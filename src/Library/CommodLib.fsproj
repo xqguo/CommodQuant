@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="Charts.fs" />
+    <Compile Include="Markets.fs" />
+    <Compile Include="Swaps.fs" />
+    <Compile Include="Options.fs" />
+    <Compile Include="MonteCarlo.fs" />
+    <None Include="PlattsHolidays.fsx" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

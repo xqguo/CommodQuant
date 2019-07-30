@@ -1,0 +1,33 @@
+#storage: none
+generate_load_scripts: true
+framework: auto-detect
+source https://nuget.org/api/v2
+
+nuget FSharp.Core 
+
+# DataFrames
+nuget Deedle 
+# FSharp.Data
+nuget FSharp.Data 
+
+# MathNet.Numerics
+nuget MathNet.Numerics 
+nuget MathNet.Numerics.FSharp
+
+# XPlot
+nuget XPlot.Plotly 
+nuget XPlot.GoogleCharts 
+nuget XPlot.GoogleCharts.Deedle 
+
+source https://api.nuget.org/v3/index.json
+nuget Argu
+nuget FsCheck
+nuget FsCheck.Xunit
+nuget DiffSharp
+nuget Nager.Date
+
+nuget Microsoft.NET.Test.Sdk
+nuget xunit
+nuget Xunit.core
+nuget xunit.runner.visualstudio
+nuget QLNet

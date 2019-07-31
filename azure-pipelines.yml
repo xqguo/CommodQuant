@@ -37,4 +37,14 @@ steps:
     testRunner: VSTest
     testResultsFiles: '**/*.trx'
 
+- task: CopyFiles@2
+  inputs:
+    #sourceFolder: # Optional
+    #contents: '**' 
+    targetFolder: $(build.artifactstagingdirectory)
+    #cleanTargetFolder: false # Optional
+    #overWrite: false # Optional
+    #flattenFolders: false # Optional
+    #preserveTimestamp: false # Optional   
+
 - task: PublishBuildArtifacts@1

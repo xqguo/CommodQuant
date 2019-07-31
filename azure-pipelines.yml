@@ -41,7 +41,7 @@ steps:
 
 - task: CopyFiles@2
   inputs:
-    contents: './src/Library/bin/Release/Release/netcoreapp2.2/publish/CoomodLib**'
+    contents: '**\publish\** '
     targetFolder: $(Build.ArtifactStagingDirectory)
 - task: PublishBuildArtifacts@1
   inputs:

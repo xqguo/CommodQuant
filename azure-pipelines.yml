@@ -30,18 +30,11 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- script: dotnet test .\src\Test\Test.fsproj --logger trx
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testRunner: VSTest
-    testResultsFiles: '**/*.trx'
-
 - script: dotnet publish --configuration Release 
 
 - task: CopyFiles@2
   inputs:
-    contents: '**\publish\** '
+    contents: '**/publish/** '
     targetFolder: $(Build.ArtifactStagingDirectory)
 - task: PublishBuildArtifacts@1
   inputs:

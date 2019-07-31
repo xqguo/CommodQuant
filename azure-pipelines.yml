@@ -42,4 +42,9 @@ steps:
 - task: PublishBuildArtifacts@1
   inputs:
     pathToPublish: $(Build.ArtifactStagingDirectory)
-    artifactName: MyBuildOutputs    
+    artifactName: FullProject   
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)/src/Library/bin/Release/netcoreapp2.2/publish'
+    artifactName: Release     

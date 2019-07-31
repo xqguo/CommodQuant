@@ -37,14 +37,13 @@ steps:
     testRunner: VSTest
     testResultsFiles: '**/*.trx'
 
+- script: dotnet publish --configuration Release 
+
 - task: CopyFiles@2
   inputs:
-    #sourceFolder: # Optional
-    #contents: '**' 
-    targetFolder: $(build.artifactstagingdirectory)
-    #cleanTargetFolder: false # Optional
-    #overWrite: false # Optional
-    #flattenFolders: false # Optional
-    #preserveTimestamp: false # Optional   
-
+    contents: './src/Library/bin/Release/**'
+    targetFolder: $(Build.ArtifactStagingDirectory)
 - task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: MyBuildOutputs    

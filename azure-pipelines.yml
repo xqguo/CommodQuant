@@ -2,49 +2,94 @@
 # Build and run tests for .NET Desktop or Windows classic desktop solutions.
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
-
+  
 trigger:
 - master
 
-pool:
-#  vmImage: 'VS2017-Win2016'
-  vmImage: 'windows-2019'
-
 variables:
   solution: '**/*.sln'
+  appname: 'CommodQuant'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
+  vmImageName: 'windows-2019'
 
-steps:
-- task: NuGetToolInstaller@0
+stages:
+  - stage: Build
+    displayName: Build stage
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+        - task: NuGetToolInstaller@0
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+        - task: NuGetCommand@2
+          inputs:
+            restoreSolution: '$(solution)'
 
-- script: dotnet restore
+        - script: dotnet restore
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+        - task: VSBuild@1
+          inputs:
+            solution: '$(solution)'
+            platform: '$(buildPlatform)'
+            configuration: '$(buildConfiguration)'
 
-- script: dotnet publish --configuration Release 
+        - script: dotnet publish --configuration Release 
 
-- task: CopyFiles@2
-  inputs:
-    contents: |
-     **/*
-     !.git/**/*    
-    targetFolder: $(Build.ArtifactStagingDirectory)
-    
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: $(Build.ArtifactStagingDirectory)
-    artifactName: FullProject   
+        - task: CopyFiles@2
+          displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/'
+          inputs:
+            SourceFolder: '$(system.defaultworkingdirectory)/src/Library/bin/Release/netcoreapp2.2/publish'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/$(appname)'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)/src/Library/bin/Release/netcoreapp2.2/publish'
-    artifactName: Release     
+        - task: ArchiveFiles@2
+          displayName: '$(appname) Archive'
+          inputs:
+            rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(appname)'
+            includeRootFolder: false
+            archiveType: zip
+            replaceExistingArchive: true
+            archiveFile: '$(Build.ArtifactStagingDirectory)/$(appname).zip'
+
+        - task: PublishPipelineArtifact@0
+          displayName: 'PublishPipelineArtifact: drop'
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/$(appname).zip'
+  - stage: Dev
+    displayName: Dev stage
+    dependsOn: Build
+    condition: succeeded('Build')
+    jobs:
+    - deployment: Dev
+      displayName: Dev
+      environment: 'development'
+      pool: 
+        vmImage: $(vmImageName)
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: DownloadPipelineArtifact@1
+              displayName: 'Download Pipeline Artifact'
+              inputs:
+                buildType: 'current'
+  - stage: Prod
+    displayName: Prod stage
+    dependsOn: Dev
+    condition: succeeded('Dev')
+    jobs:
+    - deployment: Prod
+      displayName: Prod
+      environment: 'production'
+      pool: 
+        vmImage: $(vmImageName)
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: DownloadPipelineArtifact@1
+              displayName: 'Download Pipeline Artifact'
+              inputs:
+                buildType: 'current'

@@ -4,9 +4,10 @@ open System.IO
 open Utils
 open Deedle
 open Deedle.Internal
+open System.Reflection
 
 
-let [<Literal>] ROOT = __SOURCE_DIRECTORY__
+let ROOT = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
 
 [<Measure>] type bbl
 [<Measure>] type mt 
@@ -44,7 +45,7 @@ type Instrument = //full list of known instruments and native quotation
     | TTF //converted USD/mmbut compo price
 
 let readCalendar f = 
-    File.ReadAllLines( __SOURCE_DIRECTORY__ + @"/holidays/" + f ) 
+    File.ReadAllLines( ROOT +/ @"/holidays/" +/ f ) 
     |> Array.choose( parseDateExact "yyyyMMMdd" )
     |> set
 
@@ -72,7 +73,7 @@ let getCalendar ins (calendars:Map<_,_>) =
     | _     -> Set.empty
     |> Set.fold ( fun acc s -> Set.union acc calendars.[s] ) Set.empty
 
-let brtDates = Frame.ReadCsv<string>(ROOT + "/BrentPillars.csv", indexCol = "Month", inferTypes = false)
+let brtDates = Frame.ReadCsv<string>(ROOT +/ "holidays" +/ "BrentPillars.csv", indexCol = "Month", inferTypes = false)
 let brtContracts = 
     brtDates.Columns?("Last Trade").As<string>()
     |> Series.filter( fun s v -> s <> "" && v <> "" )

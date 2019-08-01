@@ -41,7 +41,7 @@ stages:
         - task: CopyFiles@2
           displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/'
           inputs:
-            SourceFolder: '$(system.defaultworkingdirectory)/src/Library/bin/Release/netcoreapp2.2/publish'
+            SourceFolder: '$(system.defaultworkingdirectory)/src/Test/bin/Release/netcoreapp2.2/publish'
             TargetFolder: '$(Build.ArtifactStagingDirectory)/$(appname)'
 
         - task: ArchiveFiles@2
@@ -56,7 +56,13 @@ stages:
         - task: PublishPipelineArtifact@0
           displayName: 'PublishPipelineArtifact: drop'
           inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/$(appname).zip'
+            targetPath: '$(Build.ArtifactStagingDirectory)/$(appname).zip*'
+
+        - task: PublishPipelineArtifact@0
+          displayName: 'PublishPipelineArtifact: test'
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/$(appname)/*'
+            
   - stage: Dev
     displayName: Dev stage
     dependsOn: Build
@@ -71,10 +77,9 @@ stages:
         runOnce:
           deploy:
             steps:
-            - task: DownloadPipelineArtifact@1
-              displayName: 'Download Pipeline Artifact'
-              inputs:
-                buildType: 'current'
+            - download: current
+              artifact: test
+            - script: dotnet vstest Test.dll
   - stage: Prod
     displayName: Prod stage
     dependsOn: Dev
@@ -89,7 +94,6 @@ stages:
         runOnce:
           deploy:
             steps:
-            - task: DownloadPipelineArtifact@1
-              displayName: 'Download Pipeline Artifact'
-              inputs:
-                buildType: 'current'
+            - download: current
+              artifact: drop
+ 

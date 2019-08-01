@@ -4,10 +4,8 @@ open System.IO
 open Utils
 open Deedle
 open Deedle.Internal
-open System.Reflection
 
-
-let ROOT = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)
 
 [<Measure>] type bbl
 [<Measure>] type mt 
@@ -23,6 +21,7 @@ type HolidayCode =
     | ICE
     | USD
 
+printfn "ROOT=%s" (ROOT +/ "test" +/ "another")
 type ContractDates = ContractDates of Series<string,DateTime> //how to interprete tenor code to date
 
 type Commod<[<Measure>] 'c, [<Measure>] 'u>  = 
@@ -45,7 +44,7 @@ type Instrument = //full list of known instruments and native quotation
     | TTF //converted USD/mmbut compo price
 
 let readCalendar f = 
-    File.ReadAllLines( ROOT +/ @"/holidays/" +/ f ) 
+    File.ReadAllLines( ROOT +/ "holidays" +/ f ) 
     |> Array.choose( parseDateExact "yyyyMMMdd" )
     |> set
 

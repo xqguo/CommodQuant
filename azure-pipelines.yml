@@ -22,20 +22,10 @@ stages:
         pool:
           vmImage: $(vmImageName)
         steps:
-        - task: NuGetToolInstaller@0
-
-        - task: NuGetCommand@2
-          inputs:
-            restoreSolution: '$(solution)'
-
-        - script: dotnet restore
-
         - script: dotnet publish --configuration $(buildConfiguration) 
-
-        - upload: src/Test/bin/$(buildConfiguration)/netcoreapp2.2/publish/* 
+        - publish: src/Test/bin/$(buildConfiguration)/netcoreapp2.2/publish
           artifact: Test
-
-        - upload: src/Library/bin/Release/netcoreapp2.2/publish/* 
+        - publish: src/Library/bin/$(buildConfiguration)/netcoreapp2.2/publish 
           artifact: Release
         
   - stage: Dev

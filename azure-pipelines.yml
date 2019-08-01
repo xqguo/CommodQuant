@@ -43,8 +43,8 @@ stages:
           deploy:
             steps:
             - download: current
-              artifact: Test
-            - script: dotnet vstest Test.dll
+              artifact: Test              
+            - script: cd Test && dotnet vstest Test.dll
   - stage: Prod
     displayName: Prod stage
     dependsOn: Dev

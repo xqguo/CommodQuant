@@ -30,39 +30,14 @@ stages:
 
         - script: dotnet restore
 
-        - task: VSBuild@1
-          inputs:
-            solution: '$(solution)'
-            platform: '$(buildPlatform)'
-            configuration: '$(buildConfiguration)'
+        - script: dotnet publish --configuration $(buildConfiguration) 
 
-        - script: dotnet publish --configuration Release 
+        - upload: src/Test/bin/$(buildConfiguration)/netcoreapp2.2/publish/* 
+          artifact: Test
 
-        - task: CopyFiles@2
-          displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/'
-          inputs:
-            SourceFolder: '$(system.defaultworkingdirectory)/src/Test/bin/Release/netcoreapp2.2/publish'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/$(appname)'
-
-        - task: ArchiveFiles@2
-          displayName: '$(appname) Archive'
-          inputs:
-            rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(appname)'
-            includeRootFolder: false
-            archiveType: zip
-            replaceExistingArchive: true
-            archiveFile: '$(Build.ArtifactStagingDirectory)/$(appname).zip'
-
-        - task: PublishPipelineArtifact@0
-          displayName: 'PublishPipelineArtifact: drop'
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/$(appname).zip*'
-
-        - task: PublishPipelineArtifact@0
-          displayName: 'PublishPipelineArtifact: test'
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/$(appname)/*'
-            
+        - upload: src/Library/bin/Release/netcoreapp2.2/publish/* 
+          artifact: Release
+        
   - stage: Dev
     displayName: Dev stage
     dependsOn: Build
@@ -78,7 +53,7 @@ stages:
           deploy:
             steps:
             - download: current
-              artifact: test
+              artifact: Test
             - script: dotnet vstest Test.dll
   - stage: Prod
     displayName: Prod stage
@@ -95,5 +70,6 @@ stages:
           deploy:
             steps:
             - download: current
-              artifact: drop
+              artifact: Release
+            
  

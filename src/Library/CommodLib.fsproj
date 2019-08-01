@@ -11,5 +11,8 @@
     <Compile Include="MonteCarlo.fs" />
     <None Include="PlattsHolidays.fsx" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="holidays\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

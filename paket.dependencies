@@ -1,7 +1,7 @@
 #storage: none
 generate_load_scripts: true
 framework: auto-detect
-source https://nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core 
 
@@ -19,7 +19,6 @@ nuget XPlot.Plotly
 nuget XPlot.GoogleCharts 
 nuget XPlot.GoogleCharts.Deedle 
 
-source https://api.nuget.org/v3/index.json
 nuget Argu
 nuget FsCheck
 nuget FsCheck.Xunit

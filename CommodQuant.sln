@@ -7,7 +7,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FC2C5FBC-9A5
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Test", "src\Test\Test.fsproj", "{04CF4599-BE53-4FDA-B33F-DC382C1054FF}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CommodLib", "src\Library\CommodLib.fsproj", "{90FD8193-24EA-4324-A9FB-5C1FA806908E}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CommodLib", "src\Library\CommodLib.fsproj", "{90FD8193-24EA-4324-A9FB-5C1FA806908E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C981EE6A-699C-4D32-ACB9-BA54B947B415}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

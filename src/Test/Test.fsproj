@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFrameworks>net472;netcoreapp2.2</TargetFrameworks>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="paket.references" />
     <Compile Include="FsCheckTypes.fs" />
     <Compile Include="TestCalendar.fs" />
     <Compile Include="TestUtilities.fs" />
@@ -20,6 +21,7 @@
     <ProjectReference Include="..\Library\CommodLib.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="System.Runtime" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />

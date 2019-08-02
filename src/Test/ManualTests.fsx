@@ -1,7 +1,7 @@
-﻿#I "../../.paket/load/net472/"
+﻿#I "../../.paket/load/"
 #load "MathNet.Numerics.FSharp.fsx"
 #load "FsCheck.fsx"
-#r "../Library/bin/Release/net472/Library.dll"
+#r "../Library/bin/Release/netcoreapp2.2/CommodLib.dll"
 open FsCheck
 open MathNet.Numerics.LinearAlgebra
 open MathNet.Numerics.Statistics

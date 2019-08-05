@@ -13,7 +13,7 @@ NUGET
     FsCheck.Xunit (2.14)
       FsCheck (2.14)
       xunit.extensibility.execution (>= 2.2 < 3.0)
-    FSharp.Core (4.7)
+    FSharp.Core (4.6.2)
     FSharp.Data (3.1.1)
       FSharp.Core (>= 4.3.4)
     FSharp.Quotations.Evaluator (1.1.3)

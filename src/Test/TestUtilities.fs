@@ -2,7 +2,7 @@
 
 open FsCheck
 open FsCheck.Xunit
-open Utils
+open Commod.Utils
 open System
 open FsCheckTypes
 

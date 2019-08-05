@@ -7,7 +7,8 @@ module TestMarket
 open System
 open FsCheck
 open FsCheck.Xunit
-open Markets
+open Commod
+open Commod.Markets
 open Deedle
 
 [<Property>]

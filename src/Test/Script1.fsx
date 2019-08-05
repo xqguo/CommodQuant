@@ -1,9 +1,10 @@
+#r "../../packages/NETStandard.Library/build/netstandard2.0/ref/netstandard.dll "
+#r "bin/Debug/netstandard2.0/CommodLib.dll"
 #I "../../.paket/load/"
 #load "MathNet.Numerics.FSharp.fsx"
 #load "FsCheck.fsx"
 #load "FsCheck.Xunit.fsx"
 #load "FsCheckTypes.fs"
-#r "../Library/bin/Release/netcoreapp2.2/CommodLib.dll"
 open FsCheck
 open MathNet.Numerics.LinearAlgebra
 open MathNet.Numerics.Distributions

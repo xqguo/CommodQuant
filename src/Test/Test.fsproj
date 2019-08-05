@@ -13,6 +13,7 @@
     <Compile Include="TestOptions.fs" />
     <Compile Include="TestMonteCarlo.fs" />
     <Compile Include="TestSwaps.fs" />
+    <Compile Include="TestRates.fs" />
     <None Include="Script1.fsx" />
     <None Include="Script2.fsx" />
     <None Include="ManualTests.fsx" />

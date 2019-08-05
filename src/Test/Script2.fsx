@@ -1,8 +1,9 @@
-﻿#I "../../.paket/load/"
+﻿#r "../../packages/NETStandard.Library/build/netstandard2.0/ref/netstandard.dll "
+#r "bin/Debug/netstandard2.0/CommodLib.dll"
+#I "../../.paket/load/"
 #load "MathNet.Numerics.FSharp.fsx"
 #load "FsCheck.fsx"
 #load "FsCheck.Xunit.fsx"
-#r "../Library/bin/Release/netcoreapp2.2/CommodLib.dll"
 open FsCheck
 open FsCheck.Xunit
 open Utils
@@ -43,8 +44,6 @@ let testnumsBizdays (d1:DateTime) n0 n1 (n2:int) =
     let num2 = numBizdays holiday d3 d4
     num1 = num2 - (n1*n2-n1)
 Check.One({ Config.Quick with MaxTest = 500;Arbitrary = [typeof<SmallInt>; typeof<ValidDate>]}, testnumsBizdays)
-
-
 
 let week = ["Sunday",0;"Monday",1;"Tuesday",2;"Wednesday",3;"Thursday",4;"Friday",5;"Saturday",6]
 let weekmap = week|>Map.ofList

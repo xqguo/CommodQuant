@@ -4,8 +4,8 @@ open MathNet.Numerics.Distributions
 open MathNet.Numerics.Statistics
 open FsCheck
 open FsCheck.Xunit
-open Options
-open MC
+open Commod.Options
+open Commod.MC
 open FsCheckTypes
 
 

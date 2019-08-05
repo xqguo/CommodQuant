@@ -8,7 +8,7 @@ open System
 open FsCheck
 open FsCheck.Xunit
 open FsCheckTypes
-open Utils
+open Commod.Utils
 
 let cal = [ DateTime( 2019,1,1); DateTime(2019,12,25)] |> set
 

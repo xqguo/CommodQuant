@@ -4,9 +4,11 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Charts.fs" />
     <Compile Include="Markets.fs" />
+    <Compile Include="Rates.fs" />
     <Compile Include="Swaps.fs" />
     <Compile Include="Options.fs" />
     <Compile Include="MonteCarlo.fs" />
@@ -14,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="holidays\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="csv\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

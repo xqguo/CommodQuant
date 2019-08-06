@@ -26,7 +26,8 @@ module Rates =
                       | _ -> invalidOp <| sprintf "Unknown pillar format, expect W/M/Y, got %s" p
                     let q = SimpleQuote(Nullable(v)) :> Quote
                     let h = Handle(q)
-                    OISRateHelper(2, Period(n, u), h, i ) :> RateHelper)        
+                    OISRateHelper(2, Period(n, u), h, i ) :> RateHelper        
+                | _ -> invalidOp <| sprintf "Unknown pillar format, expect W/M/Y, got %s" p)
         let instruments = ResizeArray(helpers)
         PiecewiseYieldCurve<Discount, LogLinear>( Date td, instruments, Actual360())
 

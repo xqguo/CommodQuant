@@ -36,15 +36,19 @@ module DomainTypes  =
         member x.Lot = float x.LotSize //example of member functions
 
     type Instrument = //full list of known instruments and native quotation
-        | DBRT
+        | DBRT //dated brent
         | BRT
         | GO
         | FO380
         | FO180
+        | FO3_5 //Fuel oil 3.5 Barges 
         | JKM
         | JCC
         | TTF //converted USD/mmbut compo price
-        
+        | SGO //Singapore Gas oil ref...
+        | NG // Herry Hub natural gas
+        | DUB // dubai crude
+         
     type PriceCsv = CsvProvider<"PILLAR,PRICE">
 
     type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation

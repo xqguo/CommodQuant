@@ -5,6 +5,7 @@ module Swaps =
     open Utils
     open Markets
     open Deedle
+    open Calendars
 
     let brtFutures = getCommod 1.<USD/bbl> 1000.<bbl/lot> BRT
     let jccIndex = getCommod 1.<USD/bbl> 1000.<bbl/lot> JCC

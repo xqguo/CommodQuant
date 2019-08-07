@@ -35,7 +35,7 @@ module DomainTypes  =
         }
         member x.Lot = float x.LotSize //example of member functions
 
-    type Instrument = //full list of known instruments and native quotation
+    type Instrument = //full list of known instruments
         | DBRT //dated brent
         | BRT
         | GO

@@ -48,6 +48,7 @@ module DomainTypes  =
         | SGO //Singapore Gas oil ref...
         | NG // Herry Hub natural gas
         | DUB // dubai crude
+        | SJET // Sing Jet
          
     type PriceCsv = CsvProvider<"PILLAR,PRICE">
 

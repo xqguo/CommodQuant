@@ -1,10 +1,7 @@
 namespace Commod
 module Markets = 
-    open System
-    open System.IO
     open Calendars
     open Deedle
-    open Deedle.Internal
 
     //type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
     // these depends on the data format, as in PriceVols.csv

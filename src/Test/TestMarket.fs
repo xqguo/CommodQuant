@@ -9,6 +9,7 @@ open FsCheck
 open FsCheck.Xunit
 open Commod
 open Commod.Markets
+open Commod.Calendars
 open Deedle
 
 [<Property>]

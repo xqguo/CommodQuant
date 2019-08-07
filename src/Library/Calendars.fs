@@ -35,7 +35,7 @@ module Calendars =
         | DBRT -> [PLTLDN] |> set
         | JKM | FO380 | FO180 -> [PLTSGP] |> set
         | BRT | GO | TTF  -> [ICE] |> set 
-        | _     -> Set.empty
+        | NG | DUB | FO3_5 | JCC |SGO | SJET -> invalidOp "not implemented"
         |> Set.fold ( fun acc s -> Set.union acc calendars.[s] ) Set.empty
 
 

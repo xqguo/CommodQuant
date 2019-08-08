@@ -9,6 +9,8 @@ open FsCheck
 open FsCheck.Xunit
 open Commod
 open Commod.Markets
+open Commod.Calendars
+open Commod.ContractDates.Conventions
 open Deedle
 
 [<Property>]
@@ -38,10 +40,10 @@ let ``test getCommod `` (PositiveInt q) (PositiveInt l) (ins:Instrument) =
     let l1 = float l / 100.
     let test = getCommod q1 l1 ins
     let cal = test.Calendar
-    let ctt = test.Contracts
+    let (ContractDates ctt) = test.Contracts
     let qtt = test.Quotation
     let lot = test.LotSize
     let s = Set([BRT;JKM;JCC;TTF])
     (if ins = JCC then cal=Set.empty else cal<>Set.empty) .&.
     (qtt = q1 && lot = l1).&.
-    (if not (s.Contains(ins)) then ctt=dt else ctt<>dt)
+    (ctt.IsEmpty = false )

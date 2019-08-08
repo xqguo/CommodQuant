@@ -1,13 +1,15 @@
-#I "../.."
-#load "packages/FsLab/FsLab.fsx"
-#load "../Library/Utils.fs"
-#r "packages/FSharp.Data/lib/net45/FSharp.Data.dll"
-#r @"packages/Nager.Date/lib/net45/Nager.Date.dll"
+#r "../../packages/NETStandard.Library/build/netstandard2.0/ref/netstandard.dll"
+#I "../../.paket/load/netstandard2.0/"
+#load "main.group.fsx"
+#load "FSharp.Data.fsx"
+#load "Nager.Date.fsx"
+#load "FsCheck.fsx"
+#r "bin/Debug/netstandard2.0/CommodLib.dll"
 open System
 open System.IO
 open Nager.Date
 open FSharp.Data
-open Utils
+open Commod.Utils
 //generate holiday csv files: yyyy-MMM-dd
 //get current year from platts website, most authorative 
 let source = HtmlDocument.Load("https://www.spglobal.com/platts/en/our-methodology/holiday")
@@ -22,7 +24,7 @@ let holRows =
 let isPLT o (e:HtmlNode) = 
     let d = ( e.Descendants ["div"] |> Seq.head ).InnerText() |> parseDateExact "ddMMMyyyy" 
     // let desc = ( e.Descendants ["div"] |> Seq.skip 1 |> Seq.head ).InnerText()
-    let offices = ( e.Descendants ["div"] |> Seq.skip 2 |> Seq.head ).Descendants ["li"] |> Seq.map ( fun x -> x.InnerText() |> String.trim) |> set
+    let offices = ( e.Descendants ["div"] |> Seq.skip 2 |> Seq.head ).Descendants ["li"] |> Seq.map ( fun x -> x.InnerText().Trim()) |> set
     // let exchanges = ( e.Descendants ["div"] |> Seq.skip 3 |> Seq.head ).Descendants ["li"] |> Seq.map ( fun x -> x.InnerText() |> String.trim) |> set
     if ( offices.Contains o || offices.Contains "All Platts offices" ) then d else None
 
@@ -33,7 +35,7 @@ let isExchange s (e:HtmlNode) =
     let d = ( e.Descendants ["div"] |> Seq.head ).InnerText() |> parseDateExact "ddMMMyyyy" 
     // let desc = ( e.Descendants ["div"] |> Seq.skip 1 |> Seq.head ).InnerText()
     // let offices = ( e.Descendants ["div"] |> Seq.skip 2 |> Seq.head ).Descendants ["li"] |> Seq.map ( fun x -> x.InnerText() |> String.trim) |> set
-    if ( e.Descendants ["div"] |> Seq.skip 3 |> Seq.head ).InnerText() |> String.contains s then d else None 
+    if ( e.Descendants ["div"] |> Seq.skip 3 |> Seq.head ).InnerText().Contains s  then d else None 
 
 let getHol f = 
     holRows

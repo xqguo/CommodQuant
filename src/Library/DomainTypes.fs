@@ -23,6 +23,7 @@ module DomainTypes  =
         | PLTLDN 
         | ICE
         | USD
+        | CME
     
     type ContractDates = ContractDates of Series<string,DateTime> //how to interprete tenor code to date
 
@@ -35,7 +36,7 @@ module DomainTypes  =
         }
         member x.Lot = float x.LotSize //example of member functions
 
-    type Instrument = //full list of known instruments and native quotation
+    type Instrument = //full list of known instruments
         | DBRT //dated brent
         | BRT
         | GO
@@ -48,8 +49,10 @@ module DomainTypes  =
         | SGO //Singapore Gas oil ref...
         | NG // Herry Hub natural gas
         | DUB // dubai crude
+        | SJET // Sing Jet
          
     type PriceCsv = CsvProvider<"PILLAR,PRICE">
+    type ContractCsv = CsvProvider<"Oct19,2019-08-27", HasHeaders = false, Schema="string,date">
 
     type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
 

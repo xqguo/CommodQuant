@@ -7,12 +7,15 @@
     <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Charts.fs" />
+    <Compile Include="Calendars.fs" />
+    <Compile Include="ContractDates.fs" />
     <Compile Include="Markets.fs" />
     <Compile Include="Rates.fs" />
     <Compile Include="Swaps.fs" />
     <Compile Include="Options.fs" />
     <Compile Include="MonteCarlo.fs" />
     <None Include="PlattsHolidays.fsx" />
+    <None Include="icecontracts.fsx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="holidays\**" CopyToOutputDirectory="PreserveNewest" />

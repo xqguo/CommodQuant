@@ -51,6 +51,7 @@ module DomainTypes  =
         | SJET // Sing Jet
          
     type PriceCsv = CsvProvider<"PILLAR,PRICE">
+    type ContractCsv = CsvProvider<"Oct19,2019-08-27", HasHeaders = false, Schema="string,date">
 
     type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
 

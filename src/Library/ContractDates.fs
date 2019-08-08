@@ -5,15 +5,20 @@ module ContractDates =
     open System
     open Utils
     open Deedle
-    open Deedle.Internal
     open Calendars
 
     module Conventions = 
-        let brtDates = Frame.ReadCsv<string>(ROOT +/ "holidays" +/ "BrentPillars.csv", indexCol = "Month", inferTypes = false)
+        //let brtDates = Frame.ReadCsv<string>(ROOT +/ "holidays" +/ "BrentPillars.csv", indexCol = "Month", inferTypes = false)
+        //let brtContracts = 
+        //    brtDates.Columns?("Last Trade").As<string>()
+        //    |> Series.filter( fun s v -> s <> "" && v <> "" )
+        //    |> Series.mapValues parseMMddyy 
+        //    |> ContractDates
+
         let brtContracts = 
-            brtDates.Columns?("Last Trade").As<string>()
-            |> Series.filter( fun s v -> s <> "" && v <> "" )
-            |> Series.mapValues parseMMddyy 
+            ContractCsv.Load( ROOT +/ "holidays" +/ "brtfut.csv").Rows
+            |> Seq.map( fun r -> r.Column1, r.Column2 ) 
+            |> series 
             |> ContractDates
 
         //GO contracts: https://www.theice.com/products/34361119/Low-Sulphur-Gasoil-Future

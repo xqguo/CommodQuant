@@ -93,6 +93,20 @@ module ContractDates =
             |> Series.ofObservations
             |> ContractDates
 
+        let ngContracts = 
+            ///start from current month last year
+            let td = DateTime.Today |> dateAdjust' "-1ya" 
+            //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
+            //Expiration Date
+            //Trading will cease at the close of business three Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
+            let getExp d = dateAdjust (getCalendar NG calendars ) "-3b" d
+            generateMonth (td |> dateAdjust' "a" ) true 
+            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), (getExp x)  ))
+            |> Seq.skipWhile( fun (_,d) -> d < td )
+            |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
+            |> Series.ofObservations
+            |> ContractDates
+
     let getContracts ins =
         match ins with
         | BRT -> Conventions.brtContracts
@@ -100,6 +114,6 @@ module ContractDates =
         | JCC -> Conventions.jccContracts
         | TTF -> Conventions.ttfContracts
         | GO -> Conventions.goContracts
-        | NG -> "not implemented"
+        | NG -> Conventions.ngContracts
         | DBRT | DUB | FO180 | FO380 | FO3_5 | SGO | SJET -> Conventions.genericContracts
 

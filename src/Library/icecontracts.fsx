@@ -19,7 +19,6 @@ let sources =
     ]
 let saveIceFutDates f (futurl:string) (opturl:string)= 
     let fut = iceFut.Load futurl
-    fut.Rows |> Seq.take 2
     let opt = iceOpt.Load opturl
     //option contracts are shorter than futures contracts, take the common set.
     let futDates = 

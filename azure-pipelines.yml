@@ -13,7 +13,7 @@ variables:
   buildConfiguration: 'Release'
   vmImageName: 'windows-2019'
   framework: 'netstandard2.0'
-
+  testframework: 'netcoreapp2.2'
 stages:
   - stage: Build
 
@@ -25,7 +25,7 @@ stages:
           vmImage: $(vmImageName)
         steps:
         - script: dotnet publish --configuration $(buildConfiguration) 
-        - publish: src/Test/bin/$(buildConfiguration)/$(framework)/publish
+        - publish: src/Test/bin/$(buildConfiguration)/$(testframework)/publish
           artifact: Test
         - publish: src/Library/bin/$(buildConfiguration)/$(framework)/publish 
           artifact: Release

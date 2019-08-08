@@ -24,6 +24,7 @@ module Calendars =
     let calendars = 
         [ 
             (ICE, iceCalendar)
+            (CME, nymCalendar )
             (PLTSGP, pltsgpCalendar)
             (PLTLDN, pltldnCalendar)
             (USD, Set.empty)
@@ -32,10 +33,11 @@ module Calendars =
 
     let getCalendar ins (calendars:Map<_,_>) = 
         match ins with
-        | DBRT -> [PLTLDN] |> set
-        | JKM | FO380 | FO180 -> [PLTSGP] |> set
+        | DBRT | FO3_5 -> [PLTLDN] |> set
+        | JKM | SGO | SJET | FO380 | FO180 | DUB -> [PLTSGP] |> set
         | BRT | GO | TTF  -> [ICE] |> set 
-        | NG | DUB | FO3_5 | JCC |SGO | SJET -> invalidOp "not implemented"
+        | JCC -> Set.empty
+        | NG -> [CME] |> set
         |> Set.fold ( fun acc s -> Set.union acc calendars.[s] ) Set.empty
 
 

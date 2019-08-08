@@ -40,3 +40,7 @@ let saveIceFutDates f (futurl:string) (opturl:string)=
  
 // process each site in the list
 sources |> List.unzip3 |||> List.map3 saveIceFutDates 
+
+//cme contracts
+
+//NG https://www.cmegroup.com/CmeWS/mvc/ProductCalendar/Download.xls?productId=444

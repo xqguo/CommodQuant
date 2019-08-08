@@ -63,6 +63,15 @@ module ContractDates =
             |> Series.ofObservations
             |> ContractDates
 
+        let genericContracts = 
+            ///start from current month last year
+            let td = DateTime.Today |> dateAdjust' "-1ya" 
+            generateMonth (td |> dateAdjust' "a" ) true 
+            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x ))
+            |> Seq.take 72
+            |> Series.ofObservations
+            |> ContractDates
+
         /// For jcc underlying vol fixing dates, lag by 1 month.
         let getJccVolPeriod x = 
             let (d0, d1 ) = getPeriod x 
@@ -91,5 +100,6 @@ module ContractDates =
         | JCC -> Conventions.jccContracts
         | TTF -> Conventions.ttfContracts
         | GO -> Conventions.goContracts
-        | DBRT | DUB | FO180 | FO380 | FO3_5 | NG | SGO | SJET -> invalidOp "not implemented"
+        | NG -> "not implemented"
+        | DBRT | DUB | FO180 | FO380 | FO3_5 | SGO | SJET -> Conventions.genericContracts
 

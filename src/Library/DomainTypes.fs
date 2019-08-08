@@ -23,6 +23,7 @@ module DomainTypes  =
         | PLTLDN 
         | ICE
         | USD
+        | CME
     
     type ContractDates = ContractDates of Series<string,DateTime> //how to interprete tenor code to date
 

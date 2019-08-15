@@ -27,7 +27,6 @@ module Calendars =
             (CME, nymCalendar )
             (PLTSGP, pltsgpCalendar)
             (PLTLDN, pltldnCalendar)
-            (USD, Set.empty)
         ] 
         |> Map.ofList
 

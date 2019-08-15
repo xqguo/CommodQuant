@@ -2,29 +2,82 @@ namespace Commod
 module Markets = 
     open Calendars
     open Deedle
+    open FSharp.Reflection
+
+    let applyUSDbbl s = s |> Series.mapValues (fun v -> v * 1M<USD/bbl> |> USDBBL)
+    let applyUSDmmbtu s = s |> Series.mapValues (fun v -> v * 1M<USD/mmbtu> |> USDMMBTU)
+    let applyBBL x =  x * 1M<bbl> |> BBL
+    let applyMMBTU x =  x * 1M<mmbtu> |> MMBTU
+    let applyMT x =  x * 1M<mt> |> MT
+    let applyUSD x =  x * 1M<USD> |> CurrencyAmount.USD
+
+    ///f is the starting quantity to be converted into the unit of t. 
+    ///amount of t is ignored.
+    let unitConversion (f:QuantityAmount) (t:QuantityAmount) (i:Commod) = 
+        let bblmtFO = 6.35M<bbl/mt> 
+        match (f,t ) with
+        | BBL _, BBL _ -> f
+        | MT _, MT _ -> f
+        | _ -> 
+            match i.Instrument with
+            | FO180 | FO380 ->             
+                match (f,t ) with
+                | MT f, BBL _ -> f * bblmtFO |> BBL
+                | BBL f, MT _ -> f / bblmtFO |> MT
+                | _ -> invalidOp "Unit conversion not implemented"
+            | _ -> invalidOp "Not implemented"
+
+    ///appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
+    let applyQuantity f (q1:QuantityAmount) (q2:QuantityAmount) (c:Commod)=
+        let q = unitConversion q1 q2 c   
+        match q with
+        | BBL x -> decimal x |> f |> applyBBL
+        | MMBTU x -> decimal x |> f |> applyMMBTU
+        | MT x -> decimal x |> f |> applyMT
+
+    let lotsConversion (q:QuantityAmount) (i:Commod) =            
+        let getLots x = x / i.Lot
+        applyQuantity getLots q i.LotSize i
+
+
+    /////appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
+    /////appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
+    //let applyUnitPrice f (p1:UnitPrice) (p2:UnitPrice) (c:Commod)=
+    //    let t1 = Uni
+    //    let q = unitConversion q1 q2 c   
+    //    match q. with
+    //    | BBL x -> decimal x |> f |> applyBBL
+    //    | MMBTU x -> decimal x |> f |> applyMMBTU
+    //    | MT x -> decimal x |> f |> applyMT
 
     //type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
-    // these depends on the data format, as in PriceVols.csv
-    let getPrices (df:Frame<string,string>) ins = 
+    // these depends on the data format, as in BRT ICE_Price.csv
+    let getPrices ins = 
         let (ContractDates c ) = getContracts ins
-        let tag = ins.ToString()
-        df?(tag)
-        |> Series.filter( fun k _ -> c.ContainsKey k)
+        let (f,applyMeasure) = 
+            match ins with
+            | BRT -> "BRT ICE_price.csv",applyUSDbbl
+            | _ -> invalidOp "Not implemented"
+        PriceCsv.Load(f).Rows
+        |> Seq.filter( fun r -> c.ContainsKey r.PILLAR)
+        |> Seq.map( fun r ->  r.PILLAR, r.PRICE)
+        |> series
+        |> applyMeasure
 
-    let getCommod q lotsize ins = 
-        let cals = getCalendar ins calendars
-        let contracts = getContracts ins    
-        { Calendar = cals; Contracts = contracts; Quotation = q; LotSize = lotsize}  
-
-
-    let applyUSDbbl s = s |> Series.mapValues (fun v -> v * 1.<USD/bbl>)
-    let applyUSDmmbtu s = s |> Series.mapValues (fun v -> v * 1.<USD/mmbtu>)
-    let inline removeMeasure s = s |> Series.mapValues float
-
-    let getBrtPrices df = getPrices df BRT |> applyUSDbbl
-    let getJccPrices df = getPrices df JCC |> applyUSDbbl
-    let getJkmPrices df = getPrices df JKM |> applyUSDmmbtu
-    let getTtfPrices df = getPrices df TTF |> applyUSDmmbtu
+    let getCommod ins = 
+        let getCommod' q lotsize ins = 
+            let cals = getCalendar ins calendars
+            let contracts = getContracts ins    
+            { Instrument = ins; Calendar = cals; Contracts = contracts; Quotation = q; LotSize = lotsize}  
+        let q = 
+            match ins with
+            | BRT | JCC -> USDBBL 1M<USD/bbl> 
+            | JKM | TTF -> USDMMBTU 1M<USD/mmbtu>
+        let s = 
+            match ins with
+            | BRT | JCC -> BBL 1000M<bbl>
+            | JKM | TTF -> MMBTU 10000M<mmbtu>
+        getCommod' q s ins
 
     ///assuming raw data unit is in %. 
     let getVols (df:Frame<string,string>) ins = 

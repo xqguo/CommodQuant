@@ -17,25 +17,27 @@ module DomainTypes  =
     [<Measure>] type EUR
     [<Measure>] type lot
     //[<Measure>] type point //percentage point for interest rates
+    type UnitPrice = 
+        | USDBBL of decimal<USD/bbl> 
+        | USDMT of decimal<USD/mt> 
+        | USDMMBTU of decimal<USD/mmbtu> 
+
+    type QuantityAmount = 
+        | BBL of decimal<bbl> 
+        | MT of decimal<mt> 
+        | MMBTU of decimal<mmbtu> 
+        | LOT of decimal<lot> 
+
+    type CurrencyAmount = 
+        | USD of decimal<USD> 
+        | EUR of decimal<EUR> 
 
     type HolidayCode = 
         | PLTSGP 
         | PLTLDN 
         | ICE
-        | USD
         | CME
     
-    type ContractDates = ContractDates of Series<string,DateTime> //how to interprete tenor code to date
-
-    type Commod<[<Measure>] 'c, [<Measure>] 'u>  = 
-        { 
-          Calendar : Set<DateTime> 
-          Contracts: ContractDates
-          Quotation: float<'c/'u> //e.g USD/bbl
-          LotSize: float<'u/lot> //defined native unit and lot size, e.g. 1000.0<bbl/lot> 
-        }
-        member x.Lot = float x.LotSize //example of member functions
-
     type Instrument = //full list of known instruments
         | DBRT //dated brent
         | BRT
@@ -45,16 +47,47 @@ module DomainTypes  =
         | FO3_5 //Fuel oil 3.5 Barges 
         | JKM
         | JCC
-        | TTF //converted USD/mmbut compo price
+        | TTF //converted USD/mmbtu compo price
         | SGO //Singapore Gas oil ref...
         | NG // Herry Hub natural gas
         | DUB // dubai crude
         | SJET // Sing Jet
+
+    type ContractDates = ContractDates of Series<string,DateTime> //how to interprete tenor code to date
+
+    type Commod =
+        { 
+          Instrument: Instrument
+          Calendar : Set<DateTime> 
+          Contracts: ContractDates
+          Quotation: UnitPrice //e.g USD/bbl
+          LotSize: QuantityAmount //defined native unit 1000.0 bbl 
+        }
+        member x.Lot = 
+            match x.LotSize with//example of member functions
+            | BBL v -> decimal v
+            | MT v -> decimal v
+
+    let pair = ("carrot", "orange")
+    let pair2 = ("apple", "red")
+
+    // Use dict with Key-Value pairs already created.
+    let fruit = dict[pair; pair2]
          
-    type PriceCsv = CsvProvider<"PILLAR,PRICE">
+    type PriceCsv = CsvProvider<"PILLAR,PRICE", Schema="string,decimal">
     type ContractCsv = CsvProvider<"Oct19,2019-08-27", HasHeaders = false, Schema="string,date">
 
-    type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
+    type PriceCurve = PriceCurve of Series<string, UnitPrice> //prices with quotation
 
     type RateCurves = 
         | USDOIS of PiecewiseYieldCurve
+
+    type FutureContract = 
+        { 
+            fut:Commod
+            ContractMonth: string
+            quantity: decimal<lot>
+            fixedPrice: UnitPrice
+        }
+
+    type FutureContractPricer = FutureContract -> PriceCurve -> CurrencyAmount//function types

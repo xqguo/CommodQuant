@@ -7,49 +7,69 @@ module Swaps =
     open Deedle
     open Calendars
 
-    let brtFutures = getCommod 1.<USD/bbl> 1000.<bbl/lot> BRT
-    let jccIndex = getCommod 1.<USD/bbl> 1000.<bbl/lot> JCC
-    let jkmIndex = getCommod 1.<USD/mmbtu> 10000.<mmbtu/lot> JKM
-    let ttfIndex = getCommod 1.<USD/mmbtu> 10000.<mmbtu/lot> TTF
+    let diffUnitPrice (p1:UnitPrice) (p2:UnitPrice) = 
+        match (p1, p2) with
+        | USDBBL p1 , USDBBL p2 -> p1 - p2 |> USDBBL
+        | USDMT p1, USDMT p2 -> p1 - p2 |> USDMT
+        | _ -> invalidOp "Inconsistent unit"
+    
+    let diffAmount p1 p2 = 
+        match (p1, p2) with
+        | USD p1, USD p2 -> p1 - p2 |> USD
+        | EUR p1, EUR p2 -> p1 - p2 |> EUR
+        | _ -> invalidOp "Inconsistent unit"
 
-    type FutureContract<[<Measure>] 'c, [<Measure>] 'u> = 
-        { 
-            fut:Commod<'c,'u>
-            ContractMonth: string
-            quantity: float<lot>
-            fixedPrice: float<'c/'u>
-        }
-    type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
-
-    type FutureContractPricer<[<Measure>]'c,[<Measure>]'u> = FutureContract<'c,'u> -> PriceCurve<'c/'u> -> float<'c> //function types
-
-    let genericFuturePricer (f:FutureContract<_,_>) p =
+    ///get ccy amount with baked unit conversion
+    let rec getPrice (p:UnitPrice) (q:QuantityAmount) (c:Commod)= 
+        match (p, q) with
+        | USDBBL p , BBL q -> p * q |> CurrencyAmount.USD
+        | USDMT p, MT q -> p * q |> CurrencyAmount.USD
+        | _ -> 
+            match c.Instrument with 
+            | FO180 ->                 
+                match (p, q) with
+                | USDBBL _ , MT _ -> 
+                    let q1 = applyMT 1M
+                    let q2 = applyBBL 1M
+                    let q = unitConversion q1 q2 c
+                    getPrice p q c
+                |_ -> invalidOp "not implemented"
+        
+    let genericFuturePricer (f:FutureContract) (PriceCurve p) =
+        //get price
         let p0 = p |> Series.get f.ContractMonth
-        ( p0  - f.fixedPrice) * (f.fut.LotSize * f.quantity)
+        let q = 
+            match f.fut.LotSize with
+            | BBL x -> f.quantity / 1M<lot> * x |> BBL
+            | _ -> invalidOp "futures quantity should be in lots"
+        //convert to common units using futures contract members
+        let leg1 = getPrice p0 q f.fut
+        let leg2 = getPrice f.fixedPrice q f.fut
+        diffAmount leg1 leg2 
 
     type AverageFrequency = BusinessDays
     //type PeriodFrequency = |CalMonth  //allow broken period both ends
-    type AverageSpecs<[<Measure>]'c,[<Measure>]'u>=
+    type AverageSpecs=
         {
-           Commod: Commod<'c,'u>
+           Commod: Commod
            Frequency: AverageFrequency       
            RollAdj : int
            Nrby: int
         }
 
-    type PeriodSpecs<[<Measure>]'c,[<Measure>]'u> = 
+    type PeriodSpecs = 
         { 
              startDate:DateTime
              endDate: DateTime
              deliveryDate: DateTime    
-             nominal: float<'u>
-             strike: float<'c/'u>
+             nominal: QuantityAmount
+             strike: UnitPrice
         }
 
-    type AverageSwap<[<Measure>]'c,[<Measure>]'u>=
+    type AverageSwap=
         {
-           AverageSpecs: AverageSpecs<'c,'u>
-           PeriodSpecs: seq<PeriodSpecs<'c,'u>>
+           AverageSpecs: AverageSpecs
+           PeriodSpecs: seq<PeriodSpecs>
         }
 
     let getFixingDates freq hols d1 d2 = 
@@ -57,7 +77,7 @@ module Swaps =
         | BusinessDays -> bdRange hols d1 d2
 
     ///roll and nrby adjust the contracts
-    let getNrbyContracts (s:AverageSpecs<_,_>) = 
+    let getNrbyContracts (s:AverageSpecs) = 
         let hols =  s.Commod.Calendar
         let rolladj = s.RollAdj
         let nrby = s.Nrby
@@ -81,7 +101,7 @@ module Swaps =
             )
     let brtAvgFwd = 
         {
-            Commod = brtFutures
+            Commod = getCommod BRT
             Frequency = BusinessDays
             RollAdj = 1
             Nrby = 0
@@ -89,7 +109,7 @@ module Swaps =
 
     let jkmAvgFwd = 
         {
-            Commod = jkmIndex
+            Commod = getCommod JKM
             Frequency = BusinessDays
             RollAdj = 0
             Nrby = 0
@@ -97,7 +117,7 @@ module Swaps =
 
     let ttfAvgFwd = 
         {
-            Commod = ttfIndex
+            Commod = getCommod TTF
             Frequency = BusinessDays
             RollAdj = 0
             Nrby = 0
@@ -106,7 +126,7 @@ module Swaps =
     let brtAvgFwd0 = {brtAvgFwd with RollAdj = 0 }
 
     let getbrtswap d1 d2 nominal strike  = //generate standard swap
-        let dates = generateCalMonthSchedule d1 d2 |> Seq.map( fun (d1,d2) -> (d1, d2, (dateAdjust calendars.[USD] "5b" d2)))
+        let dates = generateCalMonthSchedule d1 d2 |> Seq.map( fun (d1,d2) -> (d1, d2, (dateAdjust calendars.[CME] "5b" d2)))
         {
             AverageSpecs = brtAvgFwd
             PeriodSpecs = 
@@ -118,11 +138,11 @@ module Swaps =
         let (d1, d2 ) = getPeriod period
         getbrtswap d1 d2 nominal strike
 
-    let getFixingDatesFromAvg (s:AverageSpecs<_,_>) d1 d2= 
+    let getFixingDatesFromAvg (s:AverageSpecs) d1 d2= 
         getFixingDates s.Frequency s.Commod.Calendar d1 d2
 
     ///avg swap's pillar dependencies
-    let depPillar (s:AverageSpecs<_,_>) d1 d2 =         
+    let depPillar (s:AverageSpecs) d1 d2 =         
         let fixingDates = getFixingDatesFromAvg s d1 d2
         let contractDates = getNrbyContracts s
         getFixingContracts contractDates fixingDates 
@@ -132,8 +152,8 @@ module Swaps =
     let depCurv pillars (PriceCurve p) = 
         p |> Series.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
-
-    let priceSwap (s:AverageSwap<_,_>) p = 
+    ///TODO: fix pricing.
+    let priceSwap (s:AverageSwap) p = 
         // let activePillars = 
         //     s.PeriodSpecs 
         //     |> Seq.map( fun period -> depPillar s.AverageSpecs period.startDate period.endDate )
@@ -148,7 +168,8 @@ module Swaps =
     //        printfn "%A" (fixingDates |> List.ofSeq)
             let contractDates = getNrbyContracts s.AverageSpecs
             //printfn "%A" contractDates
-            let avg = getFixingPrices contractDates fixingDates p |> Seq.average 
-            (avg - period.strike) * period.nominal
+            //let avg = getFixingPrices contractDates fixingDates p |> Seq.average 
+            //(avg - period.strike) * period.nominal
+            0.
             )
 

@@ -6,6 +6,26 @@ module DomainTypes  =
     open Deedle
     open FSharp.Data
     open QLNet
+    open FSharp.Reflection
+
+    let applyCaseDecimal<'a> (s:string) (v:decimal) = 
+        match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
+        |[|case|] -> FSharpValue.MakeUnion(case,[| box v|]) :?> 'a
+        |_ -> invalidOp <| sprintf "Unknown case %s" s
+
+    let getCaseDecimal (x:'a) = 
+            match FSharpValue.GetUnionFields(x, typeof<'a>) with
+            | case, v -> 
+                let v' = v |> Array.head :?> decimal 
+                case.Name, v'
+
+    let private map (p1:'a) (p2:'a) f = 
+            let case1, v1 = getCaseDecimal p1
+            let case2, v2 = getCaseDecimal p2
+            if case1 = case2 then 
+                f v1 v2 |> applyCaseDecimal case1
+            else 
+                invalidOp <| sprintf "Inconsistent cases %A %A" p1 p2
 
     let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)
 
@@ -21,16 +41,34 @@ module DomainTypes  =
         | USDBBL of decimal<USD/bbl> 
         | USDMT of decimal<USD/mt> 
         | USDMMBTU of decimal<USD/mmbtu> 
+        static member applyCase (ccy:string) (x:decimal) =  
+            applyCaseDecimal<UnitPrice> ccy x 
+        static member (-) (p1:UnitPrice, p2:UnitPrice) = 
+            map p1 p2 (-)
+        static member (+) (p1:UnitPrice, p2:UnitPrice) = 
+            map p1 p2 (-)
 
     type QuantityAmount = 
         | BBL of decimal<bbl> 
         | MT of decimal<mt> 
         | MMBTU of decimal<mmbtu> 
         | LOT of decimal<lot> 
+        static member applyCase (ccy:string) (x:decimal) =  
+            applyCaseDecimal<QuantityAmount> ccy x 
+        static member (-) (p1:QuantityAmount, p2:QuantityAmount) = 
+            map p1 p2 (-)
+        static member (+) (p1:QuantityAmount, p2:QuantityAmount) = 
+            map p1 p2 (-)
 
     type CurrencyAmount = 
         | USD of decimal<USD> 
-        | EUR of decimal<EUR> 
+        | EUR of decimal<EUR>
+        static member applyCase (ccy:string) (x:decimal) =  
+            applyCaseDecimal<CurrencyAmount> ccy x 
+        static member (-) (p1:CurrencyAmount, p2:CurrencyAmount) = 
+            map p1 p2 (-)
+        static member (+) (p1:CurrencyAmount, p2:CurrencyAmount) = 
+            map p1 p2 (-)
 
     type HolidayCode = 
         | PLTSGP 
@@ -63,10 +101,7 @@ module DomainTypes  =
           Quotation: UnitPrice //e.g USD/bbl
           LotSize: QuantityAmount //defined native unit 1000.0 bbl 
         }
-        member x.Lot = 
-            match x.LotSize with//example of member functions
-            | BBL v -> decimal v
-            | MT v -> decimal v
+        member x.Lot = getCaseDecimal x.LotSize |> snd
 
     let pair = ("carrot", "orange")
     let pair2 = ("apple", "red")

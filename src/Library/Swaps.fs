@@ -13,12 +13,6 @@ module Swaps =
         | USDMT p1, USDMT p2 -> p1 - p2 |> USDMT
         | _ -> invalidOp "Inconsistent unit"
     
-    let diffAmount p1 p2 = 
-        match (p1, p2) with
-        | USD p1, USD p2 -> p1 - p2 |> USD
-        | EUR p1, EUR p2 -> p1 - p2 |> EUR
-        | _ -> invalidOp "Inconsistent unit"
-
     ///get ccy amount with baked unit conversion
     let rec getPrice (p:UnitPrice) (q:QuantityAmount) (c:Commod)= 
         match (p, q) with
@@ -45,7 +39,7 @@ module Swaps =
         //convert to common units using futures contract members
         let leg1 = getPrice p0 q f.fut
         let leg2 = getPrice f.fixedPrice q f.fut
-        diffAmount leg1 leg2 
+        leg1 - leg2 
 
     type AverageFrequency = BusinessDays
     //type PeriodFrequency = |CalMonth  //allow broken period both ends
@@ -91,7 +85,7 @@ module Swaps =
         let s = c |> Series.observations |> Seq.map ( fun (k,v) -> (v, k))|> series
         dates |> Seq.map( fun d -> s |> Series.lookup d Lookup.ExactOrGreater )
 
-    let getFixingPrices c dates p =  //cnts should be after roll/nrby adj
+    let getFixingPrices c dates (PriceCurve p) =  //cnts should be after roll/nrby adj
         getFixingContracts c dates
         |> Seq.map( fun k -> 
             let v = Series.tryGet k p
@@ -152,14 +146,14 @@ module Swaps =
     let depCurv pillars (PriceCurve p) = 
         p |> Series.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
-    ///TODO: fix pricing.
+    ///TODO: fix pricing and apply unit measure.
     let priceSwap (s:AverageSwap) p = 
-        // let activePillars = 
-        //     s.PeriodSpecs 
-        //     |> Seq.map( fun period -> depPillar s.AverageSpecs period.startDate period.endDate )
-        //     |> Set.unionMany
+        let activePillars = 
+             s.PeriodSpecs 
+             |> Seq.map( fun period -> depPillar s.AverageSpecs period.startDate period.endDate )
+             |> Set.unionMany
 
-        // let p' = depCurv activePillars p
+        let p' = depCurv activePillars p
 
         s.PeriodSpecs 
         |> Seq.sumBy( fun period -> 
@@ -168,8 +162,10 @@ module Swaps =
     //        printfn "%A" (fixingDates |> List.ofSeq)
             let contractDates = getNrbyContracts s.AverageSpecs
             //printfn "%A" contractDates
-            //let avg = getFixingPrices contractDates fixingDates p |> Seq.average 
-            //(avg - period.strike) * period.nominal
-            0.
+            let avg = getFixingPrices contractDates fixingDates p' |> Seq.averageBy( fun x -> getCaseDecimal x |> snd ) 
+            let case, strike = period.strike |> getCaseDecimal
+            let v = (avg - strike ) 
+            let n = period.nominal |> getCaseDecimal |> snd
+            v * n
             )
 

@@ -4,13 +4,7 @@ module Markets =
     open Deedle
     open FSharp.Reflection
 
-    let applyUSDbbl s = s |> Series.mapValues (fun v -> v * 1M<USD/bbl> |> USDBBL)
-    let applyUSDmmbtu s = s |> Series.mapValues (fun v -> v * 1M<USD/mmbtu> |> USDMMBTU)
-    let applyBBL x =  x * 1M<bbl> |> BBL
-    let applyMMBTU x =  x * 1M<mmbtu> |> MMBTU
-    let applyMT x =  x * 1M<mt> |> MT
-    let applyUSD x =  x * 1M<USD> |> CurrencyAmount.USD
-
+    let inline applySeriesUnit case s = s |> Series.mapValues ( UnitPrice.applyCase case )
     ///f is the starting quantity to be converted into the unit of t. 
     ///amount of t is ignored.
     let unitConversion (f:QuantityAmount) (t:QuantityAmount) (i:Commod) = 
@@ -27,17 +21,14 @@ module Markets =
                 | _ -> invalidOp "Unit conversion not implemented"
             | _ -> invalidOp "Not implemented"
 
-    ///appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
-    let applyQuantity f (q1:QuantityAmount) (q2:QuantityAmount) (c:Commod)=
-        let q = unitConversion q1 q2 c   
-        match q with
-        | BBL x -> decimal x |> f |> applyBBL
-        | MMBTU x -> decimal x |> f |> applyMMBTU
-        | MT x -> decimal x |> f |> applyMT
+    ///appy a function on decimals to a q1 quantity amount for a commod with conversion to q2 first.
+    let mapQuantity f (q1:QuantityAmount) (q2:QuantityAmount) (c:Commod)=
+        let c,x = unitConversion q1 q2 c |> getCaseDecimal
+        f x |>  QuantityAmount.applyCase c
 
     let lotsConversion (q:QuantityAmount) (i:Commod) =            
         let getLots x = x / i.Lot
-        applyQuantity getLots q i.LotSize i
+        mapQuantity getLots q i.LotSize i
 
 
     /////appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
@@ -56,7 +47,7 @@ module Markets =
         let (ContractDates c ) = getContracts ins
         let (f,applyMeasure) = 
             match ins with
-            | BRT -> "BRT ICE_price.csv",applyUSDbbl
+            | BRT -> "BRT ICE_price.csv", (applySeriesUnit "USDBBL")
             | _ -> invalidOp "Not implemented"
         PriceCsv.Load(f).Rows
         |> Seq.filter( fun r -> c.ContainsKey r.PILLAR)
@@ -95,11 +86,3 @@ module Markets =
 
     let inline overrideCurve p (v:seq<float>) = 
         ((Series.keys p), p.Values, v ) |||> Seq.map3( fun p v0 v1 -> (p, ((v0 + 1.0<_> - v0 )* v1 ))) |> series
-
-    //these depends on the data format, as in PriceFixes.csv
-    //let getFixes (df:Frame<DateTime,string>) ins = 
-    //     let tag = ins.ToString()
-    //     df?(tag)
-    // let getBrtFixes df = getFixes df BRT |> applyUSDbbl
-    // let getJccFixes df = getFixes df JCC |> applyUSDbbl
-    // let getJkmFixes df = getFixes df JKM |> applyUSDmmbtu

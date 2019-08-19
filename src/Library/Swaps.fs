@@ -23,12 +23,13 @@ module Swaps =
             | FO180 ->                 
                 match (p, q) with
                 | USDBBL _ , MT _ -> 
-                    let q1 = applyMT 1M
-                    let q2 = applyBBL 1M
+                    let q1 = QuantityAmount.applyCase "MT" 1M 
+                    let q2 = QuantityAmount.applyCase "BBL" 1M 
                     let q = unitConversion q1 q2 c
                     getPrice p q c
                 |_ -> invalidOp "not implemented"
-        
+    
+    //TODO: fix general case
     let genericFuturePricer (f:FutureContract) (PriceCurve p) =
         //get price
         let p0 = p |> Series.get f.ContractMonth
@@ -40,6 +41,7 @@ module Swaps =
         let leg1 = getPrice p0 q f.fut
         let leg2 = getPrice f.fixedPrice q f.fut
         leg1 - leg2 
+        invalidOp "Not implemented"
 
     type AverageFrequency = BusinessDays
     //type PeriodFrequency = |CalMonth  //allow broken period both ends

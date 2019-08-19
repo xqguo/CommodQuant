@@ -8,10 +8,46 @@ module DomainTypes  =
     open QLNet
     open FSharp.Reflection
 
+    [<Measure>] type bbl
+    [<Measure>] type mt 
+    [<Measure>] type mmbtu 
+    [<Measure>] type USD 
+    [<Measure>] type GBP
+    [<Measure>] type EUR
+    [<Measure>] type lot
+
     let applyCaseDecimal<'a> (s:string) (v:decimal) = 
         match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
         |[|case|] -> FSharpValue.MakeUnion(case,[| box v|]) :?> 'a
         |_ -> invalidOp <| sprintf "Unknown case %s" s
+
+    //type DecimalUnit = 
+    //    | USDBBL of decimal<USD/bbl> 
+    //    | USDMT of decimal<USD/mt> 
+    //    | USDMMBTU of decimal<USD/mmbtu> 
+    //    | BBL of decimal<bbl> 
+    //    | MT of decimal<mt> 
+    //    | MMBTU of decimal<mmbtu> 
+    //    | LOT of decimal<lot> 
+    //    | USD of decimal<USD> 
+    //    | EUR of decimal<EUR>
+    //    static member applyCase (case:string) (x:decimal) =  
+    //        applyCaseDecimal<DecimalUnit> case x 
+
+    //let inline applyDecimalUnit (s:string) (v:decimal) = 
+    //    match FSharpType.GetUnionCases typeof<DecimalUnit> |> Array.filter (fun case -> case.Name = s) with
+    //    |[|case|] -> 
+    //        match case.Name with 
+    //        | "USDBBL" -> 1M<USD/bbl> 
+    //        | "USDMT" ->  1M<USD/mt> 
+    //        | "USDMMBTU" -> 1M<USD/mmbtu> 
+    //        | "BBL" -> 1M<bbl> 
+    //        | "MT" -> 1M<mt> 
+    //        | "MMBTU" -> 1M<mmbtu> 
+    //        | "LOT" -> 1M<lot> 
+    //        | "USD" -> 1M<USD> 
+    //        | "EUR" -> 1M<EUR>
+    //    |_ -> invalidOp <| sprintf "Unknown case %s" s
 
     let getCaseDecimal (x:'a) = 
             match FSharpValue.GetUnionFields(x, typeof<'a>) with
@@ -27,16 +63,6 @@ module DomainTypes  =
             else 
                 invalidOp <| sprintf "Inconsistent cases %A %A" p1 p2
 
-    let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)
-
-    [<Measure>] type bbl
-    [<Measure>] type mt 
-    [<Measure>] type mmbtu 
-    [<Measure>] type USD 
-    [<Measure>] type GBP
-    [<Measure>] type EUR
-    [<Measure>] type lot
-    //[<Measure>] type point //percentage point for interest rates
     type UnitPrice = 
         | USDBBL of decimal<USD/bbl> 
         | USDMT of decimal<USD/mt> 
@@ -102,12 +128,6 @@ module DomainTypes  =
           LotSize: QuantityAmount //defined native unit 1000.0 bbl 
         }
         member x.Lot = getCaseDecimal x.LotSize |> snd
-
-    let pair = ("carrot", "orange")
-    let pair2 = ("apple", "red")
-
-    // Use dict with Key-Value pairs already created.
-    let fruit = dict[pair; pair2]
          
     type PriceCsv = CsvProvider<"PILLAR,PRICE", Schema="string,decimal">
     type ContractCsv = CsvProvider<"Oct19,2019-08-27", HasHeaders = false, Schema="string,date">
@@ -126,3 +146,4 @@ module DomainTypes  =
         }
 
     type FutureContractPricer = FutureContract -> PriceCurve -> CurrencyAmount//function types
+    let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)

@@ -2,7 +2,6 @@ namespace Commod
 module Markets = 
     open Calendars
     open Deedle
-    open FSharp.Reflection
 
     let conversionFactors = 
         [ 

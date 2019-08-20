@@ -5,9 +5,8 @@ module Swaps =
     open Utils
     open Markets
     open Deedle
-    open Calendars
-
-    
+    open IOcsv
+   
     //TODO: fix general case
     let genericFuturePricer (f:FutureContract) (PriceCurve p) =
         let qty = f.fut.LotSize.Case
@@ -124,24 +123,16 @@ module Swaps =
     let depCurv pillars (PriceCurve p) = 
         p |> Series.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
-    ///TODO: fix pricing and apply unit measure.
     let priceSwap (s:AverageSwap) p = 
         s.PeriodSpecs 
-        |> Seq.sumBy( fun period -> 
-            let commod = s.AverageSpecs.Commod
-            let strikeunit , strike = period.strike |> getCaseDecimal
+        |> Seq.map( fun period -> 
             let activePillars = depPillar s.AverageSpecs period.startDate period.endDate        
             let p' = depCurv activePillars p
-            let curveunit = getCurveUnit p'           
-            
-
             let fixingDates = getFixingDatesFromAvg s.AverageSpecs period.startDate period.endDate 
-    //        printfn "%A" (fixingDates |> List.ofSeq)
             let contractDates = getNrbyContracts s.AverageSpecs
-            //printfn "%A" contractDates
-            let avg = getFixingPrices contractDates fixingDates p' |> Seq.averageBy( fun x -> getCaseDecimal x |> snd )
-            let v = (avg - strike ) 
-            let n = period.nominal |> getCaseDecimal |> snd
-            v * n
+            let avg = getFixingPrices contractDates fixingDates p' |> avgPrice
+            let v = (avg - period.strike ) 
+            v * period.nominal
             )
+        |> Seq.reduce (+)
 

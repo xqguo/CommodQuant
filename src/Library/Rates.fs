@@ -3,6 +3,7 @@ module Rates =
     open System
     open Utils
     open QLNet
+    open IOcsv
 
     ///create USD OIS curve csv file with ref date
     ///Fed funds in ACT/360: https://www.federalreserve.gov/releases/h15/
@@ -11,7 +12,7 @@ module Rates =
     ///    1M,2.3517
     ///    2M,2.3208
     let getUSDOIS (td:DateTime) = 
-        let f = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )
+        let f = USDOISSOURCE
         let i = FedFunds()
         let helpers = 
             getPrice f

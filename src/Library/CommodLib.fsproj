@@ -7,7 +7,7 @@
     <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Charts.fs" />
-    <Compile Include="Calendars.fs" />
+    <Compile Include="IO.fs" />
     <Compile Include="ContractDates.fs" />
     <Compile Include="Markets.fs" />
     <Compile Include="Rates.fs" />

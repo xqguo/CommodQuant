@@ -1,21 +1,16 @@
 ﻿namespace Commod
-module Calendars = 
+module IOcsv =
     open System
     open System.IO
     open Utils
-    open Deedle
-    open Deedle.Internal
 
     let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)
-    printfn "ROOT=%s" (ROOT +/ "test" +/ "another")
 
     let readCalendar f = 
         File.ReadAllLines( ROOT +/ "holidays" +/ f ) 
         |> Array.choose( parseDateExact "yyyyMMMdd" )
         |> set
 
-    // let private pltCalendar = [ DateTime( 2019, 1, 1); DateTime(2019, 12, 25)] |> set
-    // let private iceCalendar = [ DateTime( 2019, 1, 1)] |> set
     let private pltsgpCalendar = readCalendar "pltsgp.txt"
     let private pltldnCalendar = readCalendar "pltldn.txt"
     let private iceCalendar = readCalendar "ice.txt"
@@ -40,3 +35,25 @@ module Calendars =
         |> Set.fold ( fun acc s -> Set.union acc calendars.[s] ) Set.empty
 
 
+    let datamap = 
+        [ 
+            //ins, price data, futexp, optexp
+            BRT , ( "BR ICE_Price.csv", "brtfut.csv", "brtopt.csv" )
+        ]
+        |> dict
+
+    let tryPriceFile i = 
+        if datamap.ContainsKey i then 
+            let f,_,_ = datamap.[i] 
+            Some (ROOT +/ "csv" +/ f)
+        else
+            None
+
+    let tryFutExpFile i = 
+        if datamap.ContainsKey i then 
+            let _,f,_ = datamap.[i]
+            Some ( ROOT +/ "holidays" +/ f)
+        else
+            None
+
+    let USDOISSOURCE = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )

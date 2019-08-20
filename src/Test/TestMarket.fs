@@ -5,11 +5,12 @@ Test markets using fscheck
 module TestMarket
 
 open System
+open Xunit
 open FsCheck
 open FsCheck.Xunit
 open Commod
 open Commod.Markets
-open Commod.Calendars
+open Commod.IOcsv
 open Commod.ContractDates.Conventions
 open Deedle
 
@@ -33,17 +34,15 @@ let ``test getJccVolPeriod`` () =
     (getJccVolPeriod "Mar20" = (DateTime(2020,2,1), DateTime(2020,2,29)))
 
 
-//[<Property>]
-//let ``test getCommod `` (PositiveInt q) (PositiveInt l) (ins:Instrument) =
-    //let dt = [ ("Mar-19", DateTime(2019, 03, 31)) ; ("Apr-19", DateTime(2019, 4, 30))]|> series |> ContractDates
-    //let q1 = float q / 100.
-    //let l1 = float l / 100.
-    //let test = getCommod ins
-    //let cal = test.Calendar
-    //let (ContractDates ctt) = test.Contracts
-    //let qtt = test.Quotation
-    //let lot = test.LotSize
-    //let s = Set([BRT;JKM;JCC;TTF])
-    //(if ins = JCC then cal=Set.empty else cal<>Set.empty) .&.
-    //(qtt = q1 && lot = l1).&.
-    //(ctt.IsEmpty = false )
+[<Property>]
+let ``test getCommod `` (ins:Instrument) =
+    let test = getCommod ins
+    let (ContractDates ctt) = test.Contracts
+    Assert.False ctt.IsEmpty |@ sprintf "Contracts are not empty" .&.
+    Assert.True (test.Lot > 0M) |@ sprintf "Lot size is greater than 0"
+
+[<Property( MaxTest = 1)>]
+let ``test getPrices for BRT `` () =
+    let (PriceCurve p) = getPrices BRT
+    let s = p.Values |> Seq.filter( fun v -> v.Value < 0M)
+    Assert.Empty s  |@ "All prices are greater than 0"

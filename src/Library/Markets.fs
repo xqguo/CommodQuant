@@ -1,8 +1,7 @@
 namespace Commod
 module Markets = 
-    open Calendars
+    open IOcsv
     open Deedle
-
     let conversionFactors = 
         [ 
             //ins, from, to 
@@ -41,22 +40,6 @@ module Markets =
             let r = qtyConversion q1 qty2 c |> getCaseDecimal |> snd
             x * r |> UnitPrice.applyCase (ccy1+qty2)
 
-    /////get ccy amount with built-in unit conversion
-    //let rec getPrice (p:UnitPrice) (q:QuantityAmount) (c:Commod)= 
-    //    match (p, q) with
-    //    | USDBBL p , BBL q -> p * q |> CurrencyAmount.USD
-    //    | USDMT p, MT q -> p * q |> CurrencyAmount.USD
-    //    | _ -> 
-    //        match c.Instrument with 
-    //        | FO180 ->                 
-    //            match (p, q) with
-    //            | USDBBL _ , MT _ -> 
-    //                let q1 = QuantityAmount.applyCase "MT" 1M 
-    //                let q2 = QuantityAmount.applyCase "BBL" 1M 
-    //                let q = qtyConversion q1 q2 c
-    //                getPrice p q c
-    //            |_ -> invalidOp "not implemented"
-
     ///appy a function on decimals to a q1 quantity amount for a commod with conversion to q2 first.
     let mapQuantity f (q1:QuantityAmount) (q2:QuantityAmount) (c:Commod)=
         let qty2 = q2 |> getCaseDecimal |> fst
@@ -67,31 +50,7 @@ module Markets =
         let getLots x = x / i.Lot
         mapQuantity getLots q i.LotSize i
 
-
-    /////appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
-    /////appy a function for decimal to a q1 quantity amount for a commod with conversion to q2 first.
-    //let applyUnitPrice f (p1:UnitPrice) (p2:UnitPrice) (c:Commod)=
-    //    let t1 = Uni
-    //    let q = unitConversion q1 q2 c   
-    //    match q. with
-    //    | BBL x -> decimal x |> f |> applyBBL
-    //    | MMBTU x -> decimal x |> f |> applyMMBTU
-    //    | MT x -> decimal x |> f |> applyMT
-
     let inline applySeriesUnit case s = s |> Series.mapValues ( UnitPrice.applyCase case )
-    //type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
-    // these depends on the data format, as in BRT ICE_Price.csv
-    let getPrices ins = 
-        let (ContractDates c ) = getContracts ins
-        let (f,applyMeasure) = 
-            match ins with
-            | BRT -> "BRT ICE_price.csv", (applySeriesUnit "USDBBL")
-            | _ -> invalidOp "Not implemented"
-        PriceCsv.Load(f).Rows
-        |> Seq.filter( fun r -> c.ContainsKey r.PILLAR)
-        |> Seq.map( fun r ->  r.PILLAR, r.PRICE)
-        |> series
-        |> applyMeasure
 
     let getCommod ins = 
         let getCommod' q lotsize ins = 
@@ -104,6 +63,21 @@ module Markets =
             | FO180 | FO380 | FO3_5 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
             | NG | JKM | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
         getCommod' q s ins
+
+    // these depends on the data format, as in BRT ICE_Price.csv
+    let getPrices ins = 
+        let i = getCommod ins
+        let (ContractDates c) = i.Contracts
+        let f = tryPriceFile ins
+        match f with 
+        | Some v -> 
+            PriceCsv.Load(v).Rows
+            |> Seq.filter( fun r -> c.ContainsKey r.PILLAR)
+            |> Seq.map( fun r ->  r.PILLAR, r.PRICE)
+            |> series
+            |> applySeriesUnit i.Quotation.Case
+            |> PriceCurve
+        | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
     ///assuming raw data unit is in %. 
     let getVols (df:Frame<string,string>) ins = 

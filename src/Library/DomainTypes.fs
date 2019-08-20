@@ -21,34 +21,6 @@ module DomainTypes  =
         |[|case|] -> FSharpValue.MakeUnion(case,[| box v|]) :?> 'a
         |_ -> invalidOp <| sprintf "Unknown case %s" s
 
-    //type DecimalUnit = 
-    //    | USDBBL of decimal<USD/bbl> 
-    //    | USDMT of decimal<USD/mt> 
-    //    | USDMMBTU of decimal<USD/mmbtu> 
-    //    | BBL of decimal<bbl> 
-    //    | MT of decimal<mt> 
-    //    | MMBTU of decimal<mmbtu> 
-    //    | LOT of decimal<lot> 
-    //    | USD of decimal<USD> 
-    //    | EUR of decimal<EUR>
-    //    static member applyCase (case:string) (x:decimal) =  
-    //        applyCaseDecimal<DecimalUnit> case x 
-
-    //let inline applyDecimalUnit (s:string) (v:decimal) = 
-    //    match FSharpType.GetUnionCases typeof<DecimalUnit> |> Array.filter (fun case -> case.Name = s) with
-    //    |[|case|] -> 
-    //        match case.Name with 
-    //        | "USDBBL" -> 1M<USD/bbl> 
-    //        | "USDMT" ->  1M<USD/mt> 
-    //        | "USDMMBTU" -> 1M<USD/mmbtu> 
-    //        | "BBL" -> 1M<bbl> 
-    //        | "MT" -> 1M<mt> 
-    //        | "MMBTU" -> 1M<mmbtu> 
-    //        | "LOT" -> 1M<lot> 
-    //        | "USD" -> 1M<USD> 
-    //        | "EUR" -> 1M<EUR>
-    //    |_ -> invalidOp <| sprintf "Unknown case %s" s
-
     let getCaseDecimal (x:'a) = 
             match FSharpValue.GetUnionFields(x, typeof<'a>) with
             | case, v -> 
@@ -59,14 +31,15 @@ module DomainTypes  =
             let case1, v1 = getCaseDecimal p1
             let case2, v2 = getCaseDecimal p2
             if case1 = case2 then 
-                f v1 v2 |> applyCaseDecimal case1
+                f v1 v2 |> applyCaseDecimal<'a> case1
             else 
                 invalidOp <| sprintf "Inconsistent cases %A %A" p1 p2
 
     let inline private mapDecimal (p1:'a) (v:'b) f = 
             let case1, v1 = getCaseDecimal p1
             f v1 (decimal v)
-            |> applyCaseDecimal case1
+            |> applyCaseDecimal<'a> case1
+
 
     type QuantityAmount = 
         | BBL of decimal<bbl> 
@@ -143,6 +116,11 @@ module DomainTypes  =
             else 
                 invalidOp "Mismatch qty unit"
 
+    let avgPrice (s:seq<UnitPrice>) = 
+        let count = Seq.length s
+        let total = s |> Seq.reduce (+) 
+        total / count
+
     type HolidayCode = 
         | PLTSGP 
         | PLTLDN 
@@ -193,4 +171,3 @@ module DomainTypes  =
         }
 
     type FutureContractPricer = FutureContract -> PriceCurve -> CurrencyAmount//function types
-    let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)

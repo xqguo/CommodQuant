@@ -5,7 +5,7 @@ module ContractDates =
     open System
     open Utils
     open Deedle
-    open Calendars
+    open IOcsv
 
     module Conventions = 
         //let brtDates = Frame.ReadCsv<string>(ROOT +/ "holidays" +/ "BrentPillars.csv", indexCol = "Month", inferTypes = false)
@@ -16,10 +16,25 @@ module ContractDates =
         //    |> ContractDates
 
         let brtContracts = 
-            ContractCsv.Load( ROOT +/ "holidays" +/ "brtfut.csv").Rows
-            |> Seq.map( fun r -> r.Column1, r.Column2 ) 
-            |> series 
-            |> ContractDates
+            let ins = BRT
+            let f = tryFutExpFile ins
+            match f with 
+            | Some v -> 
+                ContractCsv.Load( v ).Rows
+                |> Seq.map( fun r -> r.Column1, r.Column2 ) 
+                |> series 
+                |> ContractDates
+            | None ->
+                //generate last bd
+                let td = DateTime.Today |> dateAdjust' "-1ya" 
+                let hol = getCalendar ins calendars
+                generateMonth (td |> dateAdjust' "a" ) true 
+                |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust hol "p" ))
+                |> Seq.skipWhile( fun (_,d) -> d < td )
+                |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
+                |> Series.ofObservations
+                |> ContractDates
+
 
         //GO contracts: https://www.theice.com/products/34361119/Low-Sulphur-Gasoil-Future
         //compute Last Trading Day: Trading shall cease at 12:00 hours, 2 business days prior to the 14th calendar day of the delivery.

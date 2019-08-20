@@ -12,19 +12,24 @@ module Markets =
         ]
         |> dict
 
+    let getConversion i qty qty2 = 
+        let key = (i,qty,qty2) 
+        if conversionFactors.ContainsKey key then
+            conversionFactors.[key] 
+        else             
+            let key' = (i,qty2,qty) 
+            if conversionFactors.ContainsKey key' then
+                1M / conversionFactors.[key'] 
+            else 
+                invalidOp <| sprintf "Conversion factor to %s from %s not found for %A" qty2 qty i
+
     let qtyConversion (f:QuantityAmount) (qty2:string) (i:Commod) = 
         let qty, x = getCaseDecimal f
         if qty = qty2 then 
             f 
         else             
-            let key = (i.Instrument,qty,qty2) 
-            let key' = (i.Instrument,qty2,qty) 
-            if conversionFactors.ContainsKey key then
-                x * conversionFactors.[key] |> QuantityAmount.applyCase qty2
-            else if conversionFactors.ContainsKey key' then
-                x / conversionFactors.[key] |> QuantityAmount.applyCase qty2
-            else 
-                invalidOp <| sprintf "Conversion factor to %s from %s not found for %A" qty2 qty i.Instrument
+            let y = getConversion i.Instrument qty qty2 
+            x * y |> QuantityAmount.applyCase qty2
 
     ///convert price to be consistent with quantity amount based on commodity conversion factors
     let convertUnitPrice (qty2:string) (c:Commod) (p:UnitPrice)= 

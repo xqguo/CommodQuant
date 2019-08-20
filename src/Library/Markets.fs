@@ -4,27 +4,60 @@ module Markets =
     open Deedle
     open FSharp.Reflection
 
-    let inline applySeriesUnit case s = s |> Series.mapValues ( UnitPrice.applyCase case )
-    ///f is the starting quantity to be converted into the unit of t. 
-    ///amount of t is ignored.
-    let unitConversion (f:QuantityAmount) (t:QuantityAmount) (i:Commod) = 
-        let bblmtFO = 6.35M<bbl/mt> 
-        match (f,t ) with
-        | BBL _, BBL _ -> f
-        | MT _, MT _ -> f
-        | _ -> 
-            match i.Instrument with
-            | FO180 | FO380 ->             
-                match (f,t ) with
-                | MT f, BBL _ -> f * bblmtFO |> BBL
-                | BBL f, MT _ -> f / bblmtFO |> MT
-                | _ -> invalidOp "Unit conversion not implemented"
-            | _ -> invalidOp "Not implemented"
+    let conversionFactors = 
+        [ 
+            //ins, from, to 
+            (FO180, "MT", "BBL"), 6.35M 
+            (FO380, "MT", "BBL"), 6.35M 
+        ]
+        |> dict
+
+    let qtyConversion (f:QuantityAmount) (qty2:string) (i:Commod) = 
+        let qty, x = getCaseDecimal f
+        if qty = qty2 then 
+            f 
+        else             
+            let key = (i.Instrument,qty,qty2) 
+            let key' = (i.Instrument,qty2,qty) 
+            if conversionFactors.ContainsKey key then
+                x * conversionFactors.[key] |> QuantityAmount.applyCase qty2
+            else if conversionFactors.ContainsKey key' then
+                x / conversionFactors.[key] |> QuantityAmount.applyCase qty2
+            else 
+                invalidOp <| sprintf "Conversion factor to %s from %s not found for %A" qty2 qty i.Instrument
+
+    ///convert price to be consistent with quantity amount based on commodity conversion factors
+    let convertUnitPrice (qty2:string) (c:Commod) (p:UnitPrice)= 
+        let quote, x = getCaseDecimal p
+        let ccy1 = quote.Substring(0,3)
+        let qty1 = quote.Substring 3 
+        if qty1 = qty2 then p //no need to convert
+        else
+            let q1 = QuantityAmount.applyCase qty1 1M 
+            let r = qtyConversion q1 qty2 c |> getCaseDecimal |> snd
+            x * r |> UnitPrice.applyCase (ccy1+qty2)
+
+    /////get ccy amount with built-in unit conversion
+    //let rec getPrice (p:UnitPrice) (q:QuantityAmount) (c:Commod)= 
+    //    match (p, q) with
+    //    | USDBBL p , BBL q -> p * q |> CurrencyAmount.USD
+    //    | USDMT p, MT q -> p * q |> CurrencyAmount.USD
+    //    | _ -> 
+    //        match c.Instrument with 
+    //        | FO180 ->                 
+    //            match (p, q) with
+    //            | USDBBL _ , MT _ -> 
+    //                let q1 = QuantityAmount.applyCase "MT" 1M 
+    //                let q2 = QuantityAmount.applyCase "BBL" 1M 
+    //                let q = qtyConversion q1 q2 c
+    //                getPrice p q c
+    //            |_ -> invalidOp "not implemented"
 
     ///appy a function on decimals to a q1 quantity amount for a commod with conversion to q2 first.
     let mapQuantity f (q1:QuantityAmount) (q2:QuantityAmount) (c:Commod)=
-        let c,x = unitConversion q1 q2 c |> getCaseDecimal
-        f x |>  QuantityAmount.applyCase c
+        let qty2 = q2 |> getCaseDecimal |> fst
+        let x = qtyConversion q1 qty2 c |> getCaseDecimal |> snd
+        f x |>  QuantityAmount.applyCase qty2
 
     let lotsConversion (q:QuantityAmount) (i:Commod) =            
         let getLots x = x / i.Lot
@@ -41,6 +74,7 @@ module Markets =
     //    | MMBTU x -> decimal x |> f |> applyMMBTU
     //    | MT x -> decimal x |> f |> applyMT
 
+    let inline applySeriesUnit case s = s |> Series.mapValues ( UnitPrice.applyCase case )
     //type PriceCurve<[<Measure>]'u> = PriceCurve of Series<string, float<'u>> //prices with quotation
     // these depends on the data format, as in BRT ICE_Price.csv
     let getPrices ins = 
@@ -60,14 +94,11 @@ module Markets =
             let cals = getCalendar ins calendars
             let contracts = getContracts ins    
             { Instrument = ins; Calendar = cals; Contracts = contracts; Quotation = q; LotSize = lotsize}  
-        let q = 
+        let (q,s) = 
             match ins with
-            | BRT | JCC -> USDBBL 1M<USD/bbl> 
-            | JKM | TTF -> USDMMBTU 1M<USD/mmbtu>
-        let s = 
-            match ins with
-            | BRT | JCC -> BBL 1000M<bbl>
-            | JKM | TTF -> MMBTU 10000M<mmbtu>
+            | BRT |DBRT | JCC | DUB | SJET | SGO  -> USDBBL 1M<USD/bbl>, BBL 1000M<bbl>
+            | FO180 | FO380 | FO3_5 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
+            | NG | JKM | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
         getCommod' q s ins
 
     ///assuming raw data unit is in %. 
@@ -86,3 +117,5 @@ module Markets =
 
     let inline overrideCurve p (v:seq<float>) = 
         ((Series.keys p), p.Values, v ) |||> Seq.map3( fun p v0 v1 -> (p, ((v0 + 1.0<_> - v0 )* v1 ))) |> series
+
+    let getCurveUnit (PriceCurve p) = p |> Series.firstValue |> getCaseDecimal |> fst            

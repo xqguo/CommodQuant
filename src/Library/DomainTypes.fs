@@ -63,16 +63,10 @@ module DomainTypes  =
             else 
                 invalidOp <| sprintf "Inconsistent cases %A %A" p1 p2
 
-    type UnitPrice = 
-        | USDBBL of decimal<USD/bbl> 
-        | USDMT of decimal<USD/mt> 
-        | USDMMBTU of decimal<USD/mmbtu> 
-        static member applyCase (ccy:string) (x:decimal) =  
-            applyCaseDecimal<UnitPrice> ccy x 
-        static member (-) (p1:UnitPrice, p2:UnitPrice) = 
-            map p1 p2 (-)
-        static member (+) (p1:UnitPrice, p2:UnitPrice) = 
-            map p1 p2 (-)
+    let inline private mapDecimal (p1:'a) (v:'b) f = 
+            let case1, v1 = getCaseDecimal p1
+            f v1 (decimal v)
+            |> applyCaseDecimal case1
 
     type QuantityAmount = 
         | BBL of decimal<bbl> 
@@ -84,7 +78,19 @@ module DomainTypes  =
         static member (-) (p1:QuantityAmount, p2:QuantityAmount) = 
             map p1 p2 (-)
         static member (+) (p1:QuantityAmount, p2:QuantityAmount) = 
-            map p1 p2 (-)
+            map p1 p2 (+)
+        static member (*) (p1:QuantityAmount, v:decimal) = 
+            mapDecimal p1 v (*)
+        static member (/) (p1:QuantityAmount, v:decimal) = 
+            mapDecimal p1 v (/)
+        static member (*) (p1:QuantityAmount, v:int) = 
+            mapDecimal p1 v (*)
+        static member (/) (p1:QuantityAmount, v:int) = 
+            mapDecimal p1 v (/)
+        member x.Value =             
+            getCaseDecimal x |> snd
+        member x.Case = 
+            getCaseDecimal x |> fst
 
     type CurrencyAmount = 
         | USD of decimal<USD> 
@@ -94,7 +100,48 @@ module DomainTypes  =
         static member (-) (p1:CurrencyAmount, p2:CurrencyAmount) = 
             map p1 p2 (-)
         static member (+) (p1:CurrencyAmount, p2:CurrencyAmount) = 
+            map p1 p2 (+)
+        member x.Value =             
+            getCaseDecimal x |> snd
+        member x.Case = 
+            getCaseDecimal x |> fst
+
+    type UnitPrice = 
+        | USDBBL of decimal<USD/bbl> 
+        | USDMT of decimal<USD/mt> 
+        | USDMMBTU of decimal<USD/mmbtu> 
+        static member applyCase (ccy:string) (x:decimal) =  
+            applyCaseDecimal<UnitPrice> ccy x 
+        member x.Value =             
+            getCaseDecimal x |> snd
+        member x.Case = 
+            getCaseDecimal x |> fst
+        member x.QtyCase = 
+            x.Case.Substring 3 
+        member x.CcyCase = 
+            x.Case.Substring(0,3)
+        static member (-) (p1:UnitPrice, p2:UnitPrice) = 
             map p1 p2 (-)
+        static member (+) (p1:UnitPrice, p2:UnitPrice) = 
+            map p1 p2 (+)
+        static member (*) (p1:UnitPrice, v:decimal) = 
+            mapDecimal p1 v (*)
+        static member (/) (p1:UnitPrice, v:decimal) = 
+            mapDecimal p1 v (/)
+        static member (*) (p1:UnitPrice, v:int) = 
+            mapDecimal p1 v (*)
+        static member (/) (p1:UnitPrice, v:int) = 
+            mapDecimal p1 v (/)
+        static member (*) (p:UnitPrice,v:QuantityAmount) = 
+            if p.QtyCase = v.Case then 
+                p.Value * v.Value |> CurrencyAmount.applyCase p.CcyCase
+            else 
+                invalidOp "Mismatch qty unit"
+        static member (*) (v:QuantityAmount, p:UnitPrice ) = 
+            if p.QtyCase = v.Case then 
+                p.Value * v.Value |> CurrencyAmount.applyCase p.CcyCase
+            else 
+                invalidOp "Mismatch qty unit"
 
     type HolidayCode = 
         | PLTSGP 

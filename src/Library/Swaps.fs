@@ -7,41 +7,17 @@ module Swaps =
     open Deedle
     open Calendars
 
-    let diffUnitPrice (p1:UnitPrice) (p2:UnitPrice) = 
-        match (p1, p2) with
-        | USDBBL p1 , USDBBL p2 -> p1 - p2 |> USDBBL
-        | USDMT p1, USDMT p2 -> p1 - p2 |> USDMT
-        | _ -> invalidOp "Inconsistent unit"
-    
-    ///get ccy amount with baked unit conversion
-    let rec getPrice (p:UnitPrice) (q:QuantityAmount) (c:Commod)= 
-        match (p, q) with
-        | USDBBL p , BBL q -> p * q |> CurrencyAmount.USD
-        | USDMT p, MT q -> p * q |> CurrencyAmount.USD
-        | _ -> 
-            match c.Instrument with 
-            | FO180 ->                 
-                match (p, q) with
-                | USDBBL _ , MT _ -> 
-                    let q1 = QuantityAmount.applyCase "MT" 1M 
-                    let q2 = QuantityAmount.applyCase "BBL" 1M 
-                    let q = unitConversion q1 q2 c
-                    getPrice p q c
-                |_ -> invalidOp "not implemented"
     
     //TODO: fix general case
     let genericFuturePricer (f:FutureContract) (PriceCurve p) =
+        let qty = f.fut.LotSize.Case
+        let q = f.fut.LotSize * (f.quantity / 1M<lot>)
         //get price
-        let p0 = p |> Series.get f.ContractMonth
-        let q = 
-            match f.fut.LotSize with
-            | BBL x -> f.quantity / 1M<lot> * x |> BBL
-            | _ -> invalidOp "futures quantity should be in lots"
+        let p0 = p |> Series.get f.ContractMonth |> convertUnitPrice qty f.fut
+        let k0 = f.fixedPrice |> convertUnitPrice qty f.fut
         //convert to common units using futures contract members
-        let leg1 = getPrice p0 q f.fut
-        let leg2 = getPrice f.fixedPrice q f.fut
-        leg1 - leg2 
-        invalidOp "Not implemented"
+        let diff:UnitPrice = p0 - k0
+        diff * q
 
     type AverageFrequency = BusinessDays
     //type PeriodFrequency = |CalMonth  //allow broken period both ends
@@ -150,22 +126,20 @@ module Swaps =
 
     ///TODO: fix pricing and apply unit measure.
     let priceSwap (s:AverageSwap) p = 
-        let activePillars = 
-             s.PeriodSpecs 
-             |> Seq.map( fun period -> depPillar s.AverageSpecs period.startDate period.endDate )
-             |> Set.unionMany
-
-        let p' = depCurv activePillars p
-
         s.PeriodSpecs 
         |> Seq.sumBy( fun period -> 
+            let commod = s.AverageSpecs.Commod
+            let strikeunit , strike = period.strike |> getCaseDecimal
             let activePillars = depPillar s.AverageSpecs period.startDate period.endDate        
+            let p' = depCurv activePillars p
+            let curveunit = getCurveUnit p'           
+            
+
             let fixingDates = getFixingDatesFromAvg s.AverageSpecs period.startDate period.endDate 
     //        printfn "%A" (fixingDates |> List.ofSeq)
             let contractDates = getNrbyContracts s.AverageSpecs
             //printfn "%A" contractDates
-            let avg = getFixingPrices contractDates fixingDates p' |> Seq.averageBy( fun x -> getCaseDecimal x |> snd ) 
-            let case, strike = period.strike |> getCaseDecimal
+            let avg = getFixingPrices contractDates fixingDates p' |> Seq.averageBy( fun x -> getCaseDecimal x |> snd )
             let v = (avg - strike ) 
             let n = period.nominal |> getCaseDecimal |> snd
             v * n

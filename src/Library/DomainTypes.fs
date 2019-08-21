@@ -126,6 +126,7 @@ module DomainTypes  =
         | PLTLDN 
         | ICE
         | CME
+        | ALLDAYS
     
     type Instrument = //full list of known instruments
         | DBRT //dated brent

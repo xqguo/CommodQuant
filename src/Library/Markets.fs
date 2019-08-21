@@ -54,7 +54,7 @@ module Markets =
 
     let getCommod ins = 
         let getCommod' q lotsize ins = 
-            let cals = getCalendar ins calendars
+            let cals = getCalendar ins 
             let contracts = getContracts ins    
             { Instrument = ins; Calendar = cals; Contracts = contracts; Quotation = q; LotSize = lotsize}  
         let (q,s) = 

@@ -15,7 +15,7 @@ type iceOpt = CsvProvider<"https://www.theice.com/api/productguide/spec/218/expi
 // list of filename to source 
 let sources = 
     [ 
-       "brt", @"https://www.theice.com/api/productguide/spec/219/expiry/csv", @"https://www.theice.com/api/productguide/spec/218/expiry/csv"
+       "BRT", @"https://www.theice.com/api/productguide/spec/219/expiry/csv", @"https://www.theice.com/api/productguide/spec/218/expiry/csv"
     ]
 let saveIceFutDates f (futurl:string) (opturl:string)= 
     let fut = iceFut.Load futurl

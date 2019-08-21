@@ -15,3 +15,7 @@ open Commod.Utils
 open Commod
 open Commod.DomainTypes
 open FSharp.Reflection
+open Commod.Charts
+
+
+

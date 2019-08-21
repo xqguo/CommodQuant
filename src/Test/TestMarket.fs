@@ -16,7 +16,7 @@ open Deedle
 
 [<Property>]
 let ``test getCalendar`` (d: Instrument) =
-    let cal = getCalendar d calendars
+    let cal = getCalendar d 
     let b = Set.empty
     if d = JCC then cal = b
     else cal <> b

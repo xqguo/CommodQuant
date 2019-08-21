@@ -27,7 +27,7 @@ module ContractDates =
             | None ->
                 //generate last bd
                 let td = DateTime.Today |> dateAdjust' "-1ya" 
-                let hol = getCalendar ins calendars
+                let hol = getCalendar ins
                 generateMonth (td |> dateAdjust' "a" ) true 
                 |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust hol "p" ))
                 |> Seq.skipWhile( fun (_,d) -> d < td )
@@ -41,7 +41,7 @@ module ContractDates =
         let goContracts = 
             ///start from current month last year
             let td = DateTime.Today |> dateAdjust' "-1ya" 
-            let goHol = getCalendar GO calendars
+            let goHol = getCalendar GO 
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust goHol "13d-2b" ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
@@ -53,7 +53,7 @@ module ContractDates =
         let jkmContracts = 
             ///start from current month last year
             let td = DateTime.Today |> dateAdjust' "-1ya" 
-            let jkmHol = getCalendar JKM calendars
+            let jkmHol = getCalendar JKM 
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust jkmHol "-1m15d-1b" ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
@@ -63,7 +63,7 @@ module ContractDates =
 
         let getJkmPeriod x = 
             let (d0, d1 ) = getPeriod x 
-            let jkmHol = getCalendar JKM calendars
+            let jkmHol = getCalendar JKM
             let d0' = dateAdjust jkmHol "-2ma15d-1b+1d" d0
             let d1' = dateAdjust jkmHol "-1ma15d-1b" d1
             (d0', d1')
@@ -100,7 +100,7 @@ module ContractDates =
             //https://www.theice.com/products/27996665/Dutch-TTF-Gas-Futures/
             //Expiration Date
             //Trading will cease at the close of business two Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
-            let getExp d = dateAdjust (getCalendar TTF calendars ) "-2b" d
+            let getExp d = dateAdjust (getCalendar TTF ) "-2b" d
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), (getExp x)  ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
@@ -114,7 +114,7 @@ module ContractDates =
             //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
             //Expiration Date
             //Trading will cease at the close of business three Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
-            let getExp d = dateAdjust (getCalendar NG calendars ) "-3b" d
+            let getExp d = dateAdjust (getCalendar NG ) "-3b" d
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), (getExp x)  ))
             |> Seq.skipWhile( fun (_,d) -> d < td )

@@ -319,3 +319,9 @@ module Utils =
         | _ -> failwithf "Input data should have exactly 2 columns: %s" f 
                Seq.empty 
 
+    let tryFile f = 
+        if File.Exists(f) then 
+            Some f
+        else
+            None
+

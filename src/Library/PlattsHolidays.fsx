@@ -102,7 +102,7 @@ let saveHoliday f (hol:Set<DateTime>) =
     |> List.map( fun d -> d.ToString("yyyy-MMM-dd") )
     |> (fun x -> File.WriteAllLines ( root + f, x ) ) 
 
-saveHoliday "pltsgp.txt" pltsgpHol
-saveHoliday "pltldn.txt" pltldnHol
-saveHoliday "ice.txt" iceHol
-saveHoliday "nym.txt" nymHol
+saveHoliday "PLTSGP.txt" pltsgpHol
+saveHoliday "PLTLDN.txt" pltldnHol
+saveHoliday "ICE.txt" iceHol
+saveHoliday "CME.txt" nymHol

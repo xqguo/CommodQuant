@@ -97,7 +97,7 @@ module Swaps =
     let brtAvgFwd0 = {brtAvgFwd with RollAdj = 0 }
 
     let getbrtswap d1 d2 nominal strike  = //generate standard swap
-        let dates = generateCalMonthSchedule d1 d2 |> Seq.map( fun (d1,d2) -> (d1, d2, (dateAdjust calendars.[CME] "5b" d2)))
+        let dates = generateCalMonthSchedule d1 d2 |> Seq.map( fun (d1,d2) -> (d1, d2, (dateAdjust brtAvgFwd.Commod.Calendar "5b" d2)))
         {
             AverageSpecs = brtAvgFwd
             PeriodSpecs = 

@@ -41,11 +41,11 @@ let ``test getCommod `` (ins:Instrument) =
     Assert.False ctt.IsEmpty |@ sprintf "Contracts are not empty" .&.
     Assert.True (test.Lot > 0M) |@ sprintf "Lot size is greater than 0"
 
-[<Property( MaxTest = 1)>]
-let ``test getPrices for BRT `` () =
-    let (PriceCurve p) = getPrices BRT
-    let s = p.Values |> Seq.filter( fun v -> v.Value < 0M)
-    Assert.Empty s  |@ "All prices are greater than 0"
+// [<Property( MaxTest = 1)>]
+// let ``test getPrices for BRT `` () =
+//     let (PriceCurve p) = getPrices BRT
+//     let s = p.Values |> Seq.filter( fun v -> v.Value < 0M)
+//     Assert.Empty s  |@ "All prices are greater than 0"
 
 [<Property( MaxTest = 100)>]
 let ``test getPrices`` (ins:Instrument) =

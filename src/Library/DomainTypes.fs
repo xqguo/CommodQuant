@@ -134,7 +134,7 @@ module DomainTypes  =
         | GO
         | FO380
         | FO180
-        | FO3_5 //Fuel oil 3.5 Barges 
+        | FO35 //Fuel oil 3.5 Barges 
         | JKM
         | JCC
         | TTF //converted USD/mmbtu compo price

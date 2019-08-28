@@ -130,5 +130,5 @@ module ContractDates =
         | TTF -> Conventions.ttfContracts
         | GO -> Conventions.goContracts
         | NG -> Conventions.ngContracts
-        | DBRT | DUB | FO180 | FO380 | FO3_5 | SGO | SJET -> Conventions.genericContracts
+        | DBRT | DUB | FO180 | FO380 | FO35 | SGO | SJET -> Conventions.genericContracts
 

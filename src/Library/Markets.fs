@@ -60,7 +60,7 @@ module Markets =
         let (q,s) = 
             match ins with
             | BRT |DBRT | JCC | DUB | SJET | SGO  -> USDBBL 1M<USD/bbl>, BBL 1000M<bbl>
-            | FO180 | FO380 | FO3_5 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
+            | FO180 | FO380 | FO35 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
             | NG | JKM | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
         getCommod' q s ins
 

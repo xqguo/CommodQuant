@@ -36,7 +36,7 @@ module IOcsv =
 
     let getCalendar ins = 
         match ins with
-        | DBRT | FO3_5 -> [PLTLDN] 
+        | DBRT | FO35 -> [PLTLDN] 
         | JKM | SGO | SJET | FO380 | FO180 | DUB -> [PLTSGP] 
         | BRT | GO | TTF  -> [ICE] 
         | NG -> [CME] 

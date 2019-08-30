@@ -1,4 +1,5 @@
 namespace Commod
+[<AutoOpen>]
 module Markets = 
     open IOcsv
     open Deedle

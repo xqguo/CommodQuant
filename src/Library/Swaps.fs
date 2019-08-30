@@ -1,5 +1,6 @@
 namespace Commod
 ///Define swap and futures data type and pricing
+[<AutoOpen>]
 module Swaps = 
     open System
     open Utils
@@ -9,11 +10,11 @@ module Swaps =
    
     //TODO: fix general case
     let genericFuturePricer (f:FutureContract) (PriceCurve p) =
-        let qty = f.fut.LotSize.Case
-        let q = f.fut.LotSize * (f.quantity / 1M<lot>)
+        let qty = f.Fut.LotSize.Case
+        let q = f.Fut.LotSize * (f.Quantity / 1M<lot>)
         //get price
-        let p0 = p |> Series.get f.ContractMonth |> convertUnitPrice qty f.fut
-        let k0 = f.fixedPrice |> convertUnitPrice qty f.fut
+        let p0 = p |> Series.get f.ContractMonth |> convertUnitPrice qty f.Fut
+        let k0 = f.FixedPrice |> convertUnitPrice qty f.Fut
         //convert to common units using futures contract members
         let diff:UnitPrice = p0 - k0
         diff * q

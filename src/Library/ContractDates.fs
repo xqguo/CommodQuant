@@ -15,6 +15,8 @@ module ContractDates =
         //    |> Series.mapValues parseMMddyy 
         //    |> ContractDates
 
+        let formatPillar (x:DateTime) = x.ToString("MMM-yy").ToUpper() //e.g. DEC-20
+
         let brtContracts = 
             let ins = BRT
             let f = tryFutExpFile ins
@@ -29,7 +31,7 @@ module ContractDates =
                 let td = DateTime.Today |> dateAdjust' "-1ya" 
                 let hol = getCalendar ins
                 generateMonth (td |> dateAdjust' "a" ) true 
-                |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust hol "p" ))
+                |> Seq.map ( fun x -> (formatPillar x , x |> dateAdjust hol "p" ))
                 |> Seq.skipWhile( fun (_,d) -> d < td )
                 |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
                 |> Series.ofObservations
@@ -43,7 +45,7 @@ module ContractDates =
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             let goHol = getCalendar GO 
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust goHol "13d-2b" ))
+            |> Seq.map ( fun x -> ( formatPillar x, x |> dateAdjust goHol "13d-2b" ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
             |> Series.ofObservations
@@ -55,7 +57,7 @@ module ContractDates =
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             let jkmHol = getCalendar JKM 
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x |> dateAdjust jkmHol "-1m15d-1b" ))
+            |> Seq.map ( fun x -> ( formatPillar x, x |> dateAdjust jkmHol "-1m15d-1b" ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
             |> Series.ofObservations
@@ -72,7 +74,7 @@ module ContractDates =
             ///start from current month last year
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x ))
+            |> Seq.map ( fun x -> (formatPillar x, x ))
             |> Seq.filter( fun (_,d) -> d >= td )
             |> Seq.take 24
             |> Series.ofObservations
@@ -82,7 +84,7 @@ module ContractDates =
             ///start from current month last year
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), x ))
+            |> Seq.map ( fun x -> (formatPillar x, x ))
             |> Seq.take 72
             |> Series.ofObservations
             |> ContractDates
@@ -102,7 +104,7 @@ module ContractDates =
             //Trading will cease at the close of business two Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
             let getExp d = dateAdjust (getCalendar TTF ) "-2b" d
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), (getExp x)  ))
+            |> Seq.map ( fun x -> ( formatPillar x, (getExp x)  ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
             |> Series.ofObservations
@@ -116,7 +118,7 @@ module ContractDates =
             //Trading will cease at the close of business three Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
             let getExp d = dateAdjust (getCalendar NG ) "-3b" d
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.map ( fun x -> ( x.ToString("MMM-yy"), (getExp x)  ))
+            |> Seq.map ( fun x -> ( formatPillar x, (getExp x)  ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
             |> Series.ofObservations

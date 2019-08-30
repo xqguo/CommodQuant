@@ -1,6 +1,7 @@
 ﻿namespace Commod
 
 
+[<AutoOpen>]
 module Utils = 
     open System
     open System.IO

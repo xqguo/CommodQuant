@@ -1,4 +1,5 @@
 ﻿namespace Commod
+[<AutoOpen>]
 module MC = 
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Distributions

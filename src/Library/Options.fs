@@ -1,4 +1,5 @@
 namespace Commod
+[<AutoOpen>]
 module Options =
     open System
     open MathNet.Numerics.Distributions

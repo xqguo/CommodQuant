@@ -1,4 +1,5 @@
 ﻿namespace Commod
+[<AutoOpen>]
 module IOcsv =
     open System
     open System.IO

@@ -165,10 +165,10 @@ module DomainTypes  =
 
     type FutureContract = 
         { 
-            fut:Commod
+            Fut:Commod
             ContractMonth: string
-            quantity: decimal<lot>
-            fixedPrice: UnitPrice
+            Quantity: decimal<lot>
+            FixedPrice: UnitPrice
         }
 
     type FutureContractPricer = FutureContract -> PriceCurve -> CurrencyAmount//function types

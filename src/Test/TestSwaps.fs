@@ -14,13 +14,14 @@ let ``test futPricing`` (ins:Instrument) =
     let ( PriceCurve c ) = p
     let mv = 
         c 
-        |> Series.observations
-        |> Seq.toList
+        |> Map.toList
         |> List.map(  fun (m, k) -> 
             let fut = 
                 { Fut = cmd; ContractMonth = m; Quantity = 1M<lot>; FixedPrice = k }
             let v = genericFuturePricer fut p
             v.Value )
-    let exp = List.replicate c.KeyCount 0M
+    let exp = List.replicate c.Count 0M
     Assert.False( c.IsEmpty )  |@ "Curve is no empty" .&.
     Assert.Equal<decimal list>( mv, exp)  |@ "All Fut at matrket price have mtk value"
+
+//TODO add nrby and swap tests

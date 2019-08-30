@@ -2,8 +2,6 @@
 [<AutoOpen>]
 module DomainTypes  =
     open System
-    open System.IO
-    open Deedle
     open FSharp.Data
     open QLNet
     open FSharp.Reflection
@@ -143,7 +141,7 @@ module DomainTypes  =
         | DUB // dubai crude
         | SJET // Sing Jet
 
-    type ContractDates = ContractDates of Series<string,DateTime> //how to interprete tenor code to date
+    type ContractDates = ContractDates of  Map<string,DateTime> //how to interprete tenor code to date
 
     type Commod =
         { 
@@ -158,7 +156,7 @@ module DomainTypes  =
     type PriceCsv = CsvProvider<"PILLAR,PRICE", Schema="string,decimal">
     type ContractCsv = CsvProvider<"Oct19,2019-08-27", HasHeaders = false, Schema="string,date">
 
-    type PriceCurve = PriceCurve of Series<string, UnitPrice> //prices with quotation
+    type PriceCurve = PriceCurve of Map<string, UnitPrice> //prices with quotation
 
     type RateCurves = 
         | USDOIS of PiecewiseYieldCurve

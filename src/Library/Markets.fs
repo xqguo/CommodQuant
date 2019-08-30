@@ -51,7 +51,7 @@ module Markets =
         let getLots x = x / i.Lot
         mapQuantity getLots q i.LotSize i
 
-    let inline applySeriesUnit case s = s |> Series.mapValues ( UnitPrice.applyCase case )
+    let inline applyMapUnit case s = s |> Map.map( fun k v -> UnitPrice.applyCase case v )
 
     let getCommod ins = 
         let getCommod' q lotsize ins = 
@@ -82,8 +82,8 @@ module Markets =
                     | x -> pillarToDate x |> formatPillar
                 pillar, r.PRICE)
             |> Seq.filter( fun (p,_) -> c.ContainsKey p || p = "TODAY" || p = "BOM" )
-            |> series
-            |> applySeriesUnit i.Quotation.Case
+            |> Map.ofSeq
+            |> applyMapUnit i.Quotation.Case
             |> PriceCurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
@@ -104,4 +104,4 @@ module Markets =
     let inline overrideCurve p (v:seq<float>) = 
         ((Series.keys p), p.Values, v ) |||> Seq.map3( fun p v0 v1 -> (p, ((v0 + 1.0<_> - v0 )* v1 ))) |> series
 
-    let getCurveUnit (PriceCurve p) = p |> Series.firstValue |> getCaseDecimal |> fst            
+    let getCurveUnit (PriceCurve p) = p |> Map.toSeq |> Seq.head |> snd |> getCaseDecimal |> fst            

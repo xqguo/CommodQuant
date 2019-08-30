@@ -21,7 +21,7 @@ module ContractDates =
                 |> Seq.map( fun r -> 
                     let pillar = pillarToDate r.Column1 |> formatPillar
                     pillar, r.Column2 ) 
-                |> series 
+                |> Map.ofSeq 
                 |> ContractDates
 
         let brtContracts = 
@@ -37,7 +37,7 @@ module ContractDates =
                 |> Seq.map ( fun x -> (formatPillar x , x |> dateAdjust hol "p" ))
                 |> Seq.skipWhile( fun (_,d) -> d < td )
                 |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
-                |> Series.ofObservations
+                |> Map.ofSeq
                 |> ContractDates
 
 
@@ -51,7 +51,7 @@ module ContractDates =
             |> Seq.map ( fun x -> ( formatPillar x, x |> dateAdjust goHol "13d-2b" ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
-            |> Series.ofObservations
+            |> Map.ofSeq
             |> ContractDates
 
         ///jkm contracts expiration is 15th of m-1, or previous bd. 
@@ -63,7 +63,7 @@ module ContractDates =
             |> Seq.map ( fun x -> ( formatPillar x, x |> dateAdjust jkmHol "-1m15d-1b" ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
-            |> Series.ofObservations
+            |> Map.ofSeq
             |> ContractDates
 
         let getJkmPeriod x = 
@@ -80,7 +80,7 @@ module ContractDates =
             |> Seq.map ( fun x -> (formatPillar x, x ))
             |> Seq.filter( fun (_,d) -> d >= td )
             |> Seq.take 24
-            |> Series.ofObservations
+            |> Map.ofSeq
             |> ContractDates
 
         let genericContracts = 
@@ -89,7 +89,7 @@ module ContractDates =
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> (formatPillar x, x ))
             |> Seq.take 72
-            |> Series.ofObservations
+            |> Map.ofSeq
             |> ContractDates
 
         /// For jcc underlying vol fixing dates, lag by 1 month.
@@ -110,7 +110,7 @@ module ContractDates =
             |> Seq.map ( fun x -> ( formatPillar x, (getExp x)  ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
-            |> Series.ofObservations
+            |> Map.ofSeq
             |> ContractDates
 
         let ngContracts = 
@@ -124,7 +124,7 @@ module ContractDates =
             |> Seq.map ( fun x -> ( formatPillar x, (getExp x)  ))
             |> Seq.skipWhile( fun (_,d) -> d < td )
             |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
-            |> Series.ofObservations
+            |> Map.ofSeq
             |> ContractDates
 
     let getContracts ins =

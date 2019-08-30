@@ -13,7 +13,7 @@ module Swaps =
         let qty = f.Fut.LotSize.Case
         let q = f.Fut.LotSize * (f.Quantity / 1M<lot>)
         //get price
-        let p0 = p |> Series.get f.ContractMonth |> convertUnitPrice qty f.Fut
+        let p0 = p.Item f.ContractMonth |> convertUnitPrice qty f.Fut
         let k0 = f.FixedPrice |> convertUnitPrice qty f.Fut
         //convert to common units using futures contract members
         let diff:UnitPrice = p0 - k0
@@ -56,17 +56,24 @@ module Swaps =
         let (ContractDates cnts) = s.Commod.Contracts
         if rolladj < 0 then (invalidArg "rolladj" "invalid rolladj or nrby number, expect positive int")
         if nrby < 0 then (invalidArg "nrby" "invalid nrby number, expect positive int")
-        cnts |> Series.shift nrby |> Series.mapValues (addBusinessDay -rolladj hols ) |> ContractDates
+        cnts 
+        |> Map.toSeq 
+        |> Seq.map( fun (k,v) -> 
+            let k' = (pillarToDate k).AddMonths nrby |> formatPillar
+            let v' = addBusinessDay -rolladj hols v 
+            k',v')
+        |> Map.ofSeq
+        |> ContractDates
 
     let getFixingContracts (ContractDates c) dates =  
         //cnts could be after roll/nrby adj, return the pillar used to lookup price, so we know the exact dependencies and also enable diffsharp can work
-        let s = c |> Series.observations |> Seq.map ( fun (k,v) -> (v, k))|> series
-        dates |> Seq.map( fun d -> s |> Series.lookup d Lookup.ExactOrGreater )
+        let s = c |> Map.toSeq |> Seq.map ( fun (k,v) -> (v, k))
+        dates |> Seq.map( fun d -> s |> Seq.find( fun x -> fst x >= d ) |> snd )
 
     let getFixingPrices c dates (PriceCurve p) =  //cnts should be after roll/nrby adj
         getFixingContracts c dates
         |> Seq.map( fun k -> 
-            let v = Series.tryGet k p
+            let v = Map.tryFind k p
             match v with
             | Some x -> x
             | _ -> (sprintf "Please check market data input, missing pillar %s from curve %A" k p) |> invalidOp
@@ -122,7 +129,7 @@ module Swaps =
 
     //used to filter out unnecessary pillars before pricing and risk computation
     let depCurv pillars (PriceCurve p) = 
-        p |> Series.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
+        p |> Map.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
     let priceSwap (s:AverageSwap) p = 
         s.PeriodSpecs 

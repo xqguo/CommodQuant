@@ -50,5 +50,5 @@ let ``test getCommod `` (ins:Instrument) =
 [<Property( MaxTest = 100)>]
 let ``test getPrices`` (ins:Instrument) =
     let (PriceCurve p) = getPrices ins
-    let s = p.Values |> Seq.filter( fun v -> v.Value < 0M)
+    let s = p |> Map.filter( fun _ v -> v.Value < 0M)
     Assert.Empty s  |@ "All prices are greater than 0"

@@ -5,7 +5,10 @@ module IOcsv =
     open System.IO
     open Utils
 
-    let ROOT = Path.GetDirectoryName( Reflection.Assembly.GetExecutingAssembly().Location)
+    let ROOT = 
+        let dir1 = @"C:\Commodities\bin"
+        if Directory.Exists( dir1 ) then dir1 else
+            Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
 
     //let readCalendar f = 
     //    File.ReadAllLines( ROOT +/ "holidays" +/ f ) 

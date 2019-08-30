@@ -65,7 +65,8 @@ module Markets =
             | NG | JKM | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
         getCommod' q s ins
 
-    // these depends on the data format, as in BRT ICE_Price.csv
+    // these depends on the data format
+    // commod curve pillars are either MMM-yy or TODAY or BOM, all in upper case.
     let getPrices ins = 
         let i = getCommod ins
         let (ContractDates c) = i.Contracts
@@ -73,8 +74,14 @@ module Markets =
         match f with 
         | Some v -> 
             PriceCsv.Load(v).Rows
-            |> Seq.filter( fun r -> c.ContainsKey r.PILLAR)
-            |> Seq.map( fun r ->  r.PILLAR, r.PRICE)
+            |> Seq.map( fun r ->  
+                let pillar = 
+                    match r.PILLAR with
+                    | "TODAY" -> "TODAY"
+                    | s when s.StartsWith "BOM" -> "BOM"
+                    | x -> pillarToDate x |> formatPillar
+                pillar, r.PRICE)
+            |> Seq.filter( fun (p,_) -> c.ContainsKey p || p = "TODAY" || p = "BOM" )
             |> series
             |> applySeriesUnit i.Quotation.Case
             |> PriceCurve

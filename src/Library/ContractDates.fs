@@ -15,17 +15,20 @@ module ContractDates =
         //    |> Series.mapValues parseMMddyy 
         //    |> ContractDates
 
-        let formatPillar (x:DateTime) = x.ToString("MMM-yy").ToUpper() //e.g. DEC-20
+
+        let readContracts (v:string) = 
+                ContractCsv.Load( v ).Rows
+                |> Seq.map( fun r -> 
+                    let pillar = pillarToDate r.Column1 |> formatPillar
+                    pillar, r.Column2 ) 
+                |> series 
+                |> ContractDates
 
         let brtContracts = 
             let ins = BRT
             let f = tryFutExpFile ins
             match f with 
-            | Some v -> 
-                ContractCsv.Load( v ).Rows
-                |> Seq.map( fun r -> r.Column1, r.Column2 ) 
-                |> series 
-                |> ContractDates
+            | Some v -> readContracts v
             | None ->
                 //generate last bd
                 let td = DateTime.Today |> dateAdjust' "-1ya" 

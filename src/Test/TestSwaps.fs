@@ -5,10 +5,10 @@ open FsCheck
 open FsCheck.Xunit
 open Commod
 open Deedle
-open System.Threading.Tasks
 
-[<Property( MaxTest = 5 )>]
+[<Property>]
 let ``test futPricing`` (ins:Instrument) =
+    //let ins = BRT
     let cmd = getCommod ins
     let p = getPrices ins
     let ( PriceCurve c ) = p

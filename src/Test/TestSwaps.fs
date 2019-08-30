@@ -4,7 +4,6 @@ open Xunit
 open FsCheck
 open FsCheck.Xunit
 open Commod
-open Deedle
 
 [<Property>]
 let ``test futPricing`` (ins:Instrument) =

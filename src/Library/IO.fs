@@ -6,9 +6,8 @@ module IOcsv =
     open Utils
 
     let ROOT = 
-        let dir1 = @"C:\Commodities\bin"
-        if Directory.Exists( dir1 ) then dir1 else
-            Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
+        let dlldir = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
+        if Directory.Exists( dlldir +/ "csv" ) then dlldir else @"C:\Commodities\bin"
 
     //let readCalendar f = 
     //    File.ReadAllLines( ROOT +/ "holidays" +/ f ) 

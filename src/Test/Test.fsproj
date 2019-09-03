@@ -1,9 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Library\CommodLib.fsproj" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="FsCheckTypes.fs" />
@@ -12,15 +13,12 @@
     <Compile Include="TestUtilities.fs" />
     <Compile Include="TestMarket.fs" />
     <Compile Include="TestOptions.fs" />
-    <Compile Include="TestMonteCarlo.fs" />
     <Compile Include="TestSwaps.fs" />
+    <Compile Include="TestMonteCarlo.fs" />
     <Compile Include="TestRates.fs" />
     <None Include="Script1.fsx" />
     <None Include="Script2.fsx" />
     <None Include="ManualTests.fsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Library\CommodLib.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Runtime" />

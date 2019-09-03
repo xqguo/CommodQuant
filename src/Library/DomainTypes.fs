@@ -156,7 +156,14 @@ module DomainTypes  =
     type PriceCsv = CsvProvider<"PILLAR,PRICE", Schema="string,decimal">
     type ContractCsv = CsvProvider<"Oct19,2019-08-27", HasHeaders = false, Schema="string,date">
 
-    type PriceCurve = PriceCurve of Map<string, UnitPrice> //prices with quotation
+    type PriceCurve = 
+        PriceCurve of Map<string, UnitPrice> with//prices with quotation
+        member this.Pillars = 
+            let (PriceCurve c) = this
+            c |> Map.toSeq |> Seq.map( fst ) |> set
+        member this.Item s = 
+            let (PriceCurve c) = this
+            c.Item s
 
     type RateCurves = 
         | USDOIS of PiecewiseYieldCurve

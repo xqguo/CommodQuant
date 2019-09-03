@@ -67,7 +67,7 @@ module Swaps =
 
     let getFixingContracts (ContractDates c) dates =  
         //cnts could be after roll/nrby adj, return the pillar used to lookup price, so we know the exact dependencies and also enable diffsharp can work
-        let s = c |> Map.toSeq |> Seq.map ( fun (k,v) -> (v, k))
+        let s = c |> Map.toSeq |> Seq.map ( fun (k,v) -> (v, k)) |> Seq.sortBy fst
         dates |> Seq.map( fun d -> s |> Seq.find( fun x -> fst x >= d ) |> snd )
 
     let getFixingPrices c dates (PriceCurve p) =  //cnts should be after roll/nrby adj

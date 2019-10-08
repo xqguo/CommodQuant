@@ -87,21 +87,26 @@ module Markets =
             |> PriceCurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
-    ///assuming raw data unit is in %. 
-    let getVols (df:Frame<string,string>) ins = 
-        let (ContractDates c ) = getContracts ins
-        let tag = ins.ToString() + " Vol"
-        df?(tag)
-        |> Series.filter( fun k _ -> c.ContainsKey k)
-        |> Series.mapValues( fun v -> v /100.)
-
-    let filterCurve p pillars = 
-        p |> Series.filter( fun k _ -> Set.contains k pillars)
-
-    let shiftCurve p (v:seq<float>) = 
-        ((Series.keys p), p.Values, v ) |||> Seq.map3( fun p v0 v1 -> (p, (v0 + v1 ))) |> series
-
-    let inline overrideCurve p (v:seq<float>) = 
-        ((Series.keys p), p.Values, v ) |||> Seq.map3( fun p v0 v1 -> (p, ((v0 + 1.0<_> - v0 )* v1 ))) |> series
+    // these depends on the data format
+    // commod curve pillars are either MMM-yy or TODAY or BOM, all in upper case.
+    // vols data in market quote ( percent ), e.g. 20.1
+    let getVols ins = 
+        let i = getCommod ins
+        let (ContractDates c) = i.Contracts
+        let f = tryVolsFile ins
+        match f with 
+        | Some v -> 
+            PriceCsv.Load(v).Rows
+            |> Seq.map( fun r ->  
+                let pillar = 
+                    match r.PILLAR with
+                    | "TODAY" -> "TODAY"
+                    | s when s.StartsWith "BOM" -> "BOM"
+                    | x -> pillarToDate x |> formatPillar
+                pillar, ( PercentVol r.PRICE))
+            |> Seq.filter( fun (p,_) -> c.ContainsKey p || p = "TODAY" || p = "BOM" )
+            |> Map.ofSeq
+            |> VolCurve
+        | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
     let getCurveUnit (PriceCurve p) = p |> Map.toSeq |> Seq.head |> snd |> getCaseDecimal |> fst            

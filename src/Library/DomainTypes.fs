@@ -165,6 +165,21 @@ module DomainTypes  =
             let (PriceCurve c) = this
             c.Item s
 
+    type Vol = 
+        | PercentVol of decimal //percentage vol e.g. 20
+        | AbsoluteVol of decimal // e.g. 0.2
+
+    type VolCurve = 
+        VolCurve of Map<string, Vol > with//prices with quotation
+        member this.Pillars = 
+            let (VolCurve c) = this
+            c |> Map.toSeq |> Seq.map( fst ) |> set
+        member this.Item s = 
+            let (VolCurve c) = this
+            match c.Item s with //always return absolute vol
+            | PercentVol v -> v / 100M
+            | AbsoluteVol v -> v
+
     type RateCurves = 
         | USDOIS of PiecewiseYieldCurve
 

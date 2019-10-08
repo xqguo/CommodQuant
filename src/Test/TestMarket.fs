@@ -52,3 +52,13 @@ let ``test getPrices`` (ins:Instrument) =
     let (PriceCurve p) = getPrices ins
     let s = p |> Map.filter( fun _ v -> v.Value < 0M)
     Assert.Empty s  |@ "All prices are greater than 0"
+
+[<Property( MaxTest = 100)>]
+let ``test getVols`` () =
+    let v = getVols JCC
+    let s = 
+        v.Pillars
+        |> Set.toSeq
+        |> Seq.map v.Item
+        |> Seq.filter ( fun v -> v < 0M)
+    Assert.Empty s |@ "All vols are greater than 0"

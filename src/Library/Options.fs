@@ -44,7 +44,7 @@ module Options =
         let tmatrix = getTmatrix T1 T1
         let vv = ((V1.OuterProduct  V1) .* tmatrix ).PointwiseExp() //assuming constant vol per forward, used for com, more generally could sum piece-wise 
         let x11 = ((f.OuterProduct f) .* vv ) |> sum
-        (x1, x11, 0.)
+        (x1, x11, 0. )
 
     ///cross moments
     let momentsx (f1w:Vector<float>) (v1:Vector<float>) (t1:Vector<float>) (f2w:Vector<float>) (v2:Vector<float>) (t2:Vector<float>) rho = 
@@ -53,7 +53,8 @@ module Options =
             ff.RowSums().Sum() //all cross terms are 0.
         else
             let tmatrix = getTmatrix t1 t2
-            (ff .* ((v1.OuterProduct v2).*tmatrix*rho).PointwiseExp()) |> sum 
+            //((f1w.OuterProduct f2w).*exp( (v1.OuterProduct v2) .* tmatrix * rho )) |> sum
+            ((f1w.OuterProduct f2w).*exp( (v1.OuterProduct v2) .* tmatrix  )) |> sum
 
     let asianoption (f1:Vector<float>) (fw1:Vector<float>) t1 v1 k' o p1w =
         let (y1, y11, delta) = moments (f1 .* fw1) v1 t1  
@@ -66,21 +67,15 @@ module Options =
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 
             let f1w = f1 .* fw1 //1st asset weighted
             let f2w = f2 .* fw2
-            //#1st moments
-            let x1 = f1w.Sum()
-            let x2 = f2w.Sum()
             let k' = k - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
             if k' < 0. then
                 let v0 = Vector<float>.Build.Dense(1) 
                 spreadoption f2 fw2 t2 v2 f1 fw1 t1 v1 -k' rho -callput v0 v0 v0 v0 //put equivalent
             else 
-            //#2nd moments
-                let tmatrix1 = getTmatrix t1 t1
-                let x11 = ((f1w.OuterProduct f1w).*exp( (v1.OuterProduct v1) .* tmatrix1)) |> sum
-                let tmatrix2 = getTmatrix t2 t2
-                let x22 = ((f2w.OuterProduct f2w).*exp( (v2.OuterProduct v2) .* tmatrix2)) |> sum
-                let tmatrix = getTmatrix t1 t2
-                let x12 = ((f1w.OuterProduct f2w).*exp( (v1.OuterProduct v2) .* tmatrix)) |> sum
+            //moments
+                let ( x1, x11, _) = moments f1w v1 t1
+                let ( x2, x22, _) = moments f2w v2 t2
+                let x12 = momentsx f1w v1 t1 fw2 v2 t2 rho
             //#intermediates
                 let b1 = sqrt(log(x22 / x2 / x2 ))
                 let b2 = 1. / b1 * log(x12 / (x1 * x2))

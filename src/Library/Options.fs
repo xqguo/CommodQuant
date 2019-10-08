@@ -62,6 +62,7 @@ module Options =
         let v = sqrt( log (y11/y1/y1) )
         bs y1 k v 0. 1. o 
 
+    ///spread option pricing using numerical integration
     let rec spreadoption (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k rho callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 

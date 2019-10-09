@@ -77,53 +77,46 @@ Host gitlab.com
   PreferredAuthentications publickey
 </code></pre></td></tr></table>
 </li>
-<li>
-<p><a href="https://www.ssh.com/ssh/copy-id">Copy ssh id</a></p>
+<li><p><a href="https://www.ssh.com/ssh/copy-id">Copy ssh id</a></p></li>
+</ul>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip"><code lang="bash">ssh -i ~/.ssh/mykey user@host
 </code></pre></td></tr></table>
-</li>
-</ul>
 <h2>Git</h2>
 <ul>
 <li><a href="https://about.gitlab.com/images/press/git-cheat-sheet.pdf">Gitlab git cheat sheet</a></li>
-<li>
-Use submoduels to have nested git repositories. <a href="https://www.vogella.com/tutorials/GitSubmodules/article.html">ref</a>
-
-```bash
-</li>
+<li>Use submoduels to have nested git repositories. <a href="https://www.vogella.com/tutorials/GitSubmodules/article.html">ref</a></li>
 </ul>
-<p>git clone --recursive [URL to Git repo]
-git submodule update --init</p>
-<h1>if there are nested submodules:</h1>
-<p>git submodule update --init --recursive</p>
-<h1>pull all changes in the repo including changes in the submodules</h1>
-<p>git pull --recurse-submodules</p>
-<h1>pull all changes for the submodules</h1>
-<p>git submodule update --remote</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="console">git clone --recursive [URL to Git repo]
+git submodule update --init
+git submodule update --init --recursive
+git pull --recurse-submodules
+git submodule update --remote
+</code></pre></td></tr></table>
+<ul>
+<li>Create a clean git history <a href="https://tecadmin.net/delete-commit-history-in-github/">ref</a></li>
+</ul>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
 <span class="l">4: </span>
 <span class="l">5: </span>
 <span class="l">6: </span>
-<span class="l">7: </span>
-<span class="l">8: </span>
-<span class="l">9: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="o">-</span> <span class="i">Create</span> <span class="i">a</span> <span class="i">clean</span> <span class="i">git</span> <span class="i">history</span> [<span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">ref</span>](<span class="i">https</span><span class="o">:</span><span class="c">//tecadmin.net/delete-commit-history-in-github/)</span>
-
-<span class="k">`</span><span class="k">`</span><span class="k">`</span><span class="i">console</span>
-<span class="i">git</span> <span class="i">checkout</span> <span class="o">--</span><span class="i">orphan</span> <span class="i">temp_branch</span>
-<span class="i">git</span> <span class="i">add</span> <span class="o">-</span><span class="i">A</span>
-<span class="i">git</span> <span class="i">commit</span> <span class="o">-</span><span class="i">am</span> <span class="s">&quot;the first commit&quot;</span>
-<span class="i">git</span> <span class="i">branch</span> <span class="o">-</span><span class="i">D</span> <span class="i">master</span>
-<span class="i">git</span> <span class="i">branch</span> <span class="o">-</span><span class="i">m</span> <span class="i">master</span>
-<span class="i">git</span> <span class="i">push</span> <span class="o">-</span><span class="i">f</span> <span class="i">origin</span> <span class="i">master</span>
-</code></pre></td>
-</tr>
-</table>
+<td class="snippet"><pre class="fssnip"><code lang="console">git checkout --orphan temp_branch
+git add -A
+git commit -am "the first commit"
+git branch -D master
+git branch -m master
+git push -f origin master
+</code></pre></td></tr></table>
 <ul>
 <li>Or Simply rebase the whole thing</li>
 </ul>
@@ -194,7 +187,6 @@ $NewPath = $CleanedPath -join ';'
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip"><code lang="console">xcopy /S src des
-
 </code></pre></td></tr></table>
 <h2>WSL</h2>
 <ul>
@@ -272,7 +264,6 @@ gpg -ers $id file
 </pre></td>
 <td class="snippet"><pre class="fssnip"><code lang="console">wget -r -A .jpy url
 </code></pre></td></tr></table>
-<div class="tip" id="fs1">Multiple items<br />val ref : value:&#39;T -&gt; &#39;T ref<br /><br />Full name: Microsoft.FSharp.Core.Operators.ref<br /><br />--------------------<br />type &#39;T ref = Ref&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.ref&lt;_&gt;</div>
 
 
           

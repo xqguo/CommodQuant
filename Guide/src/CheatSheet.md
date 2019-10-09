@@ -21,22 +21,19 @@ Some references for tools
 
 - [Copy ssh id](https://www.ssh.com/ssh/copy-id)
 
-  ```bash
-  ssh -i ~/.ssh/mykey user@host
-  ```
+```bash
+ssh -i ~/.ssh/mykey user@host
+```
 
 ## Git
 - [Gitlab git cheat sheet](https://about.gitlab.com/images/press/git-cheat-sheet.pdf)
 - Use submoduels to have nested git repositories. [ref](https://www.vogella.com/tutorials/GitSubmodules/article.html)
 
- ```bash
+```console
 git clone --recursive [URL to Git repo]
 git submodule update --init
-# if there are nested submodules:
 git submodule update --init --recursive
-# pull all changes in the repo including changes in the submodules
 git pull --recurse-submodules
-# pull all changes for the submodules
 git submodule update --remote
 ```
 
@@ -108,7 +105,6 @@ A useful windows cmd to copy folder
 
 ```console
 xcopy /S src des
-
 ```
 
 ## WSL

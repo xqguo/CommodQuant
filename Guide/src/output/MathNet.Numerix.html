@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <!--
+      The MathNet.Numerics parameters will be replaced with the
+      document title extracted from the <h1> element or
+      file name, if there is no <h1> heading
+    -->
+    <title>MathNet.Numerics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/style.css" />
+    <script src="styles/tips.js" type="text/javascript"></script>
+    
+    <script language="javascript" type="text/javascript">
+      function init()
+      {
+        try {
+          websocket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/websocket");
+          websocket.onmessage = function(evt) { location.reload(); };
+        } catch (e) { /* silently ignore lack of websockets */ }
+      }
+      window.addEventListener("load", init, false);
+    </script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="index.html">Index</a></li>
+          <!--<li><a href="http://fsharp.github.io/FSharp.Data/">FSharp.Data</a></li>
+          <li><a href="http://fslab.org/Deedle">Deedle</a></li>
+          <li><a href="http://fslab.org/RProvider">R Provider</a></li>
+          <li><a href="https://fslab.org/XPlot/">XPlot</a></li>
+          <li><a href="https://fslab.org/XPlot/">FSharp.Charting</a></li>
+          <li><a href="https://numerics.mathdotnet.com/">Math.NET Numerics</a></li>-->
+        </ul>
+        <h3 class="muted">Practical Guide to Commodity Strategist</h3>
+      </div>
+      <hr />
+      <div class="row" style="margin-top:30px">
+        <div class="span1"></div>
+        <div class="span10" id="main">
+          <h1>MathNet.Numerics</h1>
+<p>It is a library for numerical computation. We can use it for LinearAlgebra, Stats and Distributions etc.</p>
+<h2>Simulate correlated GBM are useful for Monte Carlo methods used option pricing and PFE etc.</h2>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#I</span> <span class="s">&quot;../.paket/load/&quot;</span>
+<span class="prep">#load</span> <span class="s">&quot;MathNet.Numerics.FSharp.fsx&quot;</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">MathNet</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">Numerics</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="i">LinearAlgebra</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 4)" onmouseover="showTip(event, 'fs1', 4)" class="i">MathNet</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs2', 5)" onmouseover="showTip(event, 'fs2', 5)" class="i">Numerics</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs4', 6)" onmouseover="showTip(event, 'fs4', 6)" class="i">Statistics</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 7)" onmouseover="showTip(event, 'fs1', 7)" class="i">MathNet</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs2', 8)" onmouseover="showTip(event, 'fs2', 8)" class="i">Numerics</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs5', 9)" onmouseover="showTip(event, 'fs5', 9)" class="i">Distributions</span>
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs6', 10)" onmouseover="showTip(event, 'fs6', 10)" class="i">corrs</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs7', 11)" onmouseover="showTip(event, 'fs7', 11)" class="f">matrix</span> [ [<span class="n">1.0</span>; <span class="n">0.8</span>; <span class="n">0.</span> ];[<span class="n">0.8</span>; <span class="n">1.0</span> ; <span class="n">0.</span>];[<span class="n">0.0</span>;<span class="n">0.</span>;<span class="n">1.0</span>]] 
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs8', 12)" onmouseover="showTip(event, 'fs8', 12)" class="i">ch</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs6', 13)" onmouseover="showTip(event, 'fs6', 13)" class="i">corrs</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs9', 14)" onmouseover="showTip(event, 'fs9', 14)" class="f">Cholesky</span>()<span class="o">.</span><span class="i">Factor</span><span class="o">.</span><span class="f">Transpose</span>() <span class="c">//transpose need if samples are in rows</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs10', 15)" onmouseover="showTip(event, 'fs10', 15)" class="i">r</span><span class="o">=</span> <span onmouseout="hideTip(event, 'fs11', 16)" onmouseover="showTip(event, 'fs11', 16)" class="i">System</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 17)" onmouseover="showTip(event, 'fs12', 17)" class="t">Random</span>(<span class="n">42</span>) <span class="c">//fix a random source for reproducable output</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs13', 18)" onmouseover="showTip(event, 'fs13', 18)" class="i">normrnd</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 19)" onmouseover="showTip(event, 'fs14', 19)" class="t">Normal</span>()
+<span onmouseout="hideTip(event, 'fs13', 20)" onmouseover="showTip(event, 'fs13', 20)" class="i">normrnd</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs15', 21)" onmouseover="showTip(event, 'fs15', 21)" class="i">RandomSource</span> <span class="o">&lt;-</span> <span onmouseout="hideTip(event, 'fs10', 22)" onmouseover="showTip(event, 'fs10', 22)" class="i">r</span>
+<span class="c">//10000 sample of 3 correlated variables</span>
+<span class="k">let</span> (<span onmouseout="hideTip(event, 'fs16', 23)" onmouseover="showTip(event, 'fs16', 23)" class="i">s</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs17', 24)" onmouseover="showTip(event, 'fs17', 24)" class="t">Matrix</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs18', 25)" onmouseover="showTip(event, 'fs18', 25)" class="t">float</span><span class="o">&gt;</span>) <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 26)" onmouseover="showTip(event, 'fs19', 26)" class="t">DenseMatrix</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs20', 27)" onmouseover="showTip(event, 'fs20', 27)" class="f">random</span> <span class="n">10000</span> <span class="n">3</span> <span onmouseout="hideTip(event, 'fs13', 28)" onmouseover="showTip(event, 'fs13', 28)" class="i">normrnd</span> 
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs21', 29)" onmouseover="showTip(event, 'fs21', 29)" class="i">samples</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs16', 30)" onmouseover="showTip(event, 'fs16', 30)" class="i">s</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs8', 31)" onmouseover="showTip(event, 'fs8', 31)" class="i">ch</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span onmouseout="hideTip(event, 'fs21', 32)" onmouseover="showTip(event, 'fs21', 32)" class="i">samples</span> 
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs17', 33)" onmouseover="showTip(event, 'fs17', 33)" class="t">Matrix</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs22', 34)" onmouseover="showTip(event, 'fs22', 34)" class="f">toColArrays</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs23', 35)" onmouseover="showTip(event, 'fs23', 35)" class="t">Correlation</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs24', 36)" onmouseover="showTip(event, 'fs24', 36)" class="f">PearsonMatrix</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 37)" onmouseover="showTip(event, 'fs25', 37)" class="f">printfn</span> <span class="s">&quot;Similated sample correlation:</span><span class="e">\n</span><span class="s"> </span><span class="pf">%A</span><span class="s">&quot;</span> 
+
+<span onmouseout="hideTip(event, 'fs25', 38)" onmouseover="showTip(event, 'fs25', 38)" class="f">printfn</span> <span class="s">&quot;input correlation matrix:</span><span class="e">\n</span><span class="s"> </span><span class="pf">%A</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'fs6', 39)" onmouseover="showTip(event, 'fs6', 39)" class="i">corrs</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td><pre><code>Similated sample correlation:
+ DenseMatrix 3x3-Double
+          1     0.794536  -0.00915398
+   0.794536            1  -0.00671729
+-0.00915398  -0.00671729            1
+
+input correlation matrix:
+ DenseMatrix 3x3-Double
+  1  0.8  0
+0.8    1  0
+  0    0  1</code></pre></td></tr></table>
+<div class="tip" id="fs1">namespace MathNet</div>
+<div class="tip" id="fs2">namespace MathNet.Numerics</div>
+<div class="tip" id="fs3">namespace MathNet.Numerics.LinearAlgebra</div>
+<div class="tip" id="fs4">namespace MathNet.Numerics.Statistics</div>
+<div class="tip" id="fs5">namespace MathNet.Numerics.Distributions</div>
+<div class="tip" id="fs6">val corrs : Matrix&lt;float&gt;<br /><br />Full name: MathNet.Numerix.corrs</div>
+<div class="tip" id="fs7">val matrix : lst:&#39;T list list -&gt; Matrix&lt;&#39;T&gt; (requires default constructor and value type and &#39;T :&gt; System.IEquatable&lt;&#39;T&gt; and &#39;T :&gt; System.IFormattable and &#39;T :&gt; System.ValueType)<br /><br />Full name: MathNet.Numerics.LinearAlgebra.MatrixExtensions.matrix</div>
+<div class="tip" id="fs8">val ch : Matrix&lt;float&gt;<br /><br />Full name: MathNet.Numerix.ch</div>
+<div class="tip" id="fs9">Matrix.Cholesky() : Factorization.Cholesky&lt;float&gt;</div>
+<div class="tip" id="fs10">val r : System.Random<br /><br />Full name: MathNet.Numerix.r</div>
+<div class="tip" id="fs11">namespace System</div>
+<div class="tip" id="fs12">Multiple items<br />type Random =<br />&#160;&#160;new : unit -&gt; Random + 1 overload<br />&#160;&#160;member Next : unit -&gt; int + 2 overloads<br />&#160;&#160;member NextBytes : buffer:byte[] -&gt; unit<br />&#160;&#160;member NextDouble : unit -&gt; float<br /><br />Full name: System.Random<br /><br />--------------------<br />System.Random() : unit<br />System.Random(Seed: int) : unit</div>
+<div class="tip" id="fs13">val normrnd : Normal<br /><br />Full name: MathNet.Numerix.normrnd</div>
+<div class="tip" id="fs14">Multiple items<br />type Normal =<br />&#160;&#160;new : unit -&gt; Normal + 3 overloads<br />&#160;&#160;member CumulativeDistribution : x:float -&gt; float<br />&#160;&#160;member Density : x:float -&gt; float<br />&#160;&#160;member DensityLn : x:float -&gt; float<br />&#160;&#160;member Entropy : float<br />&#160;&#160;member InverseCumulativeDistribution : p:float -&gt; float<br />&#160;&#160;member Maximum : float<br />&#160;&#160;member Mean : float<br />&#160;&#160;member Median : float<br />&#160;&#160;member Minimum : float<br />&#160;&#160;...<br /><br />Full name: MathNet.Numerics.Distributions.Normal<br /><br />--------------------<br />Normal() : unit<br />Normal(randomSource: System.Random) : unit<br />Normal(mean: float, stddev: float) : unit<br />Normal(mean: float, stddev: float, randomSource: System.Random) : unit</div>
+<div class="tip" id="fs15">property Normal.RandomSource: System.Random</div>
+<div class="tip" id="fs16">val s : Matrix&lt;float&gt;<br /><br />Full name: MathNet.Numerix.s</div>
+<div class="tip" id="fs17">type Matrix&lt;&#39;T (requires default constructor and value type and &#39;T :&gt; IEquatable&lt;&#39;T&gt; and &#39;T :&gt; IFormattable and &#39;T :&gt; ValueType)&gt; =<br />&#160;&#160;member Add : scalar:&#39;T -&gt; Matrix&lt;&#39;T&gt; + 3 overloads<br />&#160;&#160;member Append : right:Matrix&lt;&#39;T&gt; -&gt; Matrix&lt;&#39;T&gt; + 1 overload<br />&#160;&#160;member AsArray : unit -&gt; &#39;T[,]<br />&#160;&#160;member AsColumnArrays : unit -&gt; &#39;T[][]<br />&#160;&#160;member AsColumnMajorArray : unit -&gt; &#39;T[]<br />&#160;&#160;member AsRowArrays : unit -&gt; &#39;T[][]<br />&#160;&#160;member AsRowMajorArray : unit -&gt; &#39;T[]<br />&#160;&#160;member At : row:int * column:int -&gt; &#39;T + 1 overload<br />&#160;&#160;member Cholesky : unit -&gt; Cholesky&lt;&#39;T&gt;<br />&#160;&#160;member Clear : unit -&gt; unit<br />&#160;&#160;...<br /><br />Full name: MathNet.Numerics.LinearAlgebra.Matrix&lt;_&gt;</div>
+<div class="tip" id="fs18">Multiple items<br />val float : value:&#39;T -&gt; float (requires member op_Explicit)<br /><br />Full name: Microsoft.FSharp.Core.Operators.float<br /><br />--------------------<br />type float = System.Double<br /><br />Full name: Microsoft.FSharp.Core.float<br /><br />--------------------<br />type float&lt;&#39;Measure&gt; = float<br /><br />Full name: Microsoft.FSharp.Core.float&lt;_&gt;</div>
+<div class="tip" id="fs19">module DenseMatrix<br /><br />from MathNet.Numerics.LinearAlgebra</div>
+<div class="tip" id="fs20">val random : rows:int -&gt; cols:int -&gt; dist:IContinuousDistribution -&gt; Matrix&lt;&#39;T&gt; (requires value type and &#39;T :&gt; System.ValueType and default constructor and &#39;T :&gt; System.IEquatable&lt;&#39;T&gt; and &#39;T :&gt; System.IFormattable)<br /><br />Full name: MathNet.Numerics.LinearAlgebra.DenseMatrix.random</div>
+<div class="tip" id="fs21">val samples : Matrix&lt;float&gt;<br /><br />Full name: MathNet.Numerix.samples</div>
+<div class="tip" id="fs22">val toColArrays : m:#Matrix&lt;&#39;b&gt; -&gt; &#39;b [] [] (requires default constructor and value type and &#39;b :&gt; System.IEquatable&lt;&#39;b&gt; and &#39;b :&gt; System.IFormattable and &#39;b :&gt; System.ValueType)<br /><br />Full name: MathNet.Numerics.LinearAlgebra.Matrix.toColArrays</div>
+<div class="tip" id="fs23">type Correlation =<br />&#160;&#160;static member Pearson : dataA:IEnumerable&lt;float&gt; * dataB:IEnumerable&lt;float&gt; -&gt; float<br />&#160;&#160;static member PearsonMatrix : [&lt;ParamArray&gt;] vectors:float[][] -&gt; Matrix&lt;float&gt; + 1 overload<br />&#160;&#160;static member Spearman : dataA:IEnumerable&lt;float&gt; * dataB:IEnumerable&lt;float&gt; -&gt; float<br />&#160;&#160;static member SpearmanMatrix : [&lt;ParamArray&gt;] vectors:float[][] -&gt; Matrix&lt;float&gt; + 1 overload<br />&#160;&#160;static member WeightedPearson : dataA:IEnumerable&lt;float&gt; * dataB:IEnumerable&lt;float&gt; * weights:IEnumerable&lt;float&gt; -&gt; float<br /><br />Full name: MathNet.Numerics.Statistics.Correlation</div>
+<div class="tip" id="fs24">Correlation.PearsonMatrix(vectors: System.Collections.Generic.IEnumerable&lt;float []&gt;) : Matrix&lt;float&gt;<br />Correlation.PearsonMatrix([&lt;System.ParamArray&gt;] vectors: float [] []) : Matrix&lt;float&gt;</div>
+<div class="tip" id="fs25">val printfn : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+
+
+          
+        </div>
+        <div class="span1"></div>
+      </div>
+      <hr style="margin-top:50px;"/>
+      <footer class="footer" style="text-align:center">
+        Submit feedback or issues on <a href="https://github.com/xqguo/xqguo.github.io">github</a>.
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <!--
+      The Project outline parameters will be replaced with the
+      document title extracted from the <h1> element or
+      file name, if there is no <h1> heading
+    -->
+    <title>Project outline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="styles/style.css" />
+    <script src="styles/tips.js" type="text/javascript"></script>
+    
+    <script language="javascript" type="text/javascript">
+      function init()
+      {
+        try {
+          websocket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/websocket");
+          websocket.onmessage = function(evt) { location.reload(); };
+        } catch (e) { /* silently ignore lack of websockets */ }
+      }
+      window.addEventListener("load", init, false);
+    </script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="index.html">Index</a></li>
+          <!--<li><a href="http://fsharp.github.io/FSharp.Data/">FSharp.Data</a></li>
+          <li><a href="http://fslab.org/Deedle">Deedle</a></li>
+          <li><a href="http://fslab.org/RProvider">R Provider</a></li>
+          <li><a href="https://fslab.org/XPlot/">XPlot</a></li>
+          <li><a href="https://fslab.org/XPlot/">FSharp.Charting</a></li>
+          <li><a href="https://numerics.mathdotnet.com/">Math.NET Numerics</a></li>-->
+        </ul>
+        <h3 class="muted">Practical Guide to Commodity Strategist</h3>
+      </div>
+      <hr />
+      <div class="row" style="margin-top:30px">
+        <div class="span1"></div>
+        <div class="span10" id="main">
+          <h1>Project outline</h1>
+<p>This project use FsLab template to document various topics related to quantitative finance with a focus on commodities markets.</p>
+<h2>Programming setup</h2>
+<ul>
+<li>Learn FSharp basics.</li>
+</ul>
+<ul>
+<li>
+Get a free environment
+<ul>
+<li><a href="https://notebooks.azure.com">Azure notebook</a></li>
+<li>
+Install .net core SDK and a IDE or editor
+<ul>
+<li>VS Community for ease of use and windows environment</li>
+<li>or Install VSCode for cross platform</li>
+<li>Vim + VimSharp plugin for cross platform use minimal resources</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+Contribute to open source project
+<ul>
+<li>a commodity pricing library <a href="https://github.com/xqguo/CommodQuant">CommodQuant</a>, with its azure devops pipeline <a href="https://dev.azure.com/guoxiaoq/CommodQuant">project</a></li>
+<li>Here is the <a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops">documentation</a> to azure devops pipeline</li>
+<li>here is the <a href="https://github.com/microsoft/azure-pipelines-yaml/">azure pipeline yaml source code</a></li>
+</ul>
+</li>
+</ul>
+<h2>Understand the markets</h2>
+<ul>
+<li><p><a href="https://docs.google.com/presentation/d/e/2PACX-1vSBtq-1KcZtVHhFnpL0sCLaqKtg5m2FpPKly7bN6X6hPmg5T-Blxo3xD6PTeBFmQt1TJDlJ5x9pZXF0/pub?start=false&amp;loop=false&amp;delayms=3000">Intro to Money market</a></p></li>
+<li>CME</li>
+<li>
+<p>ICE</p>
+<ul>
+<li><p><a href="https://www.theice.com/products/219/Brent-Crude-Futures">Brent future</a> is a benchmark price for global oil.</p></li>
+<li><p><a href="https://www.theice.com/products/218/Brent-Crude-American-style-Option">Brent Futures Option</a> is the option on the brent future.</p></li>
+</ul>
+</li>
+<li>LME</li>
+<li>
+<p>Fed</p>
+<ul>
+<li><p>The Fed publish selected rates, including the fed funds rate <a href="https://www.federalreserve.gov/releases/h15/">here</a></p></li>
+</ul>
+</li>
+</ul>
+<h2>Understand the Quantitative finance</h2>
+<ul>
+<li>Notes for <a href="https://xqguo.github.io/intro.pdf">Intro to Derivative Pricing</a> and <a href="https://xqguo.github.io/intro.txt">source</a></li>
+<li>Swap price</li>
+<li>Asian option</li>
+</ul>
+
+
+          
+        </div>
+        <div class="span1"></div>
+      </div>
+      <hr style="margin-top:50px;"/>
+      <footer class="footer" style="text-align:center">
+        Submit feedback or issues on <a href="https://github.com/xqguo/xqguo.github.io">github</a>.
+      </footer>
+    </div>
+  </body>
+</html>

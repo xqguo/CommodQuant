@@ -1,0 +1,38 @@
+{
+    //this is expected to run in vscode with wsl remote 
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Html Build",
+            "type": "shell",
+            "command": "./build.sh html", 
+        },
+        {
+            "label": "Release",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}",
+			},
+            "command": "cp -r -v output/* ../xqguo.github.io", 
+        },
+        {
+            "label": "Push",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/../xqguo.github.io",
+			},
+            "command": "git pull && git add -A && git commit -asm 'update' && git push", 
+        },
+        {
+            "label": "Build",
+            "dependsOn": ["Html Build", "Release", "Push"],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }        
+    ]
+}

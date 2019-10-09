@@ -1,0 +1,43 @@
+trigger:
+- master
+
+variables:
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
+  vmImageName: 'windows-2019'
+
+stages:
+  - stage: Build
+
+    displayName: Build stage
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+        - checkout: self
+          submodules: false
+          persistCredentials: true        
+          clean: true  
+        - task: CmdLine@2
+          inputs:
+            script: |
+              git config --global user.email "guoxiaoq@gmail.com"
+              git config --global user.name "Xiaoqiang Guo"
+              git status
+              git checkout master
+            workingDirectory: '$(Build.SourcesDirectory)'    
+        - task: PaketRestore@0
+          inputs:
+            PaketPath: '.paket'
+        - script: .\build.cmd html                 
+        - task: CmdLine@2
+          inputs:
+            script: |
+              git add -A
+              git commit -m "generate site[skip ci]"
+              git push origin master
+            workingDirectory: '$(Build.SourcesDirectory)'
+
+

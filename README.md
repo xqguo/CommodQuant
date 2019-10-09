@@ -5,7 +5,7 @@ The primary objective of this project is to provide an open-source reference for
 
 I use FsLab template to document various topics related to quantitative finance with a focus on commodities markets.
 
-FsLab scripts
+Guide in FsLab scripts
 -----------------
 
 * [Index](https://xqguo.github.io/guide/)
@@ -42,6 +42,6 @@ Understand the markets
 Understand the Quantitative finance
 ------------------
 
-* Notes for [Intro to Derivative Pricing](https://xqguo.github.io/intro.pdf) and [source](https://xqguo.github.io/intro.tex)
+* Notes for [Intro to Derivative Pricing](intro.pdf) and [source](intro.tex)
 * Swap price
 * Asian option

@@ -8,7 +8,7 @@ I use FsLab template to document various topics related to quantitative finance 
 FsLab scripts
 -----------------
 
-* [Index](https://xqguo.github.io/src/output/)
+* [Index](https://xqguo.github.io/guide/)
 
 Programming setup
 ----------

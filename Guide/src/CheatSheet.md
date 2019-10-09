@@ -29,7 +29,7 @@ Some references for tools
 - [Gitlab git cheat sheet](https://about.gitlab.com/images/press/git-cheat-sheet.pdf)
 - Use submoduels to have nested git repositories. [ref](https://www.vogella.com/tutorials/GitSubmodules/article.html)
 
- ```console
+ ```bash
 git clone --recursive [URL to Git repo]
 git submodule update --init
 # if there are nested submodules:
@@ -100,6 +100,15 @@ $SplittedPath = $TargetPath -split ';'
 $CleanedPath = $SplittedPath | Sort-Object -Unique
 $NewPath = $CleanedPath -join ';'
 [Environment]::SetEnvironmentVariable('Path', $NewPath,'User')
+```
+
+## xcopy
+
+A useful windows cmd to copy folder
+
+```console
+xcopy /S src des
+
 ```
 
 ## WSL

@@ -91,7 +91,7 @@ Host gitlab.com
 <li>
 Use submoduels to have nested git repositories. <a href="https://www.vogella.com/tutorials/GitSubmodules/article.html">ref</a>
 
-```console
+```bash
 </li>
 </ul>
 <p>git clone --recursive [URL to Git repo]
@@ -188,6 +188,13 @@ $SplittedPath = $TargetPath -split ';'
 $CleanedPath = $SplittedPath | Sort-Object -Unique
 $NewPath = $CleanedPath -join ';'
 [Environment]::SetEnvironmentVariable('Path', $NewPath,'User')
+</code></pre></td></tr></table>
+<h2>xcopy</h2>
+<p>A useful windows cmd to copy folder</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="console">xcopy /S src des
+
 </code></pre></td></tr></table>
 <h2>WSL</h2>
 <ul>

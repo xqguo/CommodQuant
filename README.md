@@ -42,6 +42,6 @@ Understand the markets
 Understand the Quantitative finance
 ------------------
 
-* Notes for [Intro to Derivative Pricing](intro.pdf) and [source](intro.tex)
+* Notes for [Intro to Derivative Pricing](guide/intro.pdf) and [source](guide/intro.tex)
 * Swap price
 * Asian option

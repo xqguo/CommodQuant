@@ -5,7 +5,7 @@ The primary objective of this project is to provide an open-source reference for
 
 I use FsLab template to document various topics related to quantitative finance with a focus on commodities markets.
 
-FsLab scripts
+Guide in FsLab scripts
 -----------------
 
 * [Index](https://xqguo.github.io/guide/)
@@ -29,6 +29,8 @@ Programming setup
 Understand the markets
 -----------------
 
+* Financial Markets by [Robert J. Shiller](https://en.wikipedia.org/wiki/Robert_J._Shiller), Arthur M. Okun Professor of Economics at Yale University, Nobel Laureate in 2013. ( https://oyc.yale.edu/economics/econ-252)
+* Ray Dalio, Founder of Bridgewater Associates, shows the basic driving forces behind the economy, and explains why economic cycles occur by breaking down concepts such as credit, interest rates, leveraging and deleveraging. [Video](https://www.economicprinciples.org/)
 * [Intro to Money market](https://docs.google.com/presentation/d/e/2PACX-1vSBtq-1KcZtVHhFnpL0sCLaqKtg5m2FpPKly7bN6X6hPmg5T-Blxo3xD6PTeBFmQt1TJDlJ5x9pZXF0/pub?start=false&loop=false&delayms=3000)
 
 * CME
@@ -42,6 +44,6 @@ Understand the markets
 Understand the Quantitative finance
 ------------------
 
-* Notes for [Intro to Derivative Pricing](https://xqguo.github.io/intro.pdf) and [source](https://xqguo.github.io/intro.tex)
+* Notes for [Intro to Derivative Pricing](https://xqguo.github.io/guide/intro.pdf) and [source](https://xqguo.github.io/guide/intro.tex)
 * Swap price
 * Asian option

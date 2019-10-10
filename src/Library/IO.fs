@@ -5,9 +5,32 @@ module IOcsv =
     open System.IO
     open Utils
 
+    ///root dir to read cvs files. 
+    ///default to dll dir, then environemnt variable COMMODITIES
     let ROOT = 
         let dlldir = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
-        if Directory.Exists( dlldir +/ "csv" ) then dlldir else @"C:\Commodities\bin"
+        let dir1 = @"C:\Commodities\bin" 
+        if Directory.Exists( dlldir +/ "csv" ) then 
+            dlldir 
+        elif 
+            Directory.Exists( dir1 +/ "csv" ) then 
+            dir1 
+        else //use env variable if set 
+            let root = Environment.GetEnvironmentVariable("COMMODITIES")
+            let dir = 
+                match root with
+                | null ->  //use one drive for default env variables
+                    let dir = Environment.GetEnvironmentVariable("USERPROFILE") 
+                                +/  "OneDrive - Pavilion Energy" 
+                                +/ "Commodities" 
+                                +/ "bin"
+                    Environment.SetEnvironmentVariable("COMMODITIES", dir, EnvironmentVariableTarget.User)
+                    dir
+                | x -> x
+            if Directory.Exists( dir +/ "csv" ) then 
+                dir 
+            else 
+                failwith <| sprintf "Invalid root directory for CommodLib: %s" dir
 
     //let readCalendar f = 
     //    File.ReadAllLines( ROOT +/ "holidays" +/ f ) 

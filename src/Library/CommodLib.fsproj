@@ -16,6 +16,7 @@
     <Compile Include="MonteCarlo.fs" />
     <None Include="PlattsHolidays.fsx" />
     <None Include="icecontracts.fsx" />
+    <None Include="setup.fsx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="holidays\**" CopyToOutputDirectory="PreserveNewest" />

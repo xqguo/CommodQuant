@@ -21,7 +21,8 @@ module IOcsv =
                 match root with
                 | null ->  //use one drive for default env variables
                     let dir = Environment.GetEnvironmentVariable("USERPROFILE") 
-                                +/  "OneDrive - Pavilion Energy" 
+                                + @"\OneDrive - Pavilion Energy\Commodities\bin"
+                                +/ "OneDrive - Pavilion Energy" 
                                 +/ "Commodities" 
                                 +/ "bin"
                     Environment.SetEnvironmentVariable("COMMODITIES", dir, EnvironmentVariableTarget.User)
@@ -31,6 +32,14 @@ module IOcsv =
                 dir 
             else 
                 failwith <| sprintf "Invalid root directory for CommodLib: %s" dir
+
+    let addPath () =
+        let entries = 
+            Environment.GetEnvironmentVariable("Path").Split(';')
+            |> Array.filter( fun x -> x <> ROOT)
+            |> Array.append( [|ROOT|] )
+        let path = String.Join(";", entries)
+        Environment.SetEnvironmentVariable("Path", path, EnvironmentVariableTarget.User)
 
     //let readCalendar f = 
     //    File.ReadAllLines( ROOT +/ "holidays" +/ f ) 

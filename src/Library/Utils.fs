@@ -324,7 +324,6 @@ module Utils =
         if File.Exists(f) then 
             Some f
         else
-            printfn "Cannot find %s" f
             None
 
     let formatPillar (x:DateTime) = x.ToString("MMM-yy").ToUpper() //e.g. DEC-20

@@ -17,36 +17,10 @@ module IOcsv =
             dir1 
         else //use env variable if set 
             let root = Environment.GetEnvironmentVariable("COMMODITIES")
-            let dir = 
-                match root with
-                | null ->  //use one drive for default env variables
-                    dir
-                | x -> x
-            if Directory.Exists( dir +/ "csv" ) then 
-                dir 
+            if Directory.Exists( root +/ "csv" ) then 
+                root 
             else 
-                failwith <| sprintf "Invalid root directory for CommodLib: %s" dir
-
-    //addPath ROOT
-
-    //let readCalendar f = 
-    //    File.ReadAllLines( ROOT +/ "holidays" +/ f ) 
-    //    |> Array.choose( parseDateExact "yyyyMMMdd" )
-    //    |> set
-
-    //let private pltsgpCalendar = readCalendar "pltsgp.txt"
-    //let private pltldnCalendar = readCalendar "pltldn.txt"
-    //let private iceCalendar = readCalendar "ice.txt"
-    //let private nymCalendar = readCalendar "nym.txt"
-
-    //let calendars = 
-    //    [ 
-    //        (ICE, iceCalendar)
-    //        (CME, nymCalendar )
-    //        (PLTSGP, pltsgpCalendar)
-    //        (PLTLDN, pltldnCalendar)
-    //    ] 
-    //    |> Map.ofList
+                failwith <| sprintf "Invalid root directory for CommodLib: %s" root
 
     let getCalendarbyCode (code:HolidayCode) = 
         let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile

@@ -10,17 +10,17 @@ module IOcsv =
     let ROOT = 
         let dlldir = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
         let dir1 = @"C:\Commodities\bin" 
-        if Directory.Exists( dlldir +/ "csv" ) then 
+         //use env variable if set 
+        let root = Environment.GetEnvironmentVariable("COMMODITIES")
+        if Directory.Exists( root +/ "csv" ) then 
+            root 
+        elif Directory.Exists( dlldir +/ "csv" ) then 
             dlldir 
         elif 
             Directory.Exists( dir1 +/ "csv" ) then 
             dir1 
         else //use env variable if set 
-            let root = Environment.GetEnvironmentVariable("COMMODITIES")
-            if Directory.Exists( root +/ "csv" ) then 
-                root 
-            else 
-                failwith <| sprintf "Invalid root directory for CommodLib: %s" root
+            failwith "Cannot find root directory for CommodLib"
 
     let getCalendarbyCode (code:HolidayCode) = 
         let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile

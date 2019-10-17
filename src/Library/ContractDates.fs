@@ -85,10 +85,11 @@ module ContractDates =
 
         let genericContracts = 
             ///start from Jan last year, end in 7r dec.
-            let td = DateTime.Today |> dateAdjust' "a-1y" 
+            let td = DateTime.Today |> dateAdjust' "A-1y" 
+            let d2 = DateTime.Today |> dateAdjust' "Z+9y" 
             generateMonth td true 
+            |> Seq.takeWhile (fun x -> x <= d2)
             |> Seq.map ( fun x -> (formatPillar x, x ))
-            |> Seq.take 84
             |> Map.ofSeq
             |> ContractDates
 

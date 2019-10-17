@@ -11,7 +11,7 @@ module IOcsv =
         let dlldir = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
         let dir1 = @"C:\Commodities\bin" 
          //use env variable if set 
-        let root = Environment.GetEnvironmentVariable("COMMODITIES")
+        let root = Environment.GetEnvironmentVariable("COMMODITIES") +/ "bin"
         if Directory.Exists( root +/ "csv" ) then 
             root 
         elif Directory.Exists( dlldir +/ "csv" ) then 

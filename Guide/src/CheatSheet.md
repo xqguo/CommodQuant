@@ -61,21 +61,21 @@ git push --force
 git diff master origin/master
 ``` 
 
-## [Paket](https://fsprojects.github.io/Paket/)
-
-- Use paket to isntall/restore/update packages. [Get started](https://fsprojects.github.io/Paket/getting-started.html).
-
-- to start from scratch if packages cannot be downloaded or installed properly, you can [clear cache](https://fsprojects.github.io/Paket/paket-clear-cache.html)
-
-```console
-.paket\paket.exe clear-cache
-```
-
-## [Dotnet CLI](https://docs.microsoft.com/en-us/dotnet/core/tools/?tabs=netcore2x)
+## [Dotnet CLI](https://docs.microsoft.com/en-us/dotnet/core/tools/?tabs=netcore2x) and [Paket](https://fsprojects.github.io/Paket/)
 
 - sometime vs run into build issues, and the cli provides a more consistent experience. To restore, build, test, publish etc. Paket is integrated smoothly, but you might need to run paket install before building the 1st time.
 
+- use dotnet tool install paket globally
+
 ```console
+dotnet tool install paket --global
+```
+- Use paket to isntall/restore/update packages. [Get started](https://fsprojects.github.io/Paket/getting-started.html). To start from scratch if packages cannot be downloaded or installed properly, you can [clear cache](https://fsprojects.github.io/Paket/paket-clear-cache.html)
+
+```console
+paket install
+paket update
+paket clear-cache
 dotnet restore
 dotnet build -c Release
 dotnet vstest Test.dll #run test on a prebuilt test dll
@@ -84,6 +84,7 @@ dotnet publish
 ```
 
 - for a even more controlled build process, use [Fake](https://fake.build/)
+
 
 ## PowerShell
 

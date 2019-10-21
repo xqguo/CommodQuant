@@ -185,10 +185,11 @@ module Utils =
         | true, v    -> Some v
         | false, _   -> None
 
-    let parseDateExact format dStr= 
+    let datestr (str:string) = (str.ToUpper()) |> String.filter Char.IsLetterOrDigit //ignores separators like - /
+
+    let parseDateExact format str= 
         try 
-            let str = dStr |> String.filter Char.IsLetterOrDigit //ignores separators like - /
-            Some( System.DateTime.ParseExact(str, format, culture) )
+            Some( System.DateTime.ParseExact( (datestr str), format, culture) )
         with
         | _ -> None
 
@@ -283,6 +284,7 @@ module Utils =
             max ms d1, min me d2)
             
     let getPeriod (str:string) = //get period like Jan19, 1Q19, Cal19 etc
+        let str = datestr str
         // create an active pattern to match time tenor
         let (|Quarter|_|) input =
             let m = Regex.Match(input,"^([1-9])Q(\d\d)$") //2Q19

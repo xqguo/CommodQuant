@@ -80,7 +80,7 @@ dotnet restore
 dotnet build -c Release
 dotnet vstest Test.dll #run test on a prebuilt test dll
 dotnet test --filter DisplayName~getPrice #run XunitTest with a filter
-dotnet publish
+dotnet publish -c Release -o outputdir
 ```
 
 - for a even more controlled build process, use [Fake](https://fake.build/)

@@ -7,11 +7,16 @@ module IOcsv =
 
     ///root dir to read cvs files. 
     ///default to parent of dll bin dir
+    ///fall back to ddl dir for debug/test
     let mutable ROOT = 
-        let root = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location) +/ ".."
-        if Directory.Exists (root +/ "csv" ) && Directory.Exists ( root +/ "holidays" ) then 
+        let dlldir = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
+        let root = dlldir +/ ".."
+        let checkdir dir = Directory.Exists (dir +/ "csv" ) && Directory.Exists ( dir +/ "holidays" )
+        if checkdir root then 
             root 
-        else 
+        elif checkdir dlldir then 
+            dlldir
+        else
             failwithf "Cannot find csv and/or holidays subdirectory under %s" root
 
     let getCalendarbyCode (code:HolidayCode) = 

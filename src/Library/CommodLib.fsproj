@@ -19,8 +19,8 @@
     <None Include="setup.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="holidays\**" CopyToOutputDirectory="Never" />
-    <None Include="csv\**" CopyToOutputDirectory="Never" />
+    <None Include="holidays\**" CopyToOutputDirectory="Always"/>
+    <None Include="csv\**" CopyToOutputDirectory="Always"/>
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

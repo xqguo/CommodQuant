@@ -18,8 +18,9 @@ module IOcsv =
         let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile
         match f with 
         | Some path -> 
-            File.ReadAllLines path
-            |> Array.choose( parseDateExact "yyyyMMMdd" )
+            path
+            |> readLines
+            |> Seq.choose( parseDateExact "yyyyMMMdd" )
             |> set
         | None -> Set.empty
 

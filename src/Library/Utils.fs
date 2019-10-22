@@ -241,6 +241,14 @@ module Utils =
           | _  -> invalidOp "Unknown tenor string"
       | _ -> System.DateTime.Today  
       
+    ///readline without locking file
+    let readLines (path:string) = seq {
+        use fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)            
+        use sr = new StreamReader(fs)
+        while not sr.EndOfStream do
+            yield sr.ReadLine ()
+        }
+
     let updatefile (file:FileInfo) (destFile:FileInfo)  = 
           let destname =  destFile.FullName
           let backup = destname+"~"

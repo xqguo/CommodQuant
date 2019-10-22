@@ -2,7 +2,6 @@ namespace Commod
 [<AutoOpen>]
 module Markets = 
     open IOcsv
-    open Deedle
     let conversionFactors = 
         [ 
             //ins, from, to 
@@ -73,7 +72,8 @@ module Markets =
         let f = tryPriceFile ins
         match f with 
         | Some v -> 
-            PriceCsv.Load(v).Rows
+            let data = PriceCsv.AsyncLoad v |> Async.RunSynchronously
+            data.Rows
             |> Seq.map( fun r ->  
                 let pillar = 
                     match r.PILLAR with
@@ -96,7 +96,8 @@ module Markets =
         let f = tryVolsFile ins
         match f with 
         | Some v -> 
-            PriceCsv.Load(v).Rows
+            let data = PriceCsv.AsyncLoad v |> Async.RunSynchronously
+            data.Rows
             |> Seq.map( fun r ->  
                 let pillar = 
                     match r.PILLAR with

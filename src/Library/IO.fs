@@ -6,21 +6,13 @@ module IOcsv =
     open Utils
 
     ///root dir to read cvs files. 
-    ///default to dll dir, then environemnt variable COMMODITIES
-    let ROOT = 
+    ///default to dll dir
+    let mutable ROOT = 
         let dlldir = Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location)
-        let dir1 = @"C:\Commodities\bin" 
-         //use env variable if set 
-        let root = Environment.GetEnvironmentVariable("COMMODITIES") +/ "bin"
-        if Directory.Exists( root +/ "csv" ) then 
-            root 
-        elif Directory.Exists( dlldir +/ "csv" ) then 
+        if Directory.Exists (dlldir +/ "csv" ) && Directory.Exists (dlldir +/ "holidays" ) then 
             dlldir 
-        elif 
-            Directory.Exists( dir1 +/ "csv" ) then 
-            dir1 
-        else //use env variable if set 
-            failwith "Cannot find root directory for CommodLib"
+        else 
+            failwithf "Cannot find csv and/or holidays subdirectory under %s" dlldir
 
     let getCalendarbyCode (code:HolidayCode) = 
         let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile

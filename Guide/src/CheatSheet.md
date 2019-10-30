@@ -117,6 +117,13 @@ certmgr -ssl https://nuget.org
 certmgr -ssl https://github.com
 ```
 
+- mount network drive
+
+```
+sudo mkdir /mnt/f
+sudo mount -t drvfs F: /mnt/f
+```
+
 ## Unix commands
 
 - [find](http://man7.org/linux/man-pages/man1/find.1.html) files with certain pattern and run cmd on them, e.g. change dos to unix txt format for all .sh .vim and .py files.

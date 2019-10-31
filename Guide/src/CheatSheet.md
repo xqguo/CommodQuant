@@ -2,6 +2,10 @@
 
 Some references for tools
 
+## [Scoop](https://github.com/lukesampson/scoop)
+
+This is quite cool to get unix cmds into windows 10 without a lof of unix knowledge. Using powershell felt as if a unix shell. Highly recommended for windows user.  
+
 ## SSH
 
 - To use ssh on 443 port, you can add the following in ~/.ssh/config

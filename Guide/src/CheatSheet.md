@@ -100,6 +100,12 @@ $NewPath = $CleanedPath -join ';'
 [Environment]::SetEnvironmentVariable('Path', $NewPath,'User')
 ```
 
+-- delete directory by force
+
+```
+rm -r -fo somedir
+```
+
 ## xcopy
 
 A useful windows cmd to copy folder

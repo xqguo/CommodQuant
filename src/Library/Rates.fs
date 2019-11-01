@@ -1,9 +1,7 @@
 ﻿namespace Commod
 module Rates = 
     open System
-    open Utils
     open QLNet
-    open IOcsv
 
     ///create USD OIS curve csv file with ref date
     ///Fed funds in ACT/360: https://www.federalreserve.gov/releases/h15/

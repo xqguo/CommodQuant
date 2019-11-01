@@ -1,5 +1,5 @@
 GENERATE-LOAD-SCRIPTS: ON
-RESTRICTION: == net472
+RESTRICTION: == net48
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Argu (5.5)
@@ -46,11 +46,11 @@ NUGET
     MathNet.Numerics.FSharp (3.20.2)
       FSharp.Core (>= 3.1.2.5)
       MathNet.Numerics (3.20.2)
-    Microsoft.CodeCoverage (16.2)
-    Microsoft.NET.Test.Sdk (16.2)
-      Microsoft.CodeCoverage (>= 16.2)
+    Microsoft.CodeCoverage (16.3)
+    Microsoft.NET.Test.Sdk (16.3)
+      Microsoft.CodeCoverage (>= 16.3)
     Microsoft.NETCore.Platforms (2.2.2)
-    Nager.Date (1.25.3)
+    Nager.Date (1.25.7)
     NetOffice.Core (1.7.4.4)
     NetOffice.Excel (1.7.4.4)
       NetOffice.Core (>= 1.7.4.4)

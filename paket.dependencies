@@ -4,17 +4,13 @@ framework: auto-detect
 source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core
-
-# DataFrames
-nuget Deedle 
-# FSharp.Data
 nuget FSharp.Data 
+nuget FSharpx.Extras
 
-# MathNet.Numerics
+nuget Deedle 
 nuget MathNet.Numerics 
 nuget MathNet.Numerics.FSharp
 
-# XPlot
 nuget XPlot.Plotly 
 nuget XPlot.GoogleCharts 
 nuget XPlot.GoogleCharts.Deedle 

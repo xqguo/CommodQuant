@@ -3,10 +3,6 @@ namespace Commod
 [<AutoOpen>]
 module Swaps = 
     open System
-    open Utils
-    open Markets
-    open Deedle
-    open IOcsv
    
     //TODO: fix general case
     let genericFuturePricer (f:FutureContract) (PriceCurve p) =

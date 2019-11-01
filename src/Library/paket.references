@@ -1,5 +1,6 @@
 ﻿FSharp.Core
 FSharp.Data
+FSharpx.Extras
 MathNet.Numerics
 MathNet.Numerics.FSharp
 Deedle

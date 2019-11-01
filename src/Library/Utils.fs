@@ -1,16 +1,137 @@
 ﻿namespace Commod
-
+open System.Globalization
+open System
+open System.IO
+open System.Threading.Tasks
 
 [<AutoOpen>]
 module Utils = 
-    open System
-    open System.IO
-    open System.Text.RegularExpressions
-    open System.Globalization
     open FSharp.Data
+    open FSharpx.Control
 
     let culture = CultureInfo("en-GB")
     culture.Calendar.TwoDigitYearMax <- 2080
+    let Error = Result.Error //avoid name clash with FSharpx
+    let (+/) path1 path2 = Path.Combine(path1, path2)
+
+    let tryParseWith tryParseFunc x = 
+      match x with
+      | "" | "NaN" | "N/A" -> None
+      | _ ->  
+        match tryParseFunc x with
+        | true, v    -> Some v
+        | false, _   -> None
+    let parseDate   = tryParseWith System.DateTime.TryParse
+    let parseInt    = tryParseWith System.Int32.TryParse
+    let parseSingle = tryParseWith System.Single.TryParse
+    let parseDouble10 = tryParseWith System.Double.TryParse >> Option.map (sprintf "%.10g") 
+
+    let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", CultureInfo.InvariantCulture)
+    let datestr (str:string) = (str.ToUpper()) |> String.filter Char.IsLetterOrDigit //ignores separators like - /
+
+    let parseDateExact format str= 
+        try 
+            Some( System.DateTime.ParseExact( (datestr str), format, culture) )
+        with
+        | _ -> None
+    // active patterns for try-parsing strings
+    let (|YYYYMMDD|_|)   = parseDateExact "yyyyMMdd"
+    let (|MMMYY|_|)   = parseDateExact "MMMyy"
+    let (|DDMMMYY|_|)   = parseDateExact "ddMMMyy"
+    let (|MMDDYY|_|)   = parseDateExact "MMddyy"
+    let (|Date|_|)   = parseDate
+    let (|Int|_|)    = parseInt
+    let (|Single|_|) = parseSingle
+    let (|Double10|_|) = parseDouble10
+    let parseDouble = tryParseWith System.Double.TryParse
+    let (|Double|_|) = parseDouble
+
+    type Async with
+        static member AwaitPlainTask (task : Task) =
+            task.ContinueWith(ignore) |> Async.AwaitTask
+
+    [<Literal>]
+    let DEFAULT_BUFFER_SIZE = 4096
+
+    let tryFile f = 
+        if File.Exists(f) then 
+            Some f
+        else
+            None
+
+    let copyToAsync source dest =
+      async {
+          use sourceFile = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, DEFAULT_BUFFER_SIZE, true);
+          use destFile = new FileStream(dest, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, DEFAULT_BUFFER_SIZE, true);
+          do! sourceFile.CopyToAsync(destFile) |> Async.AwaitPlainTask
+      }        
+
+    let writeTextAsync f str = 
+        File.AsyncWriteAllText(f,str)
+
+    let writeLinesAsync (f:string) l = 
+        File.AsyncWriteAllLines(f, l)
+        
+    ///readline without locking file
+    let readLines (path:string) = seq {
+        use fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)            
+        use sr = new StreamReader(fs)
+        while not sr.EndOfStream do
+            yield sr.ReadLine ()
+        }
+
+    let writeFile f lines = 
+        File.AsyncWriteAllLines(f, lines)
+
+    let updatefile (file:FileInfo) (destFile:FileInfo)  = 
+          let destname =  destFile.FullName
+          let backup = destname+"~"
+          if destFile.Exists then
+            if file.LastWriteTime > destFile.LastWriteTime then 
+              if File.Exists( backup ) then File.Delete(backup)
+              File.Move( destname, backup ) 
+              file.CopyTo( destFile.FullName) |> ignore
+              printfn "%s updated" destFile.FullName
+          else
+            file.CopyTo( destFile.FullName) |> ignore
+            printfn "%s updated" destFile.FullName
+
+    let updatedir sourcePath destinationPath  = 
+      try 
+      //Create all of the directories
+        for dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories) do
+            Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath)) |> ignore
+
+        //Copy all the files & Replaces any files with the same name, except some files
+        Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories)
+        |> Seq.filter( fun x -> not <| x.Contains(@"\csv\")  && not <| x.Contains("currentuser.txt"))
+        |> Seq.iter( fun newPath ->
+            let file = FileInfo(newPath)
+            let destFile = FileInfo( newPath.Replace(sourcePath, destinationPath) )
+            updatefile file destFile )
+      with 
+      | e -> printf "Failed to update directory from %s to %s %O" sourcePath destinationPath e
+      
+    ///read price from csv file into seq of string,float tuples
+    let getPrice (f:string) = 
+      use fs = new StreamReader( f )
+      let tsk = fs.ReadToEndAsync()
+      let price = CsvFile.Parse(tsk.Result)
+      match price.NumberOfColumns with
+        | 2 -> seq{
+                for row in price.Rows do
+                  //validate price is a number, skip empty pillar
+                  match row.[0],row.[1] with
+                  | "",_ -> ignore()
+                  | p, Double v -> yield (p.ToUpper(), v)  
+                  | p, v ->  failwithf "Wrong data format in file %s, pillar %s, value %s!" f p v
+               } 
+        | _ -> failwithf "Input data should have exactly 2 columns: %s" f 
+               Seq.empty 
+
+[<AutoOpen>]
+module DateUtils = 
+    open System.Text.RegularExpressions
 
     let generateDay (d:DateTime) (dir:bool) =
         let nums =  Seq.initInfinite float // 0.0 , 1.0, ...
@@ -22,8 +143,8 @@ module Utils =
         let nums =  Seq.initInfinite int // 0.0 , 1.0, ...
         match dir with
         | true -> Seq.map d.AddMonths nums 
-        | false -> Seq.map( fun i -> d.AddMonths -i ) nums 
-
+        | false -> Seq.map ( (-) 0 >> d.AddMonths ) nums // equiv to: Seq.map( fun i -> d.AddMonths -i ) nums  
+    
     let dateRange startDate endDate =
          let fwd = startDate <= endDate   
          generateDay startDate fwd 
@@ -172,56 +293,17 @@ module Utils =
           | x -> failwith ("unknown str:" + x) ) d0
 
     let dateAdjust' = dateAdjust Set.empty //shortcut for no holiday checking, still check for weekends
-
-    let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", CultureInfo.InvariantCulture)
-
-    let (+/) path1 path2 = Path.Combine(path1, path2)
-
-    let tryParseWith tryParseFunc x = 
-      match x with
-      | "" | "NaN" | "N/A" -> None
-      | _ ->  
-        match tryParseFunc x with
-        | true, v    -> Some v
-        | false, _   -> None
-
-    let datestr (str:string) = (str.ToUpper()) |> String.filter Char.IsLetterOrDigit //ignores separators like - /
-
-    let parseDateExact format str= 
-        try 
-            Some( System.DateTime.ParseExact( (datestr str), format, culture) )
-        with
-        | _ -> None
-
-
-    let parseDate   = tryParseWith System.DateTime.TryParse
-    let parseInt    = tryParseWith System.Int32.TryParse
-    let parseSingle = tryParseWith System.Single.TryParse
-    let parseDouble = tryParseWith System.Double.TryParse
-    let parseDouble10 = tryParseWith System.Double.TryParse >> Option.map (sprintf "%.10g") 
-
-    // active patterns for try-parsing strings
-    let (|YYYYMMDD|_|)   = parseDateExact "yyyyMMdd"
-    let (|MMMYY|_|)   = parseDateExact "MMMyy"
-    let (|DDMMMYY|_|)   = parseDateExact "ddMMMyy"
-    let (|MMDDYY|_|)   = parseDateExact "MMddyy"
-    let (|Date|_|)   = parseDate
-    let (|Int|_|)    = parseInt
-    let (|Single|_|) = parseSingle
-    let (|Double|_|) = parseDouble
-    let (|Double10|_|) = parseDouble10
-
     // create an active pattern to match time tenor
     let (|Tenor|_|) input =
-       let tenors = ["O/N"; "T/N"; "S/N" ; "SPOT" ] |> set
+       let tenors = ["ON"; "TN"; "SN" ; "SPOT"; "TODAY"; "BOMCD1"] |> set
        if tenors.Contains input then Some input else None
 
     let (|Period|_|) input =
-       let m = Regex.Match(input,"^(\d+)(W|M|Y))$") 
-       if (m.Success) then Some (int(m.Groups.[0].Value), m.Groups.[1].Value) else None  
+       let m = Regex.Match(input,"^(\d+)(D|W|M|Y)$") 
+       if (m.Success) then Some (int(m.Groups.[1].Value), m.Groups.[2].Value) else None  
 
     let pillarToDate (dStr:string) = 
-      match dStr.ToUpper() with
+      match datestr dStr with
       | YYYYMMDD d -> d
       | MMMYY d -> d
       | DDMMMYY d -> d
@@ -229,55 +311,21 @@ module Utils =
       | Date d -> d
       | Period ( n, p ) -> 
           match p with
+          |"D" -> DateTime.Today.AddDays( float n )
           |"W" -> DateTime.Today.AddDays( float n * 7.0 )
           |"M" -> DateTime.Today.AddMonths(n)
           |"Y" -> DateTime.Today.AddYears(n)
-          | _  -> invalidOp "Unknown period type, expect W/M/Y"
+          | _  -> invalidOp "Unknown period type, expect D/W/M/Y"
       | Tenor d -> 
           match d with 
-          |"O/N" -> DateTime.Today.AddDays( 1.0 )
-          |"T/N"|"SPOT" -> DateTime.Today.AddDays( 2.0 )
-          |"S/N" -> DateTime.Today.AddDays( 3.0 )
+          |"ON"| "BOMCD1" -> DateTime.Today.AddDays( 1.0 )
+          |"TN"|"SPOT" -> DateTime.Today.AddDays( 2.0 )
+          |"SN" -> DateTime.Today.AddDays( 3.0 )
+          |"TODAY" -> DateTime.Today
           | _  -> invalidOp "Unknown tenor string"
-      | _ -> System.DateTime.Today  
+    //   | _ -> failwithf "Unknown pillar %s" dStr
+      | _ -> DateTime.Today
       
-    ///readline without locking file
-    let readLines (path:string) = seq {
-        use fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)            
-        use sr = new StreamReader(fs)
-        while not sr.EndOfStream do
-            yield sr.ReadLine ()
-        }
-
-    let updatefile (file:FileInfo) (destFile:FileInfo)  = 
-          let destname =  destFile.FullName
-          let backup = destname+"~"
-          if destFile.Exists then
-            if file.LastWriteTime > destFile.LastWriteTime then 
-              if File.Exists( backup ) then File.Delete(backup)
-              File.Move( destname, backup ) 
-              file.CopyTo( destFile.FullName) |> ignore
-              printfn "%s updated" destFile.FullName
-          else
-            file.CopyTo( destFile.FullName) |> ignore
-            printfn "%s updated" destFile.FullName
-
-    let updatedir sourcePath destinationPath  = 
-      try 
-      //Create all of the directories
-        for dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories) do
-            Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath)) |> ignore
-
-        //Copy all the files & Replaces any files with the same name, except some files
-        Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories)
-        |> Seq.filter( fun x -> not <| x.Contains(@"\csv\")  && not <| x.Contains("currentuser.txt"))
-        |> Seq.iter( fun newPath ->
-            let file = FileInfo(newPath)
-            let destFile = FileInfo( newPath.Replace(sourcePath, destinationPath) )
-            updatefile file destFile )
-      with 
-      | e -> printf "Failed to update directory from %s to %s %O" sourcePath destinationPath e
-
     /// <summary>
     /// allow broken period both end, d1 to month end, then each whole month, and finally month start to d2
     /// </summary>
@@ -312,29 +360,6 @@ module Utils =
             let s = DateTime( y + 2000, 1 , 1) 
             s, s |> dateAdjust' "Z"
         | _ -> failwithf "Invalid period %s" str
-
-    ///read price from csv file into seq of string,float tuples
-    let getPrice (f:String) = 
-      use fs = new StreamReader( f )
-      let tsk = fs.ReadToEndAsync()
-      let price = CsvFile.Parse(tsk.Result)
-      match price.NumberOfColumns with
-        | 2 -> seq{
-                for row in price.Rows do
-                  //validate price is a number, skip empty pillar
-                  match row.[0],row.[1] with
-                  | "",_ -> ignore()
-                  | p, Double v -> yield (p.ToUpper(), v)  
-                  | p, v ->  failwithf "Wrong data format in file %s, pillar %s, value %s!" f p v
-               } 
-        | _ -> failwithf "Input data should have exactly 2 columns: %s" f 
-               Seq.empty 
-
-    let tryFile f = 
-        if File.Exists(f) then 
-            Some f
-        else
-            None
 
     let formatPillar (x:DateTime) = x.ToString("MMM-yy").ToUpper() //e.g. DEC-20
 

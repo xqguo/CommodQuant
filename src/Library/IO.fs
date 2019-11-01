@@ -3,8 +3,6 @@
 module IOcsv =
     open System
     open System.IO
-    open Utils
-
     ///root dir to read cvs files. 
     ///default to parent of dll bin dir
     let mutable ROOT = 

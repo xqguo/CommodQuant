@@ -3,9 +3,6 @@
 //define curve pillars following either published source or date rules.
 module ContractDates = 
     open System
-    open Utils
-    open Deedle
-    open IOcsv
 
     module Conventions = 
         //let brtDates = Frame.ReadCsv<string>(ROOT +/ "holidays" +/ "BrentPillars.csv", indexCol = "Month", inferTypes = false)

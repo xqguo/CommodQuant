@@ -24,6 +24,7 @@ module Utils =
     let parseDate   = tryParseWith System.DateTime.TryParse
     let parseInt    = tryParseWith System.Int32.TryParse
     let parseSingle = tryParseWith System.Single.TryParse
+    let parseDouble = tryParseWith System.Double.TryParse
     let parseDouble10 = tryParseWith System.Double.TryParse >> Option.map (sprintf "%.10g") 
 
     let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", CultureInfo.InvariantCulture)
@@ -43,7 +44,6 @@ module Utils =
     let (|Int|_|)    = parseInt
     let (|Single|_|) = parseSingle
     let (|Double10|_|) = parseDouble10
-    let parseDouble = tryParseWith System.Double.TryParse
     let (|Double|_|) = parseDouble
 
     type Async with
@@ -302,6 +302,10 @@ module DateUtils =
        let m = Regex.Match(input,"^(\d+)(D|W|M|Y)$") 
        if (m.Success) then Some (int(m.Groups.[1].Value), m.Groups.[2].Value) else None  
 
+    let (|FraPeriod|_|) input = //9m-12m etc
+       let m = Regex.Match(input,"^(\d+)(D|W|M|Y)(\d+)(D|W|M|Y)$") 
+       if (m.Success) then Some (int(m.Groups.[3].Value), m.Groups.[4].Value) else None  
+
     let pillarToDate (dStr:string) = 
       match datestr dStr with
       | YYYYMMDD d -> d
@@ -309,7 +313,7 @@ module DateUtils =
       | DDMMMYY d -> d
       | MMDDYY d -> d
       | Date d -> d
-      | Period ( n, p ) -> 
+      | Period ( n, p ) | FraPeriod( n, p) -> 
           match p with
           |"D" -> DateTime.Today.AddDays( float n )
           |"W" -> DateTime.Today.AddDays( float n * 7.0 )
@@ -323,8 +327,7 @@ module DateUtils =
           |"SN" -> DateTime.Today.AddDays( 3.0 )
           |"TODAY" -> DateTime.Today
           | _  -> invalidOp "Unknown tenor string"
-    //   | _ -> failwithf "Unknown pillar %s" dStr
-      | _ -> DateTime.Today
+      | _ -> failwithf "Unknown pillar %s" dStr
       
     /// <summary>
     /// allow broken period both end, d1 to month end, then each whole month, and finally month start to d2

@@ -24,6 +24,7 @@ stages:
         pool:
           vmImage: $(vmImageName)
         steps:
+        - script: dotnet tool install --global paket
         - script: dotnet publish --configuration $(buildConfiguration) 
         - publish: src/Test/bin/$(buildConfiguration)/$(testframework)/publish
           artifact: Test

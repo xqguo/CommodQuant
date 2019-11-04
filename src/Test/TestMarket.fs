@@ -9,10 +9,7 @@ open Xunit
 open FsCheck
 open FsCheck.Xunit
 open Commod
-open Commod.Markets
-open Commod.IOcsv
 open Commod.ContractDates.Conventions
-open Deedle
 
 [<Property>]
 let ``test getCalendar`` (d: Instrument) =

@@ -104,10 +104,16 @@ $NewPath = $CleanedPath -join ';'
 [Environment]::SetEnvironmentVariable('Path', $NewPath,'User')
 ```
 
--- delete directory by force
+- delete directory by force
 
 ```
 rm -r -fo somedir
+```
+
+- copy directory recurvsively by force
+
+```
+cp -Recurse -Force src dst
 ```
 
 ## xcopy

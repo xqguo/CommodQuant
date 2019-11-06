@@ -110,18 +110,22 @@ $NewPath = $CleanedPath -join ';'
 rm -r -fo somedir
 ```
 
-- copy directory recurvsively by force
 
+- cmd to copy folder
+```console
+robocopy src des /MIR
 ```
-cp -Recurse -Force src dst
-```
 
-## xcopy
-
-A useful windows cmd to copy folder
+or
 
 ```console
 xcopy /S src des
+```
+
+or
+
+```
+cp -Recurse -Force src dst
 ```
 
 ## WSL

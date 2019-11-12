@@ -83,6 +83,19 @@ module Utils =
     let writeFile f lines = 
         File.AsyncWriteAllLines(f, lines)
 
+    ///move file with tests and return filename
+    let moveFile outputdir (file:string) = 
+      let f = FileInfo(file)
+      try
+        if outputdir <> f.DirectoryName then 
+          let dstfile = outputdir +/ f.Name
+          if File.Exists( dstfile ) then File.Delete ( dstfile )
+          f.MoveTo(dstfile)
+          dstfile
+        else f.FullName
+      with 
+      | e -> failwithf "cannot move %s, %O" file e 
+
     let updatefile (file:FileInfo) (destFile:FileInfo)  = 
           let destname =  destFile.FullName
           let backup = destname+"~"

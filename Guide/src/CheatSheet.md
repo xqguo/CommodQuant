@@ -104,18 +104,28 @@ $NewPath = $CleanedPath -join ';'
 [Environment]::SetEnvironmentVariable('Path', $NewPath,'User')
 ```
 
--- delete directory by force
+- delete directory by force
 
 ```
 rm -r -fo somedir
 ```
 
-## xcopy
 
-A useful windows cmd to copy folder
+- cmd to copy folder
+```console
+robocopy src des /MIR
+```
+
+or
 
 ```console
 xcopy /S src des
+```
+
+or
+
+```
+cp -Recurse -Force src dst
 ```
 
 ## WSL

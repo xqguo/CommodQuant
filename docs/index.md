@@ -1,16 +1,8 @@
-Welcome to the CommodQuant wiki!
-
-
-
 Project outline
 
 ========================
 
-
-
-The primary objective of this project is to provide an open-source reference for quantitative functions related to commodities. It includes a commodity pricing library [CommodQuant](https://github.com/xqguo/CommodQuant), with its azure DevOps pipeline [project](https://dev.azure.com/guoxiaoq/CommodQuant)
-
-
+The primary objective of this project is to provide an open-source reference for quantitative functions related to commodities. It includes a commodity pricing library [CommodQuant](https://github.com/xqguo/CommodQuant) written in F# ( which can be used in any dotnet developments ), as well as some guides to some related learning materials around technology and quantitative finance. Also with its azure DevOps pipeline [project](https://dev.azure.com/guoxiaoq/CommodQuant)
 
 
 
@@ -18,7 +10,7 @@ Programming setup
 
 ----------
 
-* [CheatSheet](CheatSheet.md) for some usage reference cmds.
+* [CheatSheet](https://xqguo.github.io/CommodQuant/CheatSheet.html) for some usage reference cmds.
 
 
 
@@ -26,7 +18,7 @@ Programming setup
 
   * [F# for fun and profit](https://fsharpforfunandprofit.com): a very good site to learn F#.
 
-  * [My Azure notebook guide](aznotebook.md)
+  * [My Azure notebook guide](https://xqguo.github.io/CommodQuant/aznotebook.html)
 
 
 

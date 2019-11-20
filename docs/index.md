@@ -18,7 +18,7 @@ Programming setup
 
 ----------
 
-* [CheatSheet](https://github.com/xqguo/CommodQuant/blob/master/Guide/src/CheatSheet.md) for some usage reference cmds.
+* [CheatSheet](CheatSheet.md) for some usage reference cmds.
 
 
 
@@ -26,7 +26,7 @@ Programming setup
 
   * [F# for fun and profit](https://fsharpforfunandprofit.com): a very good site to learn F#.
 
-  * [My Azure notebook guide](https://github.com/xqguo/CommodQuant/blob/master/Guide/src/aznotebook.md)
+  * [My Azure notebook guide](aznotebook.md)
 
 
 

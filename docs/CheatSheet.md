@@ -23,6 +23,8 @@ Installed apps:
   which 2.20
 ```
 
+if you install anaconda with scoop, run activate to activate the vistual python environment.  
+
 ## SSH
 
 - To use ssh on 443 port, you can add the following in ~/.ssh/config
@@ -103,7 +105,13 @@ dotnet vstest Test.dll #run test on a prebuilt test dll
 dotnet test --filter DisplayName~getPrice #run XunitTest with a filter
 dotnet publish -c Release -o outputdir
 ```
+- Use jupyter notebook for F#
 
+For people familiar with jupyter notebook/lab, you can follow this [guide](https://www.hanselman.com/blog/AnnouncingNETJupyterNotebooks.aspx) and enable F# for it.  
+
+```
+dotnet try jupyter install
+```
 - for a even more controlled build process, use [Fake](https://fake.build/)
 
 
@@ -200,12 +208,12 @@ gpg -ers $id file
 ```
 
 
-## [Pass](https://www.passwordstore.org/)
+## [GoPass](https://www.gopass.pw/)
 
-- copy pass to clipboard under wsl using clip.exe
+- Gopass is an password manager. Use it instead of pass for better functionality and windows integration.
 
 ```console
-pass some_entry | clip.exe
+gopass some_entry
 ```
 
 ## [wget](https://www.gnu.org/software/wget/manual/wget.html)

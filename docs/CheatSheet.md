@@ -4,7 +4,26 @@ Some references for tools
 
 ## [Scoop](https://github.com/lukesampson/scoop)
 
-This is quite cool to get unix cmds into windows 10 without a lof of unix knowledge. Using powershell felt as if a unix shell. Highly recommended for windows user.  
+This is quite cool to get unix cmds into windows 10 without a lof of unix knowledge. Using powershell felt as if a unix shell. Highly recommended for windows user.  Some recommended packages:
+
+```
+~ $ scoop list
+Installed apps:
+
+  7zip 19.00
+  anaconda3 2019.10 [extras]
+  aria2 1.35.0-1
+  dark 3.11.2
+  gopass 1.8.6
+  gpg 2.2.19
+  grep 2.5.4
+  lessmsi 1.6.91
+  pshazz 0.2019.08.07
+  vim 8.2
+  which 2.20
+```
+
+if you install anaconda with scoop, run activate to activate the vistual python environment.  
 
 ## SSH
 
@@ -86,7 +105,13 @@ dotnet vstest Test.dll #run test on a prebuilt test dll
 dotnet test --filter DisplayName~getPrice #run XunitTest with a filter
 dotnet publish -c Release -o outputdir
 ```
+- Use jupyter notebook for F#
 
+For people familiar with jupyter notebook/lab, you can follow this [guide](https://www.hanselman.com/blog/AnnouncingNETJupyterNotebooks.aspx) and enable F# for it.  
+
+```
+dotnet try jupyter install
+```
 - for a even more controlled build process, use [Fake](https://fake.build/)
 
 
@@ -183,12 +208,12 @@ gpg -ers $id file
 ```
 
 
-## [Pass](https://www.passwordstore.org/)
+## [GoPass](https://www.gopass.pw/)
 
-- copy pass to clipboard under wsl using clip.exe
+- Gopass is an password manager. Use it instead of pass for better functionality and windows integration.
 
 ```console
-pass some_entry | clip.exe
+gopass some_entry
 ```
 
 ## [wget](https://www.gnu.org/software/wget/manual/wget.html)

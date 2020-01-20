@@ -1,6 +1,7 @@
 module TestOptions
+open Xunit
 open FsCheck.Xunit
-open Commod.Options
+open Commod
 open FsCheck
 open FsCheckTypes
 open MathNet.Numerics.LinearAlgebra
@@ -40,7 +41,117 @@ let ``test spread`` f k =
     let pw2 = Vector.Build.Dense(8, 0.0)
 
     let rho = 0. //correlation between long/short fixing
-    let callput = 1.
+    let callput = Call
     let so = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
-    let ao = asianoption f1 fw1 t1 v1 k Call 0.
+    let ao = asianoption f1 fw1 t1 v1 k callput 0.
     abs ( so - ao ) < 0.001 |@ sprintf "spread option and asian option price are close: %f, %f" so ao
+
+[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test choi vs V norm is input vol for long only basket`` f1 f2 v1 v2= 
+    let f1 = DenseVector.create 8 f1
+    let t1 = (( [ 40; 41; 42; 43; 44; 47; 48; 49 ] |> List.map float |> vector ) + 0.01 )/ 365. //fixing dates
+    let V1 = DenseVector.create 8 v1 // vol for each fixing
+    let fw1 = DenseVector.create 8 0.125// vol for each fixing
+    let f2 = DenseVector.create 8 f2
+    let t2 = t1 //fixing dates
+    let V2 = DenseVector.create 8 v2 // vol for each fixing
+    let fw2 = fw1 * (-1.) //weights longside
+    let rho = 0.8 //correlation between long/short fixing
+    let V = getVChoi f1 fw1 t1 V1 f2 fw2 t2 V2 rho 
+    Assert.Equal(V.Row(0).L2Norm(), v1 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    Assert.Equal(V.Row(1).L2Norm(), v1 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(2).L2Norm(), v1 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(3).L2Norm(), v1 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(8).L2Norm(), v2 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(9).L2Norm(), v2 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(10).L2Norm(), v2 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
+
+[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2= 
+    let f1 = DenseVector.create 8 f1
+    let t1 = (( [ 40; 41; 42; 43; 44; 47; 48; 49 ] |> List.map float |> vector ) + 0.01 )/ 365. //fixing dates
+    let V1 = DenseVector.create 8 v1 // vol for each fixing
+    let fw1 = DenseVector.create 8 0.125// vol for each fixing
+
+    let f2 = DenseVector.create 8 f2
+    let t2 = t1 //fixing dates
+    let V2 = DenseVector.create 8 v2 // vol for each fixing
+    let fw2 = fw1 //weights longside
+
+    let rho = 0.8 //correlation between long/short fixing
+    let V = getVChoi f1 fw1 t1 V1 f2 fw2 t2 V2 rho 
+    Assert.Equal(V.Row(0).L2Norm(), v1 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    Assert.Equal(V.Row(1).L2Norm(), v1 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(2).L2Norm(), v1 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(3).L2Norm(), v1 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(8).L2Norm(), v2 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(9).L2Norm(), v2 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(10).L2Norm(), v2 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
+
+[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test choi vs moment matching`` f k = 
+    let f1 = DenseVector.create 8 f
+    let t1 = (( [ 40; 41; 42; 43; 44; 47; 48; 49 ] |> List.map float |> vector ) + 0.01 )/ 365. //fixing dates
+    let v1 = Vector.Build.Dense(8, 0.25) // vol for each fixing
+    let fw1 = Vector.Build.Dense( 8, 1./8. ) //weights longside
+
+    let f2 = Vector.Build.Dense(8, 0.0001) // forwards short side
+    let t2 = t1 //fixing dates
+    let v2 = Vector.Build.Dense(8, 0.0001) // vol for each fixing 
+    let fw2 = fw1 //weights longside
+
+    let p1 = Vector.Build.Dense(8, 0.0) //  #past fixing longside
+    let pw1 = Vector.Build.Dense(8, 0.0)
+    let p2 = Vector.Build.Dense(8, 0.0)
+    let pw2 = Vector.Build.Dense(8, 0.0)
+
+    let rho = 0. //correlation between long/short fixing
+    let callput = Call
+    let so = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    Assert.Equal ( so , choi, 2 ) |@ sprintf "spread option  moment match and choi are close: %f, %f" so choi
+
+[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test choi vs bs`` f k = 
+    let f1 = vector [f]
+    let t1 = vector [1.] //fixing dates
+    let v1 = vector [0.25] // vol for each fixing
+    let fw1 = vector [1. ] //weights longside
+
+    let f2 = vector [0.00001] // forwards short side
+    let t2 = t1 //fixing dates
+    let v2 = vector  [0.00001] // vol for each fixing 
+    let fw2 = fw1 * -1. //weights longside
+
+    let p1 = vector [ 0.0 ] //  #past fixing longside
+
+    let rho = 0. //correlation between long/short fixing
+    let callput = Call
+    let c = bs f k 0.25 0.0 1.0 callput 
+    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
+    Assert.Equal( c , choi, 3 )
+
+//[<Property>]
+//let ``test choi vs example`` () = 
+//    let f1 = DenseVector.create 1 ( exp 0.5)
+//    let t1 = DenseVector.create 1 1.0
+//    let v1 = DenseVector.create 1 1.0
+//    let fw1 = DenseVector.create 1 1.0
+
+//    let f2 = DenseVector.create 1 ( exp 0.5)
+//    let t2 = DenseVector.create 1 1.0
+//    let v2 = DenseVector.create 1 1.0
+//    let fw2 = DenseVector.create 1 1.0
+
+//    let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
+//    let pw1 = Vector.Build.Dense(1, 0.0)
+//    let p2 = Vector.Build.Dense(1, 0.0)
+//    let pw2 = Vector.Build.Dense(1, 0.0)
+
+//    let rho = 0. //correlation between long/short fixing
+//    let callput = Call
+//    let k = 2.0
+//    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+//    choi > 0.0 |@ sprintf "choi example are close: %f, %f" choi choi

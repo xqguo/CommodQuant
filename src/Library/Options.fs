@@ -2,9 +2,11 @@ namespace Commod
 [<AutoOpen>]
 module Options =
     open System
+    open MathNet.Numerics
     open MathNet.Numerics.Distributions
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Integration
+    
 
     type Payoff = 
         | Call 
@@ -55,6 +57,7 @@ module Options =
             let tmatrix = getTmatrix t1 t2
             (ff .* ((v1.OuterProduct v2).*tmatrix*rho).PointwiseExp()) |> sum 
 
+
     let asianoption (f1:Vector<float>) (fw1:Vector<float>) t1 v1 k' o p1w =
         let (y1, y11, delta) = moments (f1 .* fw1) v1 t1  
         let k = k' - p1w - delta
@@ -72,7 +75,8 @@ module Options =
             let k' = k - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
             if k' < 0. then
                 let v0 = Vector<float>.Build.Dense(1) 
-                spreadoption f2 fw2 t2 v2 f1 fw1 t1 v1 -k' rho -callput v0 v0 v0 v0 //put equivalent
+                let callput' = match callput with | Call -> Put | Put -> Call
+                spreadoption f2 fw2 t2 v2 f1 fw1 t1 v1 -k' rho callput' v0 v0 v0 v0 //put equivalent
             else 
             //#2nd moments
                 let tmatrix1 = getTmatrix t1 t1
@@ -85,8 +89,8 @@ module Options =
             //#intermediates
                 let b1 = sqrt(log(x22 / x2 / x2 ))
                 let b2 = 1. / b1 * log(x12 / (x1 * x2))
-                // let g = callput / sqrt(log(x11 / x1 / x1) - b2 * b2) //this can be nan? 
-                let g = callput / sqrt(max (log(x11 / x1 / x1) - b2 * b2) 1E-12) //this can be nan? 
+                let cp = match callput with |Call -> 1.0 |Put -> -1.0
+                let g = cp / sqrt(max (log(x11 / x1 / x1) - b2 * b2) 1E-12) //this can be nan? 
                 let i1 = Func<float, float> (fun x -> normpdf(x) * normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x)))))
                 let i2 = Func<float, float>(fun x -> normpdf(x) * normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x)))))
                 let i3 = Func<float,float>( fun x -> normpdf(x) * normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x)))))
@@ -95,4 +99,215 @@ module Options =
                 let i1' = SimpsonRule.IntegrateComposite( i1, -stddevs, stddevs, partitions)
                 let i2' = SimpsonRule.IntegrateComposite( i2, -stddevs, stddevs, partitions)
                 let i3' = SimpsonRule.IntegrateComposite( i3, -stddevs, stddevs, partitions)
-                callput * ( x1 * i1' - x2 * i2' - k * i3')
+                cp * ( x1 * i1' - x2 * i2' - k * i3')
+    /// append 2 vectors
+    let appendVector (v1:Vector<float>) (v2:Vector<float>) =
+        v1.ToColumnMatrix().Stack(v2.ToColumnMatrix()).Column(0);
+
+    ///householder reflection matrix
+    let householderR (q:Vector<float>) =
+        let n = q.Count
+        let e = DenseVector.init n (fun n -> if n = 0 then 1.0 else 0.0)
+        let q' = (q - e )
+        let v = q' / q'.L2Norm()
+        (DiagonalMatrix.identity n ) - 2.0 * v.OuterProduct(v)
+
+    ///Sigma = rho v_k v_j min(t_k, t_j)
+    let getSigma (v1:Vector<float>) (t1:Vector<float>) (v2:Vector<float>) (t2:Vector<float>) rho = 
+        let tmatrix = getTmatrix t1 t2
+        (v1.OuterProduct v2).*tmatrix*rho
+
+    /// helper function to get multi-dim GH zs 
+    /// permulate x y into x*y entries of zs.
+    let private permutate x y = 
+        let xi = Array.length x //x is the new head
+        let yi = Array.length y //y is the exisiting tail
+        [| 
+            for i in 0 .. (xi - 1 ) do 
+            for j in 0 .. (yi - 1 ) do 
+            yield Array.append [|x.[i]|] y.[j] 
+        |]
+
+    ///helper function to get multi-dim GH weigths.
+    ///cumulative prod of normalized weights
+    let private permprod x y = 
+        let xi = Array.length x //x is the new head
+        let yi = Array.length y //y is the exisiting tail
+        [| 
+            for i in 0 .. (xi - 1 ) do 
+            for j in 0 .. (yi - 1 ) do 
+            yield x.[i] * y.[j] 
+        |]
+
+    let rec ghz5 dim =     
+        let s2 = sqrt 2.0
+        let z3 = [|-2.02018287; -0.95857246;  0.; 0.95857246;  2.02018287|] |> Array.map ( fun x -> x* s2)
+
+        match dim with
+        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
+        | 1 ->     
+            [| for x in z3 do yield [|x|] |]
+            //let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752] |> List.map (*) cons
+        | _ -> 
+            permutate z3 (ghz5 (dim-1)) //previous layer)
+
+    let rec ghw5 dim =     
+        let cons = 1.0/sqrt(System.Math.PI)
+        let w3 = [|0.01995324; 0.39361932; 0.94530872; 0.39361932; 0.01995324|] |> Array.map ( fun x -> x * cons )
+        match dim with
+        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
+        | 1 -> w3
+        | _ -> permprod w3 (ghw5 (dim-1))
+    //recursive version with dim input
+    //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
+    // 1 <= dim 
+    let rec ghz3 dim =     
+        let s2 = sqrt 2.0
+        let z3 = [|-1.2247448714;  0.        ;1.2247448714|] |> Array.map ( fun x -> x* s2)
+        match dim with
+        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
+        | 1 ->     
+            [| for x in z3 do yield [|x|] |]
+            //let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752] |> List.map (*) cons
+        | _ -> 
+            permutate z3 (ghz3 (dim-1)) //previous layer)
+
+    let rec ghw3 dim =     
+        let cons = 1.0/sqrt(System.Math.PI)
+        let w3 = [|0.2954089752; 1.1816359006 ; 0.2954089752|] |> Array.map ( fun x -> x * cons )
+        match dim with
+        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
+        | 1 -> w3
+        | _ -> permprod w3 (ghw3 (dim-1))
+
+    //let ghw = ghw5
+    //let ghz = ghz5
+    ///get V with Choi's method for 2 assets with constant correlation.
+    let getVChoi (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 
+            let fw2 = fw2 * -1. //short side has negative weights
+            let f1w = f1 .* fw1 //1st asset weighted
+            let f2w = f2 .* fw2
+            let w = appendVector fw1 fw2 
+            let v = appendVector v1 v2 
+            let n = f1.Count + f2.Count
+            //assuming constant correlation between 2 assets.
+            let g' = appendVector f1w f2w 
+            let g = (g'/ (g'.L2Norm()))
+            let sigma12 = getSigma v1 t1 v2 t2 rho
+            let sigma11 = getSigma v1 t1 v1 t1 1.0
+            let sigma22 = getSigma v2 t2 v2 t2 1.0
+            let sigma = sigma11.Stack( sigma12 ).Append((sigma12.Transpose().Stack(sigma22)))
+            let c = sigma.Cholesky().Factor //cholesky
+            let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) //should be a scalar 
+            let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
+            let V1 = (c * Q1)// need to adjust so that w_k V_k1 > 0
+            //printfn "v1: %A" (V1 |> Matrix.toArray2)
+            let eps = 0.1 //how to choose this?           
+            let V1' = DenseVector.init n ( fun n -> 
+                if V1.[n,0] * w.[n] > 0. 
+                then V1.[n,0]
+                else
+                   let s = if w.[n] > 0. then 1.0 else -1.0
+                   eps * s * v.[n] )       
+            //let a = V1.L2Norm()
+            //let b = V1'.L2Norm()
+            let mu = (c.Inverse() * V1').L2Norm()
+            //let mu = V1.L2Norm() / V1'.L2Norm()
+            let V1'' = V1' / mu
+            //let mu' = (c.Inverse() * V1'').L2Norm()
+            //let mu = 0.99 //how to choose this? need to maintain norm same as vol1
+            //V1 |> Matrix.toArray2
+            //V1'.L2Norm()
+            let Q1' = c.Inverse() * V1''
+            let R = householderR Q1'
+            let CR = c * R 
+            let CR' = CR.SubMatrix(0, n, 1, n-1) //drop 1st column.
+            let svd = CR'.Svd()      
+            //let qdot = svd.VT
+            let V = V1''.ToColumnMatrix().Append(     svd.U * svd.W)
+            //let Q'= DenseMatrix.init n n ( fun i j -> 
+            //    match i,j with
+            //    | 0, 0 -> 1.0
+            //    | 0, _ -> 0.0
+            //    | _, 0 -> 0.0
+            //    | _ , _ -> qdot.[i-1,j-1]
+            //    ) 
+            //let V = c* R* Q' //V
+            let test = (V * V.Transpose()) //is input covariance matrix
+            V
+    let optionChoi (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k' (rho:float) callput 
+        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+        let fw2 = -1. * fw2
+        let weights = appendVector fw1 fw2
+        let V = getVChoi f1 fw1 t1 v1 f2 fw2 t2 v2 rho
+        //for each z_dot, find z1 and then C_bs, and then sum them using GH
+        let n = f1.Count + f2.Count
+        let fk k (z:Vector<float>) = 
+            let vk = V.SubMatrix(k,1,1,n-1).Row(0) //kth row vector
+            let z' =
+                if vk.Count > z.Count then
+                    //pad zero, alternatively, shorten vk to z.Count only
+                    let zeros = DenseVector.create (vk.Count - z.Count) 0.0
+                    appendVector z zeros
+                else
+                    z
+            //let vk' =
+            //    if vk.Count > z.Count then
+            //        vk.SubVector( 0, z.Count )
+            //    else
+            //        vk
+            let vksum = vk * vk 
+            exp( -0.5 * vksum + vk*z' ) //fk for some z
+
+        let F = appendVector f1 f2 
+        let strike = k' - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
+        let dim = min (n-1) 4 //cap at 5 levels
+        if dim = 0 then failwith "degenerated bs formula directly, not implemented yet"
+        let zs = ghz5 dim
+        let ws = ghw5 dim
+
+        let wff z = 
+                    weights  //for each kth fixing
+                    |> Vector.mapi( fun k w -> 
+                       let fki = fk k z 
+                       w * F.[k] * fki 
+                       )
+
+        let fn z1 z = //for each risk factor scenario
+                    (wff z //for each kth fixing
+                    |> Vector.mapi( fun k w -> 
+                       w * exp( - 0.5 * V.[k,0]*V.[k,0] + V.[k,0]*z1)                
+                       )
+                    |> Vector.sum) - strike
+
+
+        let difffn z1 z =
+                    wff z  //for each kth fixing
+                    |> Vector.mapi( fun k w -> 
+                        w * exp( - 0.5 * V.[k,0]*V.[k,0] + V.[k,0]*z1)                
+                        *V.[k,0])
+                    |> Vector.sum 
+
+        let values = 
+            zs 
+            |> Array.map( fun x ->
+                let z = vector x
+                let d = 
+                    RootFinding.RobustNewtonRaphson.FindRoot(
+                        ( fun z1 -> fn z1 z),
+                        ( fun z1 -> difffn z1 z),
+                        -100., 100.) * -1.
+                match callput with
+                | Call -> 
+                    (wff z 
+                    |> Vector.mapi( fun k w -> w * normcdf( d + V.[k,0]))
+                    |> Vector.sum )- strike * normcdf(d)                       
+                | Put ->
+                    strike * normcdf(-d) - 
+                        (wff z 
+                        |> Vector.mapi( fun k w -> w * normcdf( -d - V.[k,0])) 
+                        |> Vector.sum )                  
+            )
+        (vector values) * (vector ws)

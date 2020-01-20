@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library\CommodLib.fsproj" />
@@ -18,7 +18,7 @@
     <Compile Include="TestRates.fs" />
     <None Include="Script1.fsx" />
     <None Include="Script2.fsx" />
-    <None Include="ManualTests.fsx" />
+    <None Include="Choi.fsx" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

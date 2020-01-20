@@ -1,11 +1,20 @@
-#load "C:/Users/guanxinxin/source/repos/RegTest/.paket/load/net472/MathNet.Numerics.fsx"
-#load "../../.paket/load/net472/MathNet.Numerics.FSharp.fsx"
+#load "../../../.paket/load/MathNet.Numerics.FSharp.fsx"
 
 open MathNet.Numerics
 open MathNet.Numerics.Statistics
 open MathNet.Numerics.Integration
 
 open MathNet.Numerics.LinearAlgebra
+
+        
+MathNet.Numerics.Combinatorics.CombinationsWithRepetition(3,3)
+MathNet.Numerics.Combinatorics.VariationsWithRepetition(3,2)
+MathNet.Numerics.Combinatorics.SelectVariationWithRepetition(w3,2)
+[ for i in 1 .. 3 do 
+    for j in 1 .. 3 do 
+        yield i,j
+        ]
+
 //let m : Matrix<float> = DenseMatrix.randomStandard 50 50
 //(m * m.Transpose()).Determinant()
 
@@ -23,7 +32,7 @@ normal.Samples() |> Seq.take 5
 let means = matrix [ [0.0];[0.0]]
 let vars = matrix [[1. ;0.8];[0.8; 1.]]
 let dims = matrix [[1.]]
-
+Permutation([|0;1;2|])
 let mnormal = Distributions.MatrixNormal(means, vars, dims)
 
 mnormal.RandomSource <- r
@@ -40,3 +49,4 @@ NewtonCotesTrapeziumRule.IntegrateComposite( (fun x -> (max  (100. * (exp x ) - 
 SimpsonRule.IntegrateComposite( (fun x -> (max  (100. * (exp x ) - 100.) 0. ) *(Distributions.Normal.PDF ( 0.0, 1.0, x))), -10.0, 10.0, 1000)
 NewtonCotesTrapeziumRule.IntegrateComposite( (fun x -> (max  (100. * (exp x ) - 100.) 0. ) *(Distributions.Normal.PDF ( 0.0, 1.0, x))), -10.0, 10.0, 1000)
 GaussLegendreRule.Integrate( (fun x -> (max  (100. * (exp x ) - 100.) 0. ) *(Distributions.Normal.PDF ( 0.0, 1.0, x))), -10.0, 10.0, 10000)
+

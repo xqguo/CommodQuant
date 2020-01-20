@@ -1,6 +1,6 @@
 module TestOptions
 open FsCheck.Xunit
-open Commod.Options
+open Commod
 open FsCheck
 open FsCheckTypes
 open MathNet.Numerics.LinearAlgebra

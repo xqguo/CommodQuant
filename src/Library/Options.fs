@@ -290,24 +290,48 @@ module Options =
                         *V.[k,0])
                     |> Vector.sum 
 
-        let values = 
+        let roots = 
             zs 
             |> Array.map( fun x ->
                 let z = vector x
-                let d = 
-                    RootFinding.RobustNewtonRaphson.FindRoot(
+                RootFinding.RobustNewtonRaphson.FindRoot(
                         ( fun z1 -> fn z1 z),
                         ( fun z1 -> difffn z1 z),
-                        -100., 100.) * -1.
-                match callput with
-                | Call -> 
-                    (wff z 
-                    |> Vector.mapi( fun k w -> w * normcdf( d + V.[k,0]))
-                    |> Vector.sum )- strike * normcdf(d)                       
-                | Put ->
-                    strike * normcdf(-d) - 
-                        (wff z 
-                        |> Vector.mapi( fun k w -> w * normcdf( -d - V.[k,0])) 
-                        |> Vector.sum )                  
-            )
-        (vector values) * (vector ws)
+                        -100., 100.) * -1.)
+        let opt = 
+            roots
+            |> Array.mapi( fun i d -> 
+                let z = vector zs.[i]
+                let o = 
+                    match callput with
+                    | Call -> 
+                        (wff z
+                        |> Vector.mapi( fun k w -> w * normcdf( d + V.[k,0]))
+                        |> Vector.sum )- strike * normcdf(d)                       
+                    | Put ->
+                        strike * normcdf(-d) - 
+                            (wff z
+                            |> Vector.mapi( fun k w -> w * normcdf( -d - V.[k,0])) 
+                            |> Vector.sum )
+                o * ws.[i])
+            |> Array.sum
+                        
+        let adj = 
+            roots
+            |> Array.mapi( fun i d -> 
+                let z = vector zs.[i] 
+                let a = 
+                    let calladj = 
+                        wff z
+                        |> Vector.mapi( fun k w -> w * ( normcdf( d + V.[k,0]) * (fk k z - 1.) ) )  
+                        |> Vector.sum 
+                    match callput with
+                    | Call  -> calladj
+                    | Put ->
+                        calladj - 
+                        (weights 
+                        |> Vector.mapi( fun k w -> w * F.[k] * (fk k z - 1. ))
+                        |> Vector.sum )
+                a * ws.[i])
+            |> Array.sum            
+        opt - adj

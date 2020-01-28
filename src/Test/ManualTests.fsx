@@ -28,5 +28,3 @@ ch.Row(1) * ch.Row(1)
 
 ch.Row(0) * ch.Column(0)
 ch.Column(1) * ch.Column(1
-
-let a = vector []

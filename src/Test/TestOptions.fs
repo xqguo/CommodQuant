@@ -150,7 +150,7 @@ let ``test choi vs bs`` f k callput=
     let f2 = vector [0.00001] // forwards short side
     let t2 = t1 //fixing dates
     let v2 = vector  [0.00001] // vol for each fixing 
-    let fw2 = fw1 * -1. //weights longside
+    let fw2 = fw1  //weights longside
 
     let p1 = vector [ 0.0 ] //  #past fixing longside
 
@@ -158,8 +158,8 @@ let ``test choi vs bs`` f k callput=
     let c = bs f k 0.25 1.0 callput 
     let delta = bsdelta f k 0.25 1.0 callput 
     let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    Assert.Equal( c , choi, 3 ) .&.
-    Assert.Equal( delta , delta'.[0], 3 )
+    Assert.Equal( c , choi, 2 ) .&.
+    Assert.Equal( delta , delta'.[0], 2 )
 
 //[<Property>]
 //let ``test choi vs example`` () = 

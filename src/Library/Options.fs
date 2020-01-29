@@ -335,13 +335,15 @@ module Options =
             |> Array.sum
                         
         let deltas' = 
-            roots //vector size M
-            |> Array.mapi( fun i d -> 
-                let z = vector zs.[i]                 
-                wf z
-                |> Vector.mapi( fun k w -> w * ( normcdf( d + V.[k,0])) ) )       
-            |> Array.reduce (+)
-        
+            weights 
+            |> Vector.mapi( fun k w -> 
+                roots
+                |> Array.mapi( fun i d -> 
+                    let z = vector zs.[i] 
+                    let wf = fk k z
+                    ws.[i] * w * wf * normcdf ( d + V.[k,0] ) )   
+                |> Array.sum )            
+
         let deltas = match callput with | Call -> deltas' |Put -> deltas' - 1.0
 
         let adj = 

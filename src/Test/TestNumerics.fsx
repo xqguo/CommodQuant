@@ -6,6 +6,15 @@ open MathNet.Numerics.Integration
 
 open MathNet.Numerics.LinearAlgebra
 
+        
+MathNet.Numerics.Combinatorics.CombinationsWithRepetition(3,3)
+MathNet.Numerics.Combinatorics.VariationsWithRepetition(3,2)
+MathNet.Numerics.Combinatorics.SelectVariationWithRepetition(w3,2)
+[ for i in 1 .. 3 do 
+    for j in 1 .. 3 do 
+        yield i,j
+        ]
+
 //let m : Matrix<float> = DenseMatrix.randomStandard 50 50
 //(m * m.Transpose()).Determinant()
 

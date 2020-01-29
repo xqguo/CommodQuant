@@ -8,6 +8,42 @@ module Options =
     open MathNet.Numerics.Integration
     
 
+    module List = 
+        let rec permutations = function
+            | []      -> seq [List.empty]
+            | x :: xs -> Seq.collect (insertions x) (permutations xs)
+        and insertions x = function
+            | []             -> [[x]]
+            | (y :: ys) as xs -> (x::xs)::(List.map (fun x -> y::x) (insertions x ys))
+
+    ///3 point gauss-hermite (https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature)
+    ///constants taken from numpy.polynomial.hermite.hermgauss(3) wiht precision 10.
+    ///for low point integration to work well, the function should be smooth.
+    let gh3 f = 
+        let h3 = [1.2247448714;  0.        ;1.2247448714]
+        let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752]
+        let cons = 1.0/sqrt(System.Math.PI)
+        let s2 = sqrt 2.0
+        // degree 3
+        ((w3,h3) ||> List.map2( fun x y -> x * (f (y*s2))) |> List.sum ) * cons
+
+    ////compute 3 level GH of 3 points each
+    let gh33 f = 
+        let cons = 1.0/sqrt(System.Math.PI)
+        let s2 = sqrt 2.0
+        let h3 = [1.2247448714;  0.        ;1.2247448714]
+        let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752]
+        let d = List.zip h3 w3
+        [ for x in d do
+            for y in d do
+                for z in d do
+                    yield (x,y,z)]
+        |> List.map( fun ((x1,y1),(x2,y2),(x3,y3)) -> 
+            let w = y1*y2*y3 
+            w * (f (x1*s2) (x2*s2)(x3*s2))) 
+        |> List.sum 
+        |> (*) cons
+        
     type Payoff = 
         | Call 
         | Put 

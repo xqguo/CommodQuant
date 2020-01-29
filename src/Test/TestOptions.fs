@@ -160,7 +160,7 @@ let ``test choi vs bs`` f k =
     let delta = bsdelta f k 0.25 1.0 callput 
     let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
     Assert.Equal( c , choi, 3 ) .&.
-    Assert.Equal( delta , delta'.[0] + delta'.[1], 3 )
+    Assert.Equal( delta , delta'.[0], 3 )
 
 //[<Property>]
 //let ``test choi vs example`` () = 

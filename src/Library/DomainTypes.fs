@@ -138,6 +138,7 @@ module DomainTypes  =
         | TTF //converted USD/mmbtu compo price
         | SGO //Singapore Gas oil ref...
         | NG // Herry Hub natural gas
+        | NBP // NBP natural gas
         | DUB // dubai crude
         | SJET // Sing Jet
 

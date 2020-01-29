@@ -13,11 +13,11 @@ let ``generated positive floats should be positive`` x = x > 0.0
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test bs`` f  k v t = 
-    let c = (bs f k v 0. t Call)
-    let p = (bs f k v 0. t Put)
+    let c = (bs f k v  t Call)
+    let p = (bs f k v  t Put)
     let y = f - k 
     let diff = c - p - y
-    let c2 = (bs (f+0.001) k v 0. t Call)
+    let c2 = (bs (f+0.001) k v  t Call)
     let delta = (c2 - c) / 0.001
     (p >= 0.0 ) |@ sprintf "Option value is non-negative" .&.
     (abs(diff) <= 0.001)  |@ sprintf "Must satisfy call put parity %f" diff .&. 
@@ -110,7 +110,7 @@ let ``test choi vs moment matching`` f k =
     let rho = 0. //correlation between long/short fixing
     let callput = Call
     let so = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
-    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
     Assert.Equal ( so , choi, 1 ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
@@ -132,11 +132,11 @@ let ``test choi put call parity`` f1 f2 k =
 
     let rho = 0.5  //correlation between long/short fixing
     let callput = Call
-    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
 
     let rho = 0.5 //correlation between long/short fixing
     let callput = Put
-    let choi' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi',_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
     
     Assert.Equal ( choi - choi' , f1 * fw1 - f2 * fw2 - k, 3 )
 
@@ -156,9 +156,11 @@ let ``test choi vs bs`` f k =
 
     let rho = 0. //correlation between long/short fixing
     let callput = Call
-    let c = bs f k 0.25 0.0 1.0 callput 
-    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    Assert.Equal( c , choi, 3 )
+    let c = bs f k 0.25 1.0 callput 
+    let delta = bsdelta f k 0.25 1.0 callput 
+    let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
+    Assert.Equal( c , choi, 3 ) .&.
+    Assert.Equal( delta , delta'.[0] + delta'.[1], 3 )
 
 //[<Property>]
 //let ``test choi vs example`` () = 

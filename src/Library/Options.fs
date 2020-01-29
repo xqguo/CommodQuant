@@ -14,21 +14,33 @@ module Options =
 
     let normcdf = fun x -> Normal.CDF ( 0., 1., x )  
     let normpdf = fun x -> Normal.PDF ( 0., 1., x )  
-    ///returns black scholes price
-    let bs f k v r t (o:Payoff) = 
+    ///returns black scholes fwd price
+    let bs f k v t (o:Payoff) = 
         if ( f<=0. || k <= 0. || v<=0. || t<=0. ) then 
             let iv = 
                 match o with 
                 | Call -> f - k  
                 | Put -> k - f  
-            exp(-r*t) * (max iv 0.)
+            (max iv 0.)
         else
             let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
             let d2 = d1 - v*sqrt(t)
             match o with
-            | Call -> exp(-r*t)*(f*normcdf(d1)-k*normcdf(d2))
-            | Put -> exp(-r*t)*(k*normcdf(-d2)-f*normcdf(-d1))
+            | Call -> f*normcdf(d1)-k*normcdf(d2)
+            | Put -> k*normcdf(-d2)-f*normcdf(-d1)
 
+    ///bs fwd delta
+    let bsdelta f k v t (o:Payoff) = 
+        if ( f<=0. || k <= 0. || v<=0. || t<=0. ) then 
+            match o with 
+            | Call -> if f >= k  then 1.0 else 0.0
+            | Put ->  if f <= k  then 1.0 else 0.
+        else
+            let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
+            let d2 = d1 - v*sqrt(t)
+            match o with
+            | Call -> normcdf(d1)
+            | Put -> -normcdf(-d1)
     // a time matrix for VCV using min ( T1 T2 )
     let private getTmatrix (T1:Vector<float>) (T2:Vector<float>) =
         let onesT1 = Vector.Build.Dense (T1.Count, 1.)
@@ -57,13 +69,14 @@ module Options =
             let tmatrix = getTmatrix t1 t2
             (ff .* ((v1.OuterProduct v2).*tmatrix*rho).PointwiseExp()) |> sum 
 
-
+    //asian fwd price moment matching method
     let asianoption (f1:Vector<float>) (fw1:Vector<float>) t1 v1 k' o p1w =
         let (y1, y11, delta) = moments (f1 .* fw1) v1 t1  
         let k = k' - p1w - delta
         let v = sqrt( log (y11/y1/y1) )
-        bs y1 k v 0. 1. o 
+        bs y1 k v 1. o 
 
+    ///spread option fwd pricing moment matching
     let rec spreadoption (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 
@@ -268,11 +281,16 @@ module Options =
         let zs = ghz5 dim
         let ws = ghw5 dim
 
-        let wff z = 
+        let wf z = 
                     weights  //for each kth fixing
                     |> Vector.mapi( fun k w -> 
                        let fki = fk k z 
-                       w * F.[k] * fki 
+                       w *  fki 
+                       )
+        let wff z = 
+                    wf z //for each kth fixing
+                    |> Vector.mapi( fun k x -> 
+                       x * F.[k]  
                        )
 
         let fn z1 z = //for each risk factor scenario
@@ -316,6 +334,16 @@ module Options =
                 o * ws.[i])
             |> Array.sum
                         
+        let deltas' = 
+            roots //vector size M
+            |> Array.mapi( fun i d -> 
+                let z = vector zs.[i]                 
+                wf z
+                |> Vector.mapi( fun k w -> w * ( normcdf( d + V.[k,0])) ) )       
+            |> Array.reduce (+)
+        
+        let deltas = match callput with | Call -> deltas' |Put -> deltas' - 1.0
+
         let adj = 
             roots
             |> Array.mapi( fun i d -> 
@@ -334,4 +362,5 @@ module Options =
                         |> Vector.sum )
                 a * ws.[i])
             |> Array.sum            
-        opt - adj
+        (opt - adj),deltas //return deltas same dimension as f1 f2 combined.
+

@@ -90,28 +90,28 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2=
     Assert.Equal(V.Row(10).L2Norm(), v2 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
     Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
 
-[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test choi vs moment matching`` f k = 
-    let f1 = DenseVector.create 8 f
-    let t1 = (( [ 40; 41; 42; 43; 44; 47; 48; 49 ] |> List.map float |> vector ) + 0.01 )/ 365. //fixing dates
-    let v1 = Vector.Build.Dense(8, 0.25) // vol for each fixing
-    let fw1 = Vector.Build.Dense( 8, 1./8. ) //weights longside
+[<Property( Verbose = true, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test choi vs moment matching`` f1 callput = 
+    let f1 = DenseVector.create 2 f1
+    let t1 = vector [ 340.0; 341.0 ] / 365. //fixing dates
+    let v1 = DenseVector.create 2  0.25 // vol for each fixing
+    let fw1 = DenseVector.create 2 0.5 //weights longside
 
-    let f2 = Vector.Build.Dense(8, 0.0001) // forwards short side
+    let f2 = f1 // forwards short side
     let t2 = t1 //fixing dates
-    let v2 = Vector.Build.Dense(8, 0.0001) // vol for each fixing 
+    let v2 = DenseVector.create 2 0.25 // vol for each fixing 
     let fw2 = fw1 //weights longside
 
-    let p1 = Vector.Build.Dense(8, 0.0) //  #past fixing longside
-    let pw1 = Vector.Build.Dense(8, 0.0)
-    let p2 = Vector.Build.Dense(8, 0.0)
-    let pw2 = Vector.Build.Dense(8, 0.0)
-
-    let rho = 0. //correlation between long/short fixing
-    let callput = Call
+    let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
+    let pw1 = Vector.Build.Dense(1, 0.0)
+    let p2 = Vector.Build.Dense(1, 0.0)
+    let pw2 = Vector.Build.Dense(1, 0.0)
+    let k = 0.
+    let rho = 0.5 //correlation between long/short fixing
     let so = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
     let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
-    Assert.Equal ( so , choi, 1 ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
+    (so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
+    //Assert.Equal ( (min so choi)/(max so choi), 1.0, 1  )
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi put call parity`` f1 f2 k = 
@@ -141,7 +141,7 @@ let ``test choi put call parity`` f1 f2 k =
     Assert.Equal ( choi - choi' , f1 * fw1 - f2 * fw2 - k, 3 )
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test choi vs bs`` f k = 
+let ``test choi vs bs`` f k callput= 
     let f1 = vector [f]
     let t1 = vector [1.] //fixing dates
     let v1 = vector [0.25] // vol for each fixing
@@ -155,12 +155,11 @@ let ``test choi vs bs`` f k =
     let p1 = vector [ 0.0 ] //  #past fixing longside
 
     let rho = 0. //correlation between long/short fixing
-    let callput = Call
     let c = bs f k 0.25 1.0 callput 
     let delta = bsdelta f k 0.25 1.0 callput 
     let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    Assert.Equal( c , choi, 1 ) .&.
-    Assert.Equal( delta , delta'.[0], 1 )
+    Assert.Equal( c , choi, 3 ) .&.
+    Assert.Equal( delta , delta'.[0], 3 )
 
 //[<Property>]
 //let ``test choi vs example`` () = 

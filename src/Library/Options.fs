@@ -209,7 +209,10 @@ module Options =
             let sigma12 = getSigma v1 t1 v2 t2 rho
             let sigma11 = getSigma v1 t1 v1 t1 1.0
             let sigma22 = getSigma v2 t2 v2 t2 1.0
-            let sigma = sigma11.Stack( sigma12 ).Append((sigma12.Transpose().Stack(sigma22)))
+            //printfn "sigma12 dims: %i %i" sigma12.RowCount sigma12.ColumnCount
+            //printfn "sigma11 dims: %i %i" sigma11.RowCount sigma11.ColumnCount
+            //printfn "sigma22 dims: %i %i" sigma22.RowCount sigma22.ColumnCount
+            let sigma = sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
             let c = sigma.Cholesky().Factor //cholesky
             let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) //should be a scalar 
             let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
@@ -314,7 +317,8 @@ module Options =
                 RootFinding.RobustNewtonRaphson.FindRoot(
                         ( fun z1 -> fn z1 z),
                         ( fun z1 -> difffn z1 z),
-                        -100., 100.) * -1.)
+                        -1E3, 1E3) * -1.)
+                        //-1E3, 1E3, 0.01, 1000,10) * -1.)
         let opt = 
             roots
             |> Array.mapi( fun i d -> 
@@ -343,7 +347,7 @@ module Options =
                     ws.[i] * w * wf * normcdf ( d + V.[k,0] ) )   
                 |> Array.sum )            
 
-        let deltas = match callput with | Call -> deltas' |Put -> deltas' - 1.0
+        let deltas = match callput with | Call -> deltas' |Put -> deltas' - weights
 
         let adj = 
             roots

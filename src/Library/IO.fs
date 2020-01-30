@@ -27,7 +27,7 @@ module IOcsv =
         | JKM | SGO | SJET | FO380 | FO180 | DUB -> [PLTSGP] 
         | BRT | GO | TTF  -> [ICE] 
         | NG -> [CME] 
-        | JCC -> [ ALLDAYS ] 
+        | JCC | NBP -> [ ALLDAYS ] 
         |> List.fold ( fun acc s -> Set.union acc ( getCalendarbyCode s ) ) Set.empty
 
 

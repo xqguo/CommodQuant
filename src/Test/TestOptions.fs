@@ -91,25 +91,23 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2=
     Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
 
 [<Property( Verbose = true, Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test choi vs moment matching`` f1 callput = 
-    let f1 = DenseVector.create 2 f1
-    let t1 = vector [ 340.0; 341.0 ] / 365. //fixing dates
-    let v1 = DenseVector.create 2  0.25 // vol for each fixing
-    let fw1 = DenseVector.create 2 0.5 //weights longside
+let ``test choi vs moment matching``() = 
+    let f = 1.
+    let callput = Put
+    let f1 = DenseVector.create 2 f
+    let t1 = vector [ 365.0; 366.0 ] / 365. //fixing dates
+    let v1 = vector [ 0.25; 0.25] // vol for each fixing
+    let fw1 =vector [ 0.99;  0.01] //weights longside
 
     let f2 = f1 // forwards short side
     let t2 = t1 //fixing dates
-    let v2 = DenseVector.create 2 0.25 // vol for each fixing 
+    let v2 = DenseVector.create 2 0.5 // vol for each fixing 
     let fw2 = fw1 //weights longside
-
     let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
-    let pw1 = Vector.Build.Dense(1, 0.0)
-    let p2 = Vector.Build.Dense(1, 0.0)
-    let pw2 = Vector.Build.Dense(1, 0.0)
-    let k = 0.
-    let rho = 0.5 //correlation between long/short fixing
-    let so = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
-    let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let k = 0. 
+    let rho = 0. //correlation between long/short fixing
+    let so =        spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
+    let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
     (so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
     //Assert.Equal ( (min so choi)/(max so choi), 1.0, 1  )
 
@@ -140,6 +138,31 @@ let ``test choi put call parity`` f1 f2 k =
     
     Assert.Equal ( choi - choi' , f1 * fw1 - f2 * fw2 - k, 3 )
 
+[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test choi spread put call equivalence `` f1 f2 v1 v2 k = 
+    let f1 = DenseVector.create 8 f1
+    let t1 = (( [ 40; 41; 42; 43; 44; 47; 48; 49 ] |> List.map float |> vector ) + 0.01 )/ 365. //fixing dates
+    let v1 = DenseVector.create 8 v1 // vol for each fixing
+    let fw1 = Vector.Build.Dense( 8, 1./8. ) //weights longside
+
+    let f2 = DenseVector.create 8 f2 // forwards short side
+    let t2 = t1 //fixing dates
+    let v2 = DenseVector.create 8 v2 // vol for each fixing 
+    let fw2 = fw1 //weights longside
+
+    let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
+    let pw1 = Vector.Build.Dense(1, 0.0)
+    let p2 = Vector.Build.Dense(1, 0.0)
+    let pw2 = Vector.Build.Dense(1, 0.0)
+
+    let rho = 0.5  //correlation between long/short fixing
+    let callput = Call
+    let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+
+    let callput = Put
+    let choi',_ = optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -k rho callput p1 pw1 p2 pw2
+    
+    Assert.Equal ( choi , choi' , 3 )
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi vs bs`` f k callput= 
     let f1 = vector [f]

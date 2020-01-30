@@ -24,8 +24,8 @@
     <Compile Include="Markets.fs" />
     <Compile Include="Rates.fs" />
     <Compile Include="Swaps.fs" />
-    <Compile Include="Options.fs" />
     <Compile Include="MonteCarlo.fs" />
+    <Compile Include="Options.fs" />
     <None Include="PlattsHolidays.fsx" />
     <None Include="icecontracts.fsx" />
     <None Include="setup.fsx" />

@@ -19,6 +19,10 @@ open Commod
 let vols= vector [ 0.3 ; 0.2; 0.5]
 vols.SubVector(0,3)
 let corrs = matrix [ [1.0 ; 0.8 ; 0. ];[0.8; 1.0 ; 0.];[0.0;0.;1.0]] 
+let corr11 = matrix [ [0.25 ]] 
+let corr12 = matrix [ [0.0 ]] 
+
+corr11.Stack(corr12).Append(corr12.Stack(corr11))
 
 let var = vols.OuterProduct(vols) .* corrs
 let ch = var.Cholesky().Factor

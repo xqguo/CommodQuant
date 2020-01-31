@@ -173,20 +173,20 @@ module Options =
     //recursive version with dim input
     //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
     // 1 <= dim 
+    let s2 = sqrt 2.0
+    let cons = sqrt(System.Math.PI)
     let rec ghz3 dim =     
-        let s2 = sqrt 2.0
-        let z3 = [|-1.2247448714;  0.        ;1.2247448714|] |> Array.map ( fun x -> x* s2)
+        let z3 = [|-1.2247448714;  0. ;1.2247448714|] |> Array.map ( fun x -> x* s2)
         match dim with
         | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
         | 1 ->     
-            [| for x in z3 do yield [|x|] |]
+            [| for x in z3 do yield [|x|]|]
             //let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752] |> List.map (*) cons
         | _ -> 
             permutate z3 (ghz3 (dim-1)) //previous layer)
 
     let rec ghw3 dim =     
-        let cons = 1.0/sqrt(System.Math.PI)
-        let w3 = [|0.2954089752; 1.1816359006 ; 0.2954089752|] |> Array.map ( fun x -> x * cons )
+        let w3 = [|0.2954089752; 1.1816359006 ; 0.2954089752|] |> Array.map ( fun x -> x / cons )
         match dim with
         | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
         | 1 -> w3
@@ -213,6 +213,7 @@ module Options =
             //printfn "sigma22 dims: %i %i" sigma22.RowCount sigma22.ColumnCount
             let sigma = sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
             let c = sigma.Cholesky().Factor //cholesky
+            let den2 = g.ToRowMatrix() * sigma * g.ToColumnMatrix() //should be a scalar 
             let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) //should be a scalar 
             let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
             let V1 = (c * Q1)// need to adjust so that w_k V_k1 > 0
@@ -266,9 +267,9 @@ module Options =
             let V = getVChoi f1 fw1 t1 v1 f2 fw2  t2 v2 rho
             //for each z_dot, find z1 and then C_bs, and then sum them using GH
             let n = f1.Count + f2.Count
-            let fk k (z:Vector<float>) = 
+            let fk k (z:Vector<float>) = //formula 7 
                 let vk = V.Row(k) //kth row vector
-                let vksum = vk * vk - vk.[0]*vk.[0]
+                let vksum = vk * vk  - vk.[0] * vk.[0]
                 exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
 
             let F = appendVector f1 f2 
@@ -292,7 +293,7 @@ module Options =
             let fn z1 z = //for each risk factor scenario
                         (wff z //for each kth fixing
                         |> Vector.mapi( fun k w -> 
-                           w * exp( - 0.5 * V.[k,0]*V.[k,0] + V.[k,0]*z1)                
+                           w * exp(-0.5* V.[k,0]*V.[k,0] + V.[k,0]*z1)                
                            )
                         |> Vector.sum) - strike
 
@@ -350,23 +351,29 @@ module Options =
 
             let deltas = match callput with | Call -> deltas' |Put -> deltas' - weights
 
-            let adj = 
-                roots
-                |> Array.mapi( fun i d -> 
-                    let z = vector zs.[i] 
-                    let a = 
-                        let calladj = 
-                            wff z
-                            |> Vector.mapi( fun k w -> w * ( normcdf( d + V.[k,0]) * (fk k z - 1.) ) )  
-                            |> Vector.sum 
-                        match callput with
-                        | Call  -> calladj
-                        | Put ->
-                            calladj - 
-                            (weights 
-                            |> Vector.mapi( fun k w -> w * F.[k] * (fk k z - 1. ))
-                            |> Vector.sum )
-                    a * ws.[i])
-                |> Array.sum            
+            let fwderr = 
+                weights 
+                |> Vector.mapi( fun k _ -> 
+                    zs
+                    |> Array.mapi( fun i z' -> 
+                        let z = vector z' 
+                        let wf = fk k z
+                        ws.[i] * (wf - 1.0))
+                    |> Array.sum )
+                    
+            let adj =
+                let calladj = 
+                    deltas' 
+                    |> Vector.mapi( fun k d -> 
+                        d * F.[k] * fwderr.[k])
+                    |> Vector.sum
+                match callput with
+                | Call  -> calladj
+                | Put ->
+                    calladj - 
+                        (weights 
+                        |> Vector.mapi( fun k w -> w * F.[k] *fwderr.[k])
+                        |> Vector.sum )
+
             (opt - adj),deltas //return deltas same dimension as f1 f2 combined.
 

@@ -108,8 +108,8 @@ let ``test choi vs moment matching``() =
     let rho = 0.9 //correlation between long/short fixing
     let so =        spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
     let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    (so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
-    //Assert.Equal ( (min so choi)/(max so choi), 1.0, 1  )
+    //(so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
+    Assert.Equal ( (min so choi)/(max so choi), 1.0, 1  )
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi put call parity`` f1 f2 k = 
@@ -188,7 +188,7 @@ let ``test choi vs bs`` f k callput=
 let ``test choi vs mm`` () = 
     let f = 1.
     let callput = Call
-    let k = 0.1
+    let k = 0.
     let f1 = vector [f]
     let t1 = vector [1.] //fixing dates
     let v1 = vector [0.5] // vol for each fixing
@@ -227,3 +227,19 @@ let ``test choi vs mm`` () =
 //    let k = 2.0
 //    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
 //    choi > 0.0 |@ sprintf "choi example are close: %f, %f" choi choi
+
+[<Property>]
+let ``test guass hemite weights sum to 1`` () = 
+    let dim = 3
+    let ws = ghw5 dim |> vector
+    let r = ws.Sum()
+    Assert.Equal( 1., r, 6 )
+
+[<Property>]
+let ``test guass hemite expect normal mean is 0 `` () = 
+    let dim = 3
+    let ws = ghw5 dim |> vector
+    let hs = ghz5 dim |> Array.map( Array.reduce (+)) |> vector
+    let r = ws* hs
+    Assert.Equal( 0., r, 6 )
+

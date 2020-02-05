@@ -165,6 +165,8 @@ let ``test choi spread put call equivalence `` f1 f2 v1 v2 k =
     Assert.Equal ( choi , choi' , 3 )
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi vs bs`` f k callput= 
+    //let f = 100. 
+    //let k = 100.
     let f1 = vector [f]
     let t1 = vector [1.] //fixing dates
     let v1 = vector [0.25] // vol for each fixing

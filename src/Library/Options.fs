@@ -212,6 +212,7 @@ module Options =
             //printfn "sigma11 dims: %i %i" sigma11.RowCount sigma11.ColumnCount
             //printfn "sigma22 dims: %i %i" sigma22.RowCount sigma22.ColumnCount
             let sigma = sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
+            //printfn "%A" sigma
             let c = sigma.Cholesky().Factor //cholesky
             let den2 = g.ToRowMatrix() * sigma * g.ToColumnMatrix() //should be a scalar 
             let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) //should be a scalar 
@@ -252,12 +253,30 @@ module Options =
             //let test = (V * V.Transpose()) //is input covariance matrix
             V
 
+    let consolidateInputs (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) =
+        //consolidate future details to group same fixing dates
+        let (f, t, v ) = 
+            Array.zip3  ((f1 .* fw1).ToArray()) (t1.ToArray())  (v1.ToArray())              
+            |> Array.groupBy(fun (_,t,_) -> t) 
+            |> Array.map( fun (t0,r) -> 
+                let f,t,v = Array.unzip3 r
+                let (y1, y11, _) = moments (vector f)  (vector v) (vector t  )
+                y1, t0, sqrt( log(y11/y1/y1) / t0 ))     
+            |> Array.unzip3
+        let fv = vector f
+        let tv = vector t
+        let vv = vector v
+        let w = DenseVector.create fv.Count 1.
+        fv, w, tv, vv
+
     ///Choi method of analytical 1 layer + GH remianing.
-    let rec optionChoi (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
-        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k' (rho:float) callput 
+    ///assuming perferect correalation in asset
+    let rec optionChoi (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
+        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+        let f1,fw1,t1,v1 = consolidateInputs f1' fw1' t1' v1'
+        let f2,fw2,t2,v2 = consolidateInputs f2' fw2' t2' v2' 
         let strike = k' - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
-        let callput' = match callput with | Call -> Put | Put -> Call
         if strike < 0. then 
             let v0 = Vector<float>.Build.Dense(1) 
             let callput' = match callput with | Call -> Put | Put -> Call
@@ -317,9 +336,9 @@ module Options =
                         elif ( fn l z >= 0.) then l
                         else 
                             RootFinding.RobustNewtonRaphson.FindRoot(
-                            ( fun z1 -> fn z1 z),
-                            ( fun z1 -> difffn z1 z),
-                            l, u)) * -1.)
+                                ( fun z1 -> fn z1 z),
+                                ( fun z1 -> difffn z1 z),
+                                l, u)) * -1.)
                             //-1E3, 1E3, 0.01, 1000,10) * -1.)
             let opt = 
                 roots

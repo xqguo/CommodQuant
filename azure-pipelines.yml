@@ -13,7 +13,7 @@ variables:
   buildConfiguration: 'Release'
   vmImageName: 'windows-2019'
   framework: 'netstandard2.0'
-  testframework: 'netcoreapp3.0'
+  testframework: 'netcoreapp3.1'
 stages:
   - stage: Build
 

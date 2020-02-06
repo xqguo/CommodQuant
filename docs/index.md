@@ -74,6 +74,6 @@ Understand the Quantitative finance
 
 * Notes for [Intro to Derivative Pricing](https://xqguo.github.io/CommodQuant/intro.pdf) and [source](https://github.com/xqguo/CommodQuant/tree/master/docs/intro.tex)
 
-* Swap price
+* [Swap price](https://xqguo.github.io/CommodQuant/Swap.html)
 
 * [Asian option](https://xqguo.github.io/CommodQuant/Asian.html)

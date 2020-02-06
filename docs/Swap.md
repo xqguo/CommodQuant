@@ -14,3 +14,7 @@ based), and then put a theoretical value for each future fixing. Past fixings ca
 The net settlement amount for each period is then computed. Total amount is then used as swap market to market value. 
 
 Day one pricing of swap from market maker is done similarly, where a fixed price or a spread over floating price is found to achieve zero or initial PL requirement. 
+
+### Futures nearby
+
+Futures are well documented on the futures exchanges. Futures nearby is a frequent underlying reference price of swaps. The 1st nearby referes to the current nearest to expire future. and the 2nd / 3rd etc nearby refer to the next to expire, and the following one etc. There can also be a roll adjust factor, which referes to alternative rules to decide on which nearby to take on the fixing date. One ICE, it is common to have a roll adjust of 1, which means that on the futures expiration date, the underlying future would be the next to expirate instead of the current expiring contract. 

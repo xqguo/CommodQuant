@@ -1,3 +1,7 @@
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
 # [Kelly's criterion](https://en.wikipedia.org/wiki/Kelly_criterion)
 
 Investment and gambling share a lot of similarities. Kelly's ratio is a good measure

@@ -30,4 +30,5 @@ This ratio gives you the fastest expected growth rate for the same number of bet
 This method is in sharp contract with modern porfolio management method, which relies more on [CAPM](https://en.wikipedia.org/wiki/Capital_asset_pricing_model), beta, alpha etc. 
 
 ## Delta hedging
+
 Delta hedging of options, or self-financed replication of payoff in general, are examples of almost-sure-win(loss) payoffs. For a market maker can charge enough for the hedging costs, according to Kelly's criterial, they are willing to bet all-in.

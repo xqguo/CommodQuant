@@ -1,26 +1,16 @@
-Project outline
-
-========================
+# Project outline
 
 The primary objective of this project is to provide an open-source reference for quantitative functions related to commodities. It includes a commodity pricing library [CommodQuant](https://github.com/xqguo/CommodQuant) written in F# ( which can be used in any dotnet developments ), as well as some guides to some related learning materials around technology and quantitative finance. Also with its azure DevOps pipeline [project](https://dev.azure.com/guoxiaoq/CommodQuant)
 
-
-
-Programming setup
-
-----------
+## Programming setup
 
 * [CheatSheet](https://xqguo.github.io/CommodQuant/CheatSheet.html) for some usage reference cmds.
-
-
 
 * Learn FSharp basics with free online resources.
 
   * [F# for fun and profit](https://fsharpforfunandprofit.com): a very good site to learn F#.
 
   * [My Azure notebook guide](https://xqguo.github.io/CommodQuant/aznotebook.html)
-
-
 
 * Get your own dev environment
 
@@ -38,17 +28,9 @@ Programming setup
 
   * here is the [azure pipeline yaml source code](https://github.com/microsoft/azure-pipelines-yaml/)
 
-
-
-Understand the markets
-
------------------
-
-
+## Understand the markets
 
 * [Intro to Money market](https://docs.google.com/presentation/d/e/2PACX-1vSBtq-1KcZtVHhFnpL0sCLaqKtg5m2FpPKly7bN6X6hPmg5T-Blxo3xD6PTeBFmQt1TJDlJ5x9pZXF0/pub?start=false&loop=false&delayms=3000)
-
-
 
 * CME
 
@@ -64,16 +46,12 @@ Understand the markets
 
   * The Fed publishes selected rates, including the fed funds rate [here](https://www.federalreserve.gov/releases/h15/)
 
-
-
-Understand the Quantitative finance
-
-------------------
-
-
+## Understand the Quantitative finance
 
 * Notes for [Intro to Derivative Pricing](https://xqguo.github.io/CommodQuant/intro.pdf) and [source](https://github.com/xqguo/CommodQuant/tree/master/docs/intro.tex)
 
 * [Swap price](https://xqguo.github.io/CommodQuant/Swap.html)
 
 * [Asian option](https://xqguo.github.io/CommodQuant/Asian.html)
+
+* [Risk](https://xqguo.github.io/CommodQuant/Risk.html)

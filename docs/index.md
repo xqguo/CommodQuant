@@ -52,8 +52,8 @@ The primary objective of this project is to provide an open-source reference for
 
 * Pricing and market instruments 
  
- * [Swap price](https://xqguo.github.io/CommodQuant/Swap.html)
+   * [Swap price](https://xqguo.github.io/CommodQuant/Swap.html)
 
- * [Asian option](https://xqguo.github.io/CommodQuant/Asian.html)
+   * [Asian option](https://xqguo.github.io/CommodQuant/Asian.html)
 
 * [Risk](https://xqguo.github.io/CommodQuant/Risk.html)

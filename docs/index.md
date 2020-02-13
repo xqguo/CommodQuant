@@ -50,6 +50,8 @@ The primary objective of this project is to provide an open-source reference for
 
 * Notes for [Intro to Derivative Pricing](https://xqguo.github.io/CommodQuant/intro.pdf) and [source](https://github.com/xqguo/CommodQuant/tree/master/docs/intro.tex)
 
+* Notes to [Practical Guide](https://docs.google.com/presentation/d/153lNoOKmLwy0k7gJmCkcio5nt2ejdLZ5dONjbfFM4f4/edit?usp=sharing), slides for Master of Quantitative Finance lectures. 
+
 * Pricing and market instruments 
  
    * [Swap price](https://xqguo.github.io/CommodQuant/Swap.html)

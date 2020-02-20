@@ -214,7 +214,7 @@ module Options =
             let sigma = sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
             //printfn "%A" sigma
             let c = sigma.Cholesky().Factor //cholesky
-            let den2 = g.ToRowMatrix() * sigma * g.ToColumnMatrix() //should be a scalar 
+            //let den2 = g.ToRowMatrix() * sigma * g.ToColumnMatrix() //should be a scalar 
             let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) //should be a scalar 
             let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
             let V1 = (c * Q1)// need to adjust so that w_k V_k1 > 0
@@ -255,6 +255,7 @@ module Options =
 
     let consolidateInputs (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) =
         //consolidate future details to group same fixing dates
+        //but retian the same weights, so that the delta still works
         let (f, t, v ) = 
             Array.zip3  ((f1 .* fw1).ToArray()) (t1.ToArray())  (v1.ToArray())              
             |> Array.groupBy(fun (_,t,_) -> t) 
@@ -266,8 +267,14 @@ module Options =
         let fv = vector f
         let tv = vector t
         let vv = vector v
-        let w = DenseVector.create fv.Count 1.
-        fv, w, tv, vv
+        //let w = DenseVector.create fv.Count 1.
+        let w = 
+            Array.zip  (fw1.ToArray()) (t1.ToArray())              
+            |> Array.groupBy( snd ) 
+            |> Array.map(fun (_, r ) -> r |> Array.sumBy fst )
+            |> vector
+        let fv' = fv / w //TODO need to handle case where w is 0??? e.g. two forward fixing opposite weight, different value?
+        fv', w, tv, vv
 
     ///Choi method of analytical 1 layer + GH remianing.
     ///assuming perferect correalation in asset
@@ -280,7 +287,8 @@ module Options =
         if strike < 0. then 
             let v0 = Vector<float>.Build.Dense(1) 
             let callput' = match callput with | Call -> Put | Put -> Call
-            optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -strike rho callput' v0 v0 v0 v0 //put equivalent
+            let (opt,delta) = optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -strike rho callput' v0 v0 v0 v0 //put equivalent
+            opt, (delta |> Array.rev) //delta sequence reverted.
         else
             let weights = appendVector fw1 (-1. * fw2)
             let V = getVChoi f1 fw1 t1 v1 f2 fw2  t2 v2 rho
@@ -368,7 +376,7 @@ module Options =
                         ws.[i] * w * wf * normcdf ( d + V.[k,0] ) )   
                     |> Array.sum )            
 
-            let deltas = match callput with | Call -> deltas' |Put -> deltas' - weights
+            let deltas = (match callput with | Call -> deltas' |Put -> deltas' - weights) |> Vector.toArray
 
             let fwderr = 
                 weights 
@@ -394,5 +402,5 @@ module Options =
                         |> Vector.mapi( fun k w -> w * F.[k] *fwderr.[k])
                         |> Vector.sum )
 
-            (opt - adj),deltas //return deltas same dimension as f1 f2 combined.
+            (opt - adj), deltas  //return deltas same dimension as f1 f2 combined.
 

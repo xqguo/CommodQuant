@@ -281,6 +281,11 @@ module Options =
     let rec optionChoi (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
         (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+        //validate inputs
+        if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v1' then invalidArg "v1'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v2' then invalidArg "v2'" "vol needs to be positive values"
         let f1,fw1,t1,v1 = consolidateInputs f1' fw1' t1' v1'
         let f2,fw2,t2,v2 = consolidateInputs f2' fw2' t2' v2' 
         let strike = k' - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings

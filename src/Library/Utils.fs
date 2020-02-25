@@ -308,7 +308,7 @@ module DateUtils =
     let dateAdjust' = dateAdjust Set.empty //shortcut for no holiday checking, still check for weekends
     // create an active pattern to match time tenor
     let (|Tenor|_|) input =
-       let tenors = ["ON"; "TN"; "SN" ; "SPOT"; "TODAY"; "BOMCD1"] |> set
+       let tenors = ["ON"; "TN"; "SN" ; "SPOT"; "TODAY"; "BOMCD1"; "BOMCD0"] |> set
        if tenors.Contains input then Some input else None
 
     let (|Period|_|) input =
@@ -338,9 +338,11 @@ module DateUtils =
           |"ON"| "BOMCD1" -> DateTime.Today.AddDays( 1.0 )
           |"TN"|"SPOT" -> DateTime.Today.AddDays( 2.0 )
           |"SN" -> DateTime.Today.AddDays( 3.0 )
-          |"TODAY" -> DateTime.Today
+          |"BOMCD0"|"TODAY" -> DateTime.Today
           | _  -> invalidOp "Unknown tenor string"
-      | _ -> failwithf "Unknown pillar %s" dStr
+      | _ -> 
+        //failwithf "Unknown pillar %s" dStr
+        DateTime.Today //bad default TODO fix, or create option version
       
     /// <summary>
     /// allow broken period both end, d1 to month end, then each whole month, and finally month start to d2

@@ -214,6 +214,7 @@ gpg -ers $id file
 
 ```console
 gopass some_entry
+gopass clone git_repo
 ```
 
 ## [wget](https://www.gnu.org/software/wget/manual/wget.html)

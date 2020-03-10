@@ -21,12 +21,12 @@ module Utils =
         match tryParseFunc x with
         | true, v    -> Some v
         | false, _   -> None
+    
     let parseDate   = tryParseWith System.DateTime.TryParse
     let parseInt    = tryParseWith System.Int32.TryParse
     let parseSingle = tryParseWith System.Single.TryParse
     let parseDouble = tryParseWith System.Double.TryParse
     let parseDouble10 = tryParseWith System.Double.TryParse >> Option.map (sprintf "%.10g") 
-
     let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", CultureInfo.InvariantCulture)
     let datestr (str:string) = (str.ToUpper()) |> String.filter Char.IsLetterOrDigit //ignores separators like - /
 
@@ -308,8 +308,8 @@ module DateUtils =
     let dateAdjust' = dateAdjust Set.empty //shortcut for no holiday checking, still check for weekends
     // create an active pattern to match time tenor
     let (|Tenor|_|) input =
-       let tenors = ["ON"; "TN"; "SN" ; "SPOT"; "TODAY"; "BOMCD1"; "BOMCD0"] |> set
-       if tenors.Contains input then Some input else None
+       let tenors = ["ON"; "TN"; "SN" ; "SPOT"; "TODAY" ; "DAYAHEAD"; "WEEKEND" ] |> set
+       if tenors.Contains input || input.StartsWith "BOM" then Some input else None
 
     let (|Period|_|) input =
        let m = Regex.Match(input,"^(\d+)(D|W|M|Y)$") 
@@ -335,14 +335,16 @@ module DateUtils =
           | _  -> invalidOp "Unknown period type, expect D/W/M/Y"
       | Tenor d -> 
           match d with 
-          |"ON"| "BOMCD1" -> DateTime.Today.AddDays( 1.0 )
+          |"ON" | "DAYAHEAD" -> DateTime.Today.AddDays( 1.0 )
           |"TN"|"SPOT" -> DateTime.Today.AddDays( 2.0 )
           |"SN" -> DateTime.Today.AddDays( 3.0 )
-          |"BOMCD0"|"TODAY" -> DateTime.Today
-          | _  -> invalidOp "Unknown tenor string"
+          |"TODAY" -> DateTime.Today
+          |x when x.StartsWith "BOM" -> DateTime.Today |> dateAdjust' "e"
+          | "WEEKEND" -> DateTime.Today |> dateAdjust' "7W"
+          | _  -> invalidOp (sprintf "Unknown tenor string %s" d)
       | _ -> 
-        //failwithf "Unknown pillar %s" dStr
-        DateTime.Today //bad default TODO fix, or create option version
+        //printfn "Warning: Unknown pillar %s, using today." dStr
+        DateTime.Today
       
     /// <summary>
     /// allow broken period both end, d1 to month end, then each whole month, and finally month start to d2

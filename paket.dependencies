@@ -16,6 +16,10 @@ nuget XPlot.GoogleCharts
 nuget XPlot.GoogleCharts.Deedle 
 
 nuget Argu
+nuget Serilog
+nuget Serilog.Sinks.File
+nuget Serilog.Sinks.Console
+
 nuget FsCheck
 nuget FsCheck.Xunit
 nuget DiffSharp

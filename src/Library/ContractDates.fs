@@ -19,24 +19,27 @@ module ContractDates =
                     let pillar = pillarToDate r.Column1 |> formatPillar
                     pillar, r.Column2 ) 
                 |> Map.ofSeq 
-                |> ContractDates
+               // |> ContractDates
 
         let brtContracts = 
             let ins = BRT
             let f = tryFutExpFile ins
-            match f with 
-            | Some v -> readContracts v
-            | None ->
-                //generate last bd
+            let actuals = 
+                match f with 
+                | Some v -> readContracts v
+                | None -> Map.empty
+            let rulebased =
+                //generate last bd of prior month
                 let td = DateTime.Today |> dateAdjust' "-1ya" 
                 let hol = getCalendar ins
                 generateMonth (td |> dateAdjust' "a" ) true 
-                |> Seq.map ( fun x -> (formatPillar x , x |> dateAdjust hol "p" ))
+                |> Seq.map ( fun x -> (formatPillar x , x |> dateAdjust hol "-1mp" ))
                 |> Seq.skipWhile( fun (_,d) -> d < td )
                 |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
                 |> Map.ofSeq
-                |> ContractDates
-
+            //use actuals to override rulebased
+            let contracts = Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
+            ContractDates contracts
 
         //GO contracts: https://www.theice.com/products/34361119/Low-Sulphur-Gasoil-Future
         //compute Last Trading Day: Trading shall cease at 12:00 hours, 2 business days prior to the 14th calendar day of the delivery.

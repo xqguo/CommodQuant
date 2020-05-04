@@ -380,9 +380,13 @@ module Options =
                         let wf = fk k z
                         ws.[i] * w * wf * normcdf ( d + V.[k,0] ) )   
                     |> Array.sum )            
-
+            //just return total long/short delta, because after consolidatation, the current implementation did not 
+            //trace back to original contracts. 
             let deltas = (match callput with | Call -> deltas' |Put -> deltas' - weights) |> Vector.toArray
-
+            let delta1,delta2 = deltas |> Array.splitAt fw1.Count
+            let delta1sum = Array.sum delta1
+            let delta2sum = Array.sum delta2
+            let delta = [|delta1sum ; delta2sum |]
             let fwderr = 
                 weights 
                 |> Vector.mapi( fun k _ -> 
@@ -407,5 +411,5 @@ module Options =
                         |> Vector.mapi( fun k w -> w * F.[k] *fwderr.[k])
                         |> Vector.sum )
 
-            (opt - adj), deltas  //return deltas same dimension as f1 f2 combined.
+            (opt - adj), delta  //return deltas in long/short 2 elem array
 

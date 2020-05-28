@@ -1,6 +1,10 @@
 # CheatSheet
 
-Some references for tools
+Some references for tools. 
+
+## [The Missing Semester of Your CS Education](https://missing.csail.mit.edu/)
+
+This is a good collections of lectures on tools that will get you started. 
 
 ## [Scoop](https://github.com/lukesampson/scoop)
 

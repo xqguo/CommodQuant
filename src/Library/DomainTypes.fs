@@ -133,6 +133,7 @@ module DomainTypes  =
         | FO380
         | FO180
         | FO35 //Fuel oil 3.5 Barges 
+        | MFO //Marine Fuel Oil 0.5% FOB Singapore
         | JKM
         | JCC
         | TTF //converted USD/mmbtu compo price

@@ -79,7 +79,7 @@ module ContractDates =
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> (formatPillar x, x ))
             |> Seq.filter( fun (_,d) -> d >= td )
-            |> Seq.take 24
+            |> Seq.take 120
             |> Map.ofSeq
             |> ContractDates
 

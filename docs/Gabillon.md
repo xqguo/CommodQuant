@@ -1,3 +1,3 @@
 # Gabillon Model
 
-$dF_t_T$
+$$dF_t_T$$

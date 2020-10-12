@@ -4,4 +4,4 @@
 
 # Gabillon Model
 
-$$dF_t_T$$
+  $$dF(t,T_i)$$

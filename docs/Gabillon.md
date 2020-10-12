@@ -12,6 +12,6 @@
 
 ## Calibration
 
-There are two part of model parameter fitting. Firstly, the structural parameters $k$, $\rho$, $\sigma_l$ are chosen to be constants that reflect the desired level of mean reversion, curve intra pillar correlation, and long term vols. These can also be chosen according to observed market prices that are sensitive to them, e.g. swaptions, time spread options etc. 
+There are two part of model parameter fitting. Firstly, the structural parameters $$k$$, $$\rho$$, $$\sigma_l$$ are chosen to be constants that reflect the desired level of mean reversion, curve intra pillar correlation, and long term vols. These can also be chosen according to observed market prices that are sensitive to them, e.g. swaptions, time spread options etc. 
 
 In the second stemp, we choose to calibrate a piecewise constant time dependent $dW_s(t)$ to the market implied volatilities of listed options. These are pseudo-realtime and are always recalibrated on the fly when the market vol changes. 

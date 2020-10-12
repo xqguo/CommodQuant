@@ -4,4 +4,4 @@
 
 # Gabillon Model
 
-  $$d F(t,T_i) = F(t,T_i)(\exp{-k(T_i-t)} \sigma^S(t) d W^S(t) + (1- \exp{-k(T_i-t)}) \sigma^L d W^L(t))$$
+  $$d F(t,T_i) = F(t,T_i)(e^{-k(T_i-t)} \sigma_s(t) d W_s(t) + (1- e^{-k(T_i-t)}) \sigma^L d W_l(t))$$

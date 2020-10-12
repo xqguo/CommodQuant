@@ -121,10 +121,16 @@ dotnet try jupyter install
 
 ## PowerShell
 
+- create csv and select cloumns
+
+```pwsh
+(type .\navdb.csv | Select-String "," ) | ConvertFrom-Csv | select "Path","Frequency"
+```
+
 - add user path entry and remove duplicates
   adapted from [this post](https://itluke.online/2018/07/16/how-to-remove-duplicates-from-your-path-environment-variable-with-powershell/).  
 
-```console
+```pwsh
 $CurrentPath = [Environment]::GetEnvironmentVariable('Path','User')
 $TargetPath = $CurrentPath+";path1"
 $SplittedPath = $TargetPath -split ';'

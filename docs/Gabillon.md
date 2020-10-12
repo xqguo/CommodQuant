@@ -16,4 +16,4 @@ There are two part of model parameter fitting. Firstly, the structural parameter
 
 In the second step, we choose to calibrate a piecewise constant time dependent $$dW_s(t)$$ to the market implied volatilities of listed options. These are pseudo-realtime and are always recalibrated on the fly when the market vol changes. 
 
-The forward variance of $$\ln F(t,T_i)$$ is $$ \int_{t_m}^{t_n}[ e^{-2k(T_i-t)} \sigma_s^2(t) + ( 1 - e^{-2k(T_i-t)}) \sigma_l^2 + 2 e^{-2k(T_i-t)}( 1- e^{-2k(T_i-t)}) \sigma_s(t) \sigma_l \rho] dt $$
+The forward variance of $$\ln F(t,T_i)$$ is $$ \int_{t_m}^{t_n}[ e^{-2k(T_i-t)} \sigma_s^2(t) + ( 1 - e^{-2k(T_i-t)}) \sigma_l^2 + 2 e^{-2k(T_i-t)}( 1- e^{-2k(T_i-t)}) \sigma_s(t) \sigma_l  \rho] dt $$

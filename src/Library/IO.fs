@@ -3,7 +3,7 @@
 module IOcsv =
     open System
     open System.IO
-    open Serilog
+    //open Serilog
 
     let mutable ROOT = 
         let dllDir = 
@@ -12,18 +12,18 @@ module IOcsv =
         if Directory.Exists (parDir +/ "csv") then parDir else dllDir
 
     //test logging
-    let logfile = ROOT +/ "logs" +/ "commod.log" 
-    let logLevel = Events.LogEventLevel.Information
-    let mutable logger = 
-        LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .MinimumLevel.Information() //log info as default, change to verbose for more logging.
-            //.WriteTo.File(logfile,logLevel)
-            .WriteTo.File(logfile,logLevel)
-            .CreateLogger()
+    //let logfile = ROOT +/ "logs" +/ "commod.log" 
+    //let logLevel = Events.LogEventLevel.Information
+    //let mutable logger = 
+    //    LoggerConfiguration()
+    //        .MinimumLevel.Verbose()
+    //        .MinimumLevel.Information() //log info as default, change to verbose for more logging.
+    //        //.WriteTo.File(logfile,logLevel)
+    //        .WriteTo.File(logfile,logLevel)
+    //        .CreateLogger()
     
-    logger.Information <| sprintf "Loading CommodLib" 
-    logger.Debug <| sprintf "Debug CommodLib" 
+    //logger.Information <| sprintf "Loading CommodLib" 
+    //logger.Debug <| sprintf "Debug CommodLib" 
 
     ///root dir to read cvs files. 
     ///default to parent of dll bin dir

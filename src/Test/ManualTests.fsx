@@ -41,3 +41,9 @@ let ch = var.Cholesky().Factor
 ch.Row(1) * ch.Row(1)
 
 ch.Row(0) * ch.Column(0)
+
+let tmp = Array2D.init 10 10 (fun x y -> sprintf "%d,%d" x y)
+//3rd row
+let row3 = tmp.[2,0..]
+//2nd column
+let col2 = tmp.[0..,1]

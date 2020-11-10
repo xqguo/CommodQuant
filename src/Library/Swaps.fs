@@ -56,7 +56,7 @@ module Swaps =
         |> Map.toSeq 
         |> Seq.map( fun (k,v) -> 
             let k' = (pillarToDate k).AddMonths nrby |> formatPillar
-            let v' = addBusinessDay -rolladj hols v 
+            let v' = addBusinessDay -rolladj hols ( dateAdjust hols "p" v )
             k',v')
         |> Map.ofSeq
         |> ContractDates
@@ -74,11 +74,20 @@ module Swaps =
             | Some x -> x
             | _ -> (sprintf "Please check market data input, missing pillar %s from curve %A" k p) |> invalidOp
             )
+
     let brtAvgFwd = 
         {
             Commod = getCommod BRT
             Frequency = BusinessDays
             RollAdj = 1
+            Nrby = 0
+        }
+
+    let dbrtAvgFwd = 
+        {
+            Commod = getCommod DBRT
+            Frequency = BusinessDays
+            RollAdj = 0
             Nrby = 0
         }
 

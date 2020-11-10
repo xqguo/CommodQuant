@@ -89,7 +89,7 @@ module ContractDates =
             let d2 = DateTime.Today |> dateAdjust' "Z+9y" 
             generateMonth td true 
             |> Seq.takeWhile (fun x -> x <= d2)
-            |> Seq.map ( fun x -> (formatPillar x, x ))
+            |> Seq.map ( fun x -> (formatPillar x, dateAdjust' "e" x  ))
             |> Map.ofSeq
             |> ContractDates
 

@@ -4,7 +4,7 @@
 #load "QLNet.fsx"
 #load "FsCheck.fsx"
 #r "../Library/bin/Debug/netstandard2.0/CommodLib.dll "
-open System
+open System
 open FSharp.Reflection
 open FsCheck
 open MathNet.Numerics.LinearAlgebra
@@ -13,7 +13,17 @@ open MathNet.Numerics.Distributions
 open QLNet
 open Commod
 
-
+let avgfwd = dbrtAvgFwd
+let (ContractDates cnts ) = dbrtAvgFwd.Commod.Contracts
+let com = getCommod DBRT
+let d1,d2 = getPeriod "Jun-21"
+let dates = getFixingDates dbrtAvgFwd.Frequency com.Calendar d1 d2 |> Seq.toList
+let contracts = getFixingContracts (getNrbyContracts avgfwd) dates |> Seq.toList
+let getEqualWeights x =
+    let n = List.length x
+    let w = 1.0 / float n 
+    List.replicate n w 
+let weights = (getEqualWeights dates)
 
 //chol & svd
 let vols= vector [ 0.3 ; 0.2; 0.5]

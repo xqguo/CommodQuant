@@ -173,6 +173,8 @@ module Pricer =
             [|   "Option", opt;
                 "Delta1", deltaA.[0];
                 "Delta2", deltaA.[1];
+                "P1", p1;
+                "P2", p2;
                 "Intrinsic", pintr;
                 "vol1", ( Statistics.Mean v1); //vol1 
                 "vol2", ( Statistics.Mean v2); //vol1 

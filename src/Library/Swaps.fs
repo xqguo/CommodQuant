@@ -38,7 +38,11 @@ module Swaps =
         {
            AverageSpecs: AverageSpecs
            PeriodSpecs: seq<PeriodSpecs>
-        }
+        } with
+        member this.Quantity = 
+            this.PeriodSpecs
+            |> Seq.map ( fun s -> s.nominal )
+            |> Seq.reduce (+)
 
     let getFixingDates freq hols d1 d2 = 
         match freq with
@@ -102,7 +106,19 @@ module Swaps =
 
     let getSwap ins d1 d2 nominal strike  = //generate standard swap
         let avg = getAvgFwd ins
-        let dates = generateCalMonthSchedule d1 d2 |> Seq.map( fun (d1,d2) -> (d1, d2, (dateAdjust avg.Commod.Calendar "5b" d2)))
+        let cnts = getContracts ins
+        let getPeridRange (d1,d2) =
+            match ins with
+            | TTF -> //bullet
+                let d = cnts.[(formatPillar d2)]
+                d,d
+            | JKM -> getContractMonth (getContracts ins ) (formatPillar d2)
+            | _ -> d1,d2 //default calmonth
+        let dates = 
+            generateCalMonthSchedule d1 d2 
+            |> Seq.map getPeridRange
+            |> Seq.map( fun (d1,d2) ->                 
+                (d1, d2, (dateAdjust avg.Commod.Calendar "5b" d2)))
         {
             AverageSpecs = avg
             PeriodSpecs = 

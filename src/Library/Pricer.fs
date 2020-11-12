@@ -6,8 +6,12 @@ module Pricer =
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Statistics
 
-    //let SwapPricer inst start end =
-    //    ()
+    let SwapPricer inst d1 d2 (f:PriceCurve) = //std swap pricer 
+        let c = getCommod inst
+        let s = getSwap inst d1 d2 ( c.LotSize ) ( c.Quotation * 0.M) 
+        let a = priceSwap s f
+        a.Value / s.Quantity.Value  |> float
+
 
     let SpreadOptionPricer inst1 start1 end1 inst2 start2 end2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)

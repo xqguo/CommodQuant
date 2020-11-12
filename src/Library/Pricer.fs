@@ -6,6 +6,9 @@ module Pricer =
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Statistics
 
+    //let SwapPricer inst start end =
+    //    ()
+
     let SpreadOptionPricer inst1 start1 end1 inst2 start2 end2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
         rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
@@ -40,14 +43,7 @@ module Pricer =
                 let refMonth = refDate.AddMonths i 
                 let contract = refMonth |> formatPillar
                 //get reference contract, swap for oil, bullet for gas
-                let avgfwd = 
-                    match com.Instrument with
-                    | BRT -> brtAvgFwd
-                    | DBRT -> dbrtAvgFwd
-                    | JKM -> jkmAvgFwd
-                    | TTF -> ttfAvgFwd
-                    | _ -> invalidOp "Commoditiy Not supported"
-
+                let avgfwd = getAvgFwd com.Instrument
                 let d1,d2 = 
                     match com.Instrument with 
                     | BRT 

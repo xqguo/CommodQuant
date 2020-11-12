@@ -19,8 +19,10 @@
     <None Include="PlattsHolidays.fsx" />
     <None Include="icecontracts.fsx" />
     <None Include="setup.fsx" />
-    <None Include="holidays/**" />
-    <None Include="csv/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="holidays/**" CopyToOutputDirectory="Always" />
+    <None Include="csv/**" CopyToOutputDirectory="Always" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

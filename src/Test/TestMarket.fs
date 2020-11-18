@@ -18,6 +18,11 @@ let ``test getCalendar`` (d: Instrument) =
     | JCC -> cal = Set.empty
     | _ -> true
 
+[<Property>]
+let ``test brtContract`` () =
+    let c = getCommod BRT 
+    c.Contracts.Item "AUG-20" = DateTime(2020,6,30)
+
 //[<Property>]
 //let ``test getJkmPeriod`` () =
 //    (getJkmPeriod "Nov19" = (DateTime(2019,9,14), DateTime(2019,10,15))) .&.

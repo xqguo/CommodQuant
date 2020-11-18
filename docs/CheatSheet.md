@@ -111,10 +111,12 @@ dotnet publish -c Release -o outputdir
 ```
 - Use jupyter notebook for F#
 
-For people familiar with jupyter notebook/lab, you can follow this [guide](https://www.hanselman.com/blog/AnnouncingNETJupyterNotebooks.aspx) and enable F# for it.  
+For people familiar with jupyter notebook/lab, you can follow this [guide](https://devblogs.microsoft.com/dotnet/net-interactive-is-here-net-notebooks-preview-2) and enable F# for it.  
 
 ```
-dotnet try jupyter install
+dotnet tool install --global Microsoft.dotnet-interactive
+dotnet interactive jupyter install #from Anaconda console
+jupyter kernelspec list
 ```
 - for a even more controlled build process, use [Fake](https://fake.build/)
 

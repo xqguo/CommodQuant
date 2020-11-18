@@ -23,7 +23,7 @@ module Contracts =
         
         let getBrtExp month =  
             let hol = getCalendar BRT
-            dateAdjust hol "a-1mp" month
+            dateAdjust hol "a-1m-1b" month
 
         //https://www.theice.com/products/27996665/Dutch-TTF-Gas-Futures/
         //Expiration Date
@@ -73,7 +73,6 @@ module Contracts =
         let rulebased =
             //generate last bd of prior month
             let td = DateTime.Today |> dateAdjust' "-1ya" 
-            let hol = getCalendar ins
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.map ( fun x -> (formatPillar x , Conventions.getExp x ins))
             |> Seq.skipWhile( fun (_,d) -> d < td )

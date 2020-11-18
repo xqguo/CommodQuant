@@ -1,9 +1,8 @@
-﻿#I "../../../.paket/load/"
-#load "FSharp.Data.fsx"
-#load "MathNet.Numerics.FSharp.fsx"
-#load "QLNet.fsx"
-#load "FsCheck.fsx"
-#r "../Library/bin/Debug/netstandard2.0/CommodLib.dll "
+﻿#r "nuget:FSharp.Data"
+#r "nuget:MathNet.Numerics.FSharp"
+#r "nuget:QLNet"
+#r "nuget:FsCheck"
+#r "C:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\\bin\\CommodLib.dll"
 open System
 open FSharp.Reflection
 open FsCheck
@@ -12,12 +11,19 @@ open MathNet.Numerics.Statistics
 open MathNet.Numerics.Distributions
 open QLNet
 open Commod
+open Commod.Contracts.Conventions
 
-let avgfwd =  getAvgFwd DBRT
-let (ContractDates cnts ) = avgfwd.Commod.Contracts
-let com = getCommod DBRT
+Commod.IOcsv.ROOT   <- """C:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\\bin"""
+
+let d = DateTime(2020,8,1)
+dateAdjust' "a-1m-1b" d
+getExp d BRT
+let ins = BRT
+let cnts = getContracts ins
+cnts.Item "AUG-20"
+let avgfwd =  getAvgFwd ins
 let d1,d2 = getPeriod "Jun-21"
-let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 |> Seq.toList
+let dates = getFixingDates avgfwd.Frequency avgfwd.Commod.Calendar d1 d2 |> Seq.toList
 let contracts = getFixingContracts (getNrbyContracts avgfwd) dates |> Seq.toList
 let getEqualWeights x =
     let n = List.length x
@@ -47,3 +53,10 @@ let tmp = Array2D.init 10 10 (fun x y -> sprintf "%d,%d" x y)
 let row3 = tmp.[2,0..]
 //2nd column
 let col2 = tmp.[0..,1]
+
+let rulebased = [ "K", 1 ; "K2", 4] |> Map.ofList
+let actuals = [ "K", 2 ; "K1", 3] |> Map.ofList
+Map.add "K" 100 actuals 
+Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
+
+

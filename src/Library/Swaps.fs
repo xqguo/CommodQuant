@@ -106,7 +106,7 @@ module Swaps =
 
     let getSwap ins d1 d2 nominal strike  = //generate standard swap
         let avg = getAvgFwd ins
-        let cnts = getContracts ins
+        let cnts = avg.Commod.Contracts
         let getPeridRange (d1,d2) =
             match ins with
             | TTF -> //bullet
@@ -148,12 +148,12 @@ module Swaps =
     //    p |> Map.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
     let priceSwap (s:AverageSwap) p = 
+        let contractDates = getNrbyContracts s.AverageSpecs
         s.PeriodSpecs 
         |> Array.map( fun period -> 
             //let activePillars = depPillar s.AverageSpecs period.startDate period.endDate        
             //let p' = depCurv activePillars p
             let fixingDates = getFixingDatesFromAvg s.AverageSpecs period.startDate period.endDate 
-            let contractDates = getNrbyContracts s.AverageSpecs
             let avg = getFixingPrices contractDates fixingDates p |> avgPrice
             let v = (avg - period.strike ) 
             v * period.nominal

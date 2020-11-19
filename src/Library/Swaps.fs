@@ -37,12 +37,12 @@ module Swaps =
     type AverageSwap=
         {
            AverageSpecs: AverageSpecs
-           PeriodSpecs: seq<PeriodSpecs>
+           PeriodSpecs: PeriodSpecs[]
         } with
         member this.Quantity = 
             this.PeriodSpecs
-            |> Seq.map ( fun s -> s.nominal )
-            |> Seq.reduce (+)
+            |> Array.map ( fun s -> s.nominal )
+            |> Array.reduce (+)
 
     let getFixingDates freq hols d1 d2 = 
         match freq with
@@ -57,12 +57,12 @@ module Swaps =
         if rolladj < 0 then (invalidArg "rolladj" "invalid rolladj or nrby number, expect positive int")
         if nrby < 0 then (invalidArg "nrby" "invalid nrby number, expect positive int")
         cnts 
-        |> Map.toSeq 
-        |> Seq.map( fun (k,v) -> 
+        |> Map.toArray
+        |> Array.map( fun (k,v) -> 
             let k' = (pillarToDate k).AddMonths nrby |> formatPillar
             let v' = addBusinessDay -rolladj hols ( dateAdjust hols "p" v )
             k',v')
-        |> Map.ofSeq
+        |> Map.ofArray
         |> ContractDates
 
     let getContractMonth (c:ContractDates) cnt = 
@@ -74,12 +74,12 @@ module Swaps =
 
     let getFixingContracts (ContractDates c) dates =  
         //cnts could be after roll/nrby adj, return the pillar used to lookup price, so we know the exact dependencies and also enable diffsharp can work
-        let s = c |> Map.toSeq |> Seq.map ( fun (k,v) -> (v, k)) |> Seq.sortBy fst
-        dates |> Seq.map( fun d -> s |> Seq.find( fun x -> fst x >= d ) |> snd )
+        let s = c |> Map.toArray |> Array.map ( fun (k,v) -> (v, k)) |> Array.sortBy fst
+        dates |> Array.map( fun d -> s |> Array.find( fun x -> fst x >= d ) |> snd )
 
     let getFixingPrices c dates (PriceCurve p) =  //cnts should be after roll/nrby adj
         getFixingContracts c dates
-        |> Seq.map( fun k -> 
+        |> Array.map( fun k -> 
             let v = Map.tryFind k p
             match v with
             | Some x -> x
@@ -112,18 +112,18 @@ module Swaps =
             | TTF -> //bullet
                 let d = cnts.[(formatPillar d2)]
                 d,d
-            | JKM -> getContractMonth (getContracts ins ) (formatPillar d2)
+            | JKM -> getContractMonth cnts (formatPillar d2)
             | _ -> d1,d2 //default calmonth
         let dates = 
             generateCalMonthSchedule d1 d2 
-            |> Seq.map getPeridRange
-            |> Seq.map( fun (d1,d2) ->                 
+            |> Array.map getPeridRange
+            |> Array.map( fun (d1,d2) ->                 
                 (d1, d2, (dateAdjust avg.Commod.Calendar "5b" d2)))
         {
             AverageSpecs = avg
             PeriodSpecs = 
                 dates 
-                |> Seq.map( fun (d1,d2,d3) -> { startDate = d1; endDate = d2; deliveryDate = d3; nominal = nominal; strike = strike } )
+                |> Array.map( fun (d1,d2,d3) -> { startDate = d1; endDate = d2; deliveryDate = d3; nominal = nominal; strike = strike } )
         }
 
     let getbrtswap d1 d2 nominal strike  = //generate standard swap
@@ -136,27 +136,27 @@ module Swaps =
     let getFixingDatesFromAvg (s:AverageSpecs) d1 d2= 
         getFixingDates s.Frequency s.Commod.Calendar d1 d2
 
-    ///avg swap's pillar dependencies
-    let depPillar (s:AverageSpecs) d1 d2 =         
-        let fixingDates = getFixingDatesFromAvg s d1 d2
-        let contractDates = getNrbyContracts s
-        getFixingContracts contractDates fixingDates 
-        |> set
+    /////avg swap's pillar dependencies
+    //let depPillar (s:AverageSpecs) d1 d2 =         
+    //    let fixingDates = getFixingDatesFromAvg s d1 d2
+    //    let contractDates = getNrbyContracts s
+    //    getFixingContracts contractDates fixingDates 
+    //    |> set
 
-    //used to filter out unnecessary pillars before pricing and risk computation
-    let depCurv pillars (PriceCurve p) = 
-        p |> Map.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
+    ////used to filter out unnecessary pillars before pricing and risk computation
+    //let depCurv pillars (PriceCurve p) = 
+    //    p |> Map.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
     let priceSwap (s:AverageSwap) p = 
         s.PeriodSpecs 
-        |> Seq.map( fun period -> 
-            let activePillars = depPillar s.AverageSpecs period.startDate period.endDate        
-            let p' = depCurv activePillars p
+        |> Array.map( fun period -> 
+            //let activePillars = depPillar s.AverageSpecs period.startDate period.endDate        
+            //let p' = depCurv activePillars p
             let fixingDates = getFixingDatesFromAvg s.AverageSpecs period.startDate period.endDate 
             let contractDates = getNrbyContracts s.AverageSpecs
-            let avg = getFixingPrices contractDates fixingDates p' |> avgPrice
+            let avg = getFixingPrices contractDates fixingDates p |> avgPrice
             let v = (avg - period.strike ) 
             v * period.nominal
             )
-        |> Seq.reduce (+)
+        |> Array.reduce (+)
 

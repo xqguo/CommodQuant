@@ -172,6 +172,7 @@ module DateUtils =
          let fwd = startDate <= endDate   
          generateDay startDate fwd 
          |> Seq.takeWhile (fun dt -> fwd && dt <= endDate  || ((not fwd) && dt >= endDate ))
+         |> Array.ofSeq
 
     let isHoliday (hol:Set<DateTime>) d = 
         hol.Contains d
@@ -208,13 +209,13 @@ module DateUtils =
 
     let bdRange hol d1 d2 = 
         dateRange d1 d2 
-        |> Seq.filter( isBusinessDay hol)
+        |> Array.filter( isBusinessDay hol)
 
     let numBizdays hol (d1:DateTime) d2 = //exclusive of d1
         if d1 > d2 then invalidArg "d1 d2" "d1 should not be greater than d2"
         if d1.Date <> d1 then invalidArg "d1" "d1 should not have time fractions"
         if d2.Date <> d2 then invalidArg "d1" "d2 should not have time fractions"
-        bdRange hol (d1.AddDays 1.0 ) d2 |> Seq.length
+        bdRange hol (d1.AddDays 1.0 ) d2 |> Array.length
 
     let getBizYears hol d1 d2 = 
         float ( numBizdays hol d1 d2 ) / 252.
@@ -365,7 +366,8 @@ module DateUtils =
         if d1 > d2 then failwith "d1 > d2, invalid inputs"
         generateMonth ( dateAdjust' "a" d1 ) true
         |> Seq.takeWhile ( fun d -> d <= d2 )
-        |> Seq.map( fun ms -> 
+        |> Array.ofSeq
+        |> Array.map( fun ms -> 
             let me =  dateAdjust' "e" ms             
             max ms d1, min me d2)
             

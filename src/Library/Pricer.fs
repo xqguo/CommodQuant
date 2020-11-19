@@ -20,22 +20,22 @@ module Pricer =
 
         // get equal weights based on the number of fixings
         let getEqualWeights x =
-            let n = List.length x
+            let n = Array.length x
             let w = 1.0 / float n 
-            List.replicate n w 
+            Array.replicate n w 
 
-        let lags1 = [start1 .. end1]
-        let lags2 = [start2 .. end2]
-        let inline toVector s = s |> Seq.map float |> List.ofSeq |> vector 
+        let lags1 = [|start1 .. end1|]
+        let lags2 = [|start2 .. end2|]
+        let inline toVector s = s |> Array.map float |> vector 
 
         /// split fixings into future and past using pricingDate
         let splitDetails dates weights contracts = 
-            let details = List.zip3 dates weights contracts
-            let n = dates |> List.tryFindIndex( fun x -> x > pricingDate ) 
+            let details = Array.zip3 dates weights contracts
+            let n = dates |> Array.tryFindIndex( fun x -> x > pricingDate ) 
             match n with
-            | Some 0 -> (List.empty, details)
-            | Some i -> List.splitAt i details
-            | None -> (details, List.empty)
+            | Some 0 -> (Array.empty, details)
+            | Some i -> Array.splitAt i details
+            | None -> (details, Array.empty)
 
         ///take refmonth and return a tuple of 3 lists: 
         ///fixingdate, contract, weight, s
@@ -43,7 +43,7 @@ module Pricer =
         let getFixings refMonth (com:Commod) lags slope =     
             let refDate = refMonth |> pillarToDate 
             lags 
-            |> List.map( fun i -> 
+            |> Array.map( fun i -> 
                 let refMonth = refDate.AddMonths i 
                 let contract = refMonth |> formatPillar
                 //get reference contract, swap for oil, bullet for gas
@@ -58,16 +58,16 @@ module Pricer =
                         let d = cnts.[contract]
                         d,d
 
-                let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 |> Seq.toList
+                let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 
                 //let contracts = List.replicate dates.Length contract
-                let contracts = getFixingContracts (getNrbyContracts avgfwd) dates |> Seq.toList
-                let weights = (getEqualWeights dates) |> List.map( fun x -> x /(float lags.Length) * (float slope))
+                let contracts = getFixingContracts (getNrbyContracts avgfwd) dates
+                let weights = (getEqualWeights dates) |> Array.map( fun x -> x /(float lags.Length) * (float slope))
                 dates, contracts, weights
                 )
-            |> List.reduce( fun ( d1,c1,w1) (d2,c2,w2) -> 
-                (List.append d1 d2), 
-                (List.append c1 c2),
-                (List.append w1 w2))
+            |> Array.reduce( fun ( d1,c1,w1) (d2,c2,w2) -> 
+                (Array.append d1 d2), 
+                (Array.append c1 c2),
+                (Array.append w1 w2))
 
         ///generate inputs for option pricing 
         /// inputs are
@@ -80,31 +80,31 @@ module Pricer =
             //consolidate future details to group weightes for same fixing dates and same contracts
             let futureDetails= 
                 futureDetails'
-                |> List.map( fun ( d, w, c ) -> (getTTM expDate d ), w , c ) 
-                |> List.groupBy(fun (x,_,z) -> x,z) |> List.map( fun ((k1,k2),v) -> k1,(v |> List.sumBy( fun (_,x,_)->x)),k2)
+                |> Array.map( fun ( d, w, c ) -> (getTTM expDate d ), w , c ) 
+                |> Array.groupBy(fun (x,_,z) -> x,z) |> Array.map( fun ((k1,k2),v) -> k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
 
             let fw1 = 
-                if List.isEmpty futureDetails then 
+                if Array.isEmpty futureDetails then 
                     Vector<float>.Build.Dense(1) + 0.00001
                 else 
-                    futureDetails |> List.map( fun ( _, w, _ ) -> w) |> vector
+                    futureDetails |> Array.map( fun ( _, w, _ ) -> w) |> vector
             let t1 = 
-                if futureDetails.IsEmpty then 
+                if Array.isEmpty futureDetails then 
                     Vector<float>.Build.Dense(1) + 0.00001
                 else 
-                    futureDetails |> List.map( fun ( d, _, _ ) -> d ) |> vector
+                    futureDetails |> Array.map( fun ( d, _, _ ) -> d ) |> vector
 
-            let contracts = futureDetails |> List.unzip3 |> fun ( _, _, c ) -> c 
+            let contracts = futureDetails |> Array.unzip3 |> fun ( _, _, c ) -> c 
             let f1 = 
-                if futureDetails.IsEmpty then 
+                if Array.isEmpty futureDetails then 
                     Vector<float>.Build.Dense(1) + 0.00001
                 else 
-                    contracts |> List.map getPriceFunc  |> toVector
+                    contracts |> Array.map getPriceFunc  |> toVector
             let v1 = 
-                if futureDetails.IsEmpty then 
+                if Array.isEmpty futureDetails then 
                     Vector<float>.Build.Dense(1) + 0.00001
                 else 
-                    contracts |> List.map getVolFunc |> toVector
+                    contracts |> Array.map getVolFunc |> toVector
             (f1, fw1, t1, v1)
 
         ///generate empty past quickly for use when the deal has not past dependency
@@ -114,11 +114,11 @@ module Pricer =
 
         ///generate past fixings required for asian option
         let getPastInputs pastDetails getFixingFunc = 
-                if List.isEmpty pastDetails then 
+                if Array.isEmpty pastDetails then 
                     emptyPastInputs
                 else 
-                    let w = pastDetails |> List.unzip3 |> fun ( _, w, _ ) -> w |> vector
-                    let p = pastDetails |> List.map(fun ( d, _, c ) -> getFixingFunc d c ) |> toVector
+                    let w = pastDetails |> Array.unzip3 |> fun ( _, w, _ ) -> w |> vector
+                    let p = pastDetails |> Array.map(fun ( d, _, c ) -> getFixingFunc d c ) |> toVector
                     ( w, p )            
 
         //for the final portfolio we need just functions that take price curve and return price. 

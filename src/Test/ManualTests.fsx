@@ -1,33 +1,30 @@
-﻿#I "../../../.paket/load/"
-#load "FSharp.Data.fsx"
-#load "MathNet.Numerics.FSharp.fsx"
-#load "QLNet.fsx"
-#load "FsCheck.fsx"
-#r "../Library/bin/Debug/netstandard2.0/CommodLib.dll "
+﻿#r "nuget:FSharp.Data"
+//#r "nuget:MathNet.Numerics.FSharp"
+//#r "nuget:QLNet"
+//#r "nuget:FsCheck"
+#r "../Library/bin/Release/netstandard2.0/CommodLib.dll"
 open System
-open FSharp.Reflection
-open FsCheck
-open MathNet.Numerics.LinearAlgebra
-open MathNet.Numerics.Statistics
-open MathNet.Numerics.Distributions
-open QLNet
+//open FSharp.Reflection
+//open FsCheck
+//open MathNet.Numerics.LinearAlgebra
+//open MathNet.Numerics.Statistics
+//open MathNet.Numerics.Distributions
+//open QLNet
 open Commod
+//open Commod.Contracts.Conventions
 
+Commod.IOcsv.ROOT <- (IO.Path.Combine( Environment.GetEnvironmentVariable "OneDrive", @"Commodities\bin"))
 
+let inst = BRT
+let f = getPrices inst
+let d1,d2 = getPeriod "Jan21"
+SwapPricer inst d1 d2 f 
+f.Item "FEB-21"
+f.Item "MAR-21"
+f.Item "APR-21"
 
-//chol & svd
-let vols= vector [ 0.3 ; 0.2; 0.5]
-vols.SubVector(0,3)
-let corrs = matrix [ [1.0 ; 0.8 ; 0. ];[0.8; 1.0 ; 0.];[0.0;0.;1.0]] 
-let corr11 = matrix [ [0.25 ]] 
-let corr12 = matrix [ [0.0 ]] 
+let a = (5M<USD> / 1M<bbl>) |> USDBBL
+let (USDBBL b ) = a
+b * b |> BBL
 
-corr11.Stack(corr12).Append(corr12.Stack(corr11))
-
-let var = vols.OuterProduct(vols) .* corrs
-let ch = var.Cholesky().Factor
-
-
-ch.Row(1) * ch.Row(1)
-
-ch.Row(0) * ch.Column(0)
+b * 1M

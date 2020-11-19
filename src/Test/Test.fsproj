@@ -6,6 +6,7 @@
     <ProjectReference Include="..\Library\CommodLib.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ManualTests.fsx" />
     <None Include="paket.references" />
     <Compile Include="FsCheckTypes.fs" />
     <Compile Include="TestUnitTypes.fs" />

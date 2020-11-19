@@ -38,7 +38,11 @@ module Swaps =
         {
            AverageSpecs: AverageSpecs
            PeriodSpecs: seq<PeriodSpecs>
-        }
+        } with
+        member this.Quantity = 
+            this.PeriodSpecs
+            |> Seq.map ( fun s -> s.nominal )
+            |> Seq.reduce (+)
 
     let getFixingDates freq hols d1 d2 = 
         match freq with
@@ -56,10 +60,17 @@ module Swaps =
         |> Map.toSeq 
         |> Seq.map( fun (k,v) -> 
             let k' = (pillarToDate k).AddMonths nrby |> formatPillar
-            let v' = addBusinessDay -rolladj hols v 
+            let v' = addBusinessDay -rolladj hols ( dateAdjust hols "p" v )
             k',v')
         |> Map.ofSeq
         |> ContractDates
+
+    let getContractMonth (c:ContractDates) cnt = 
+        let prior = 
+            match cnt with
+            | MMMYY d -> d.AddMonths(-1) |> formatPillar
+            | _ -> failwith "expect MMMyy format pillar only"
+        c.[prior].AddDays(1.), c.[cnt]
 
     let getFixingContracts (ContractDates c) dates =  
         //cnts could be after roll/nrby adj, return the pillar used to lookup price, so we know the exact dependencies and also enable diffsharp can work
@@ -74,40 +85,49 @@ module Swaps =
             | Some x -> x
             | _ -> (sprintf "Please check market data input, missing pillar %s from curve %A" k p) |> invalidOp
             )
-    let brtAvgFwd = 
-        {
-            Commod = getCommod BRT
-            Frequency = BusinessDays
-            RollAdj = 1
-            Nrby = 0
-        }
 
-    let jkmAvgFwd = 
-        {
-            Commod = getCommod JKM
-            Frequency = BusinessDays
-            RollAdj = 0
-            Nrby = 0
-        }
+    let getAvgFwd ins = 
+        let avg = 
+            {
+                Commod = getCommod ins
+                Frequency = BusinessDays
+                RollAdj = 0
+                Nrby = 0
+            }
+        match ins with
+        | BRT -> { avg with RollAdj = 1 } 
+        | _ -> avg
 
-    let ttfAvgFwd = 
-        {
-            Commod = getCommod TTF
-            Frequency = BusinessDays
-            RollAdj = 0
-            Nrby = 0
-        }
+    //let brtAvgFwd = getAvgFwd BRT
+    //let dbrtAvgFwd = getAvgFwd DBRT
+    //let jkmAvgFwd = getAvgFwd JKM
+    //let ttfAvgFwd = getAvgFwd TTF
+    //let brtAvgFwd0 = {brtAvgFwd with RollAdj = 0 }
 
-    let brtAvgFwd0 = {brtAvgFwd with RollAdj = 0 }
-
-    let getbrtswap d1 d2 nominal strike  = //generate standard swap
-        let dates = generateCalMonthSchedule d1 d2 |> Seq.map( fun (d1,d2) -> (d1, d2, (dateAdjust brtAvgFwd.Commod.Calendar "5b" d2)))
+    let getSwap ins d1 d2 nominal strike  = //generate standard swap
+        let avg = getAvgFwd ins
+        let cnts = getContracts ins
+        let getPeridRange (d1,d2) =
+            match ins with
+            | TTF -> //bullet
+                let d = cnts.[(formatPillar d2)]
+                d,d
+            | JKM -> getContractMonth (getContracts ins ) (formatPillar d2)
+            | _ -> d1,d2 //default calmonth
+        let dates = 
+            generateCalMonthSchedule d1 d2 
+            |> Seq.map getPeridRange
+            |> Seq.map( fun (d1,d2) ->                 
+                (d1, d2, (dateAdjust avg.Commod.Calendar "5b" d2)))
         {
-            AverageSpecs = brtAvgFwd
+            AverageSpecs = avg
             PeriodSpecs = 
                 dates 
                 |> Seq.map( fun (d1,d2,d3) -> { startDate = d1; endDate = d2; deliveryDate = d3; nominal = nominal; strike = strike } )
         }
+
+    let getbrtswap d1 d2 nominal strike  = //generate standard swap
+            getSwap BRT d1 d2 nominal strike 
 
     let getbrtswapbyPeriod period nominal strike =
         let (d1, d2 ) = getPeriod period

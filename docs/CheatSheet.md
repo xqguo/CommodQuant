@@ -111,20 +111,28 @@ dotnet publish -c Release -o outputdir
 ```
 - Use jupyter notebook for F#
 
-For people familiar with jupyter notebook/lab, you can follow this [guide](https://www.hanselman.com/blog/AnnouncingNETJupyterNotebooks.aspx) and enable F# for it.  
+For people familiar with jupyter notebook/lab, you can follow this [guide](https://devblogs.microsoft.com/dotnet/net-interactive-is-here-net-notebooks-preview-2) and enable F# for it.  
 
 ```
-dotnet try jupyter install
+dotnet tool install --global Microsoft.dotnet-interactive
+dotnet interactive jupyter install #from Anaconda console
+jupyter kernelspec list
 ```
 - for a even more controlled build process, use [Fake](https://fake.build/)
 
 
 ## PowerShell
 
+- create csv and select cloumns
+
+```pwsh
+(type .\navdb.csv | Select-String "," ) | ConvertFrom-Csv | select "Path","Frequency"
+```
+
 - add user path entry and remove duplicates
   adapted from [this post](https://itluke.online/2018/07/16/how-to-remove-duplicates-from-your-path-environment-variable-with-powershell/).  
 
-```console
+```pwsh
 $CurrentPath = [Environment]::GetEnvironmentVariable('Path','User')
 $TargetPath = $CurrentPath+";path1"
 $SplittedPath = $TargetPath -split ';'

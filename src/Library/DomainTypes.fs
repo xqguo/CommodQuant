@@ -143,7 +143,11 @@ module DomainTypes  =
         | DUB // dubai crude
         | SJET // Sing Jet
 
-    type ContractDates = ContractDates of  Map<string,DateTime> //how to interprete tenor code to date
+    type ContractDates = 
+        ContractDates of Map<string,DateTime> with //how to interprete tenor code to date
+        member this.Item s = 
+            let (ContractDates c) = this
+            c.Item s
 
     type Commod =
         { 

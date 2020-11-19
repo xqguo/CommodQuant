@@ -1,20 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Authors>Xiaoqiang Guo</Authors>
-    <Company>Pavilion Energy</Company>
-    <Product>CommodQuant</Product>
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <Copyright>Xiaoqinag Guo</Copyright>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\..\LICENSE.txt">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
+    <None Include="../../LICENSE.txt" />
     <None Include="paket.references" />
     <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
@@ -26,13 +15,14 @@
     <Compile Include="Swaps.fs" />
     <Compile Include="MonteCarlo.fs" />
     <Compile Include="Options.fs" />
+    <Compile Include="Pricer.fs" />
     <None Include="PlattsHolidays.fsx" />
     <None Include="icecontracts.fsx" />
     <None Include="setup.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="holidays\**" CopyToOutputDirectory="Always" />
-    <None Include="csv\**" CopyToOutputDirectory="Always" />
+    <None Include="holidays/**" CopyToOutputDirectory="Always" />
+    <None Include="csv/**" CopyToOutputDirectory="Always" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -41,7 +41,8 @@ let ``test getCommod `` (ins:Instrument) =
     let test = getCommod ins
     let (ContractDates ctt) = test.Contracts
     Assert.False ctt.IsEmpty |@ sprintf "Contracts are not empty" .&.
-    Assert.True (test.Lot > 0M) |@ sprintf "Lot size is greater than 0"
+    Assert.True (test.Lot > 0M) |@ sprintf "Lot size is greater than 0" .&.
+    Assert.True (test.Instrument = ins) |@ sprintf "Instrument is the same."
 
 // [<Property( MaxTest = 1)>]
 // let ``test getPrices for BRT `` () =

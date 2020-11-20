@@ -12,7 +12,6 @@ module Pricer =
         let a = priceSwap s f
         a.Value / s.Quantity.Value  |> float
 
-
     let SpreadOptionPricer inst1 start1 end1 inst2 start2 end2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
         rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
@@ -42,12 +41,13 @@ module Pricer =
         ///lope is applied here into the weights.
         let getFixings refMonth (com:Commod) lags slope =     
             let refDate = refMonth |> pillarToDate 
+            //get reference contract, swap for oil, bullet for gas
+            let avgfwd = getAvgFwd com.Instrument
+            let contracts' = getNrbyContracts avgfwd
             lags 
             |> Array.map( fun i -> 
                 let refMonth = refDate.AddMonths i 
                 let contract = refMonth |> formatPillar
-                //get reference contract, swap for oil, bullet for gas
-                let avgfwd = getAvgFwd com.Instrument
                 let d1,d2 = 
                     match com.Instrument with 
                     | BRT 
@@ -60,7 +60,7 @@ module Pricer =
 
                 let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 
                 //let contracts = List.replicate dates.Length contract
-                let contracts = getFixingContracts (getNrbyContracts avgfwd) dates
+                let contracts = getFixingContracts contracts' dates
                 let weights = (getEqualWeights dates) |> Array.map( fun x -> x /(float lags.Length) * (float slope))
                 dates, contracts, weights
                 )

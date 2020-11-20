@@ -2,6 +2,9 @@ namespace Commod
 [<AutoOpen>]
 module Markets = 
     open IOcsv
+    //cache the commods as it involves disk IO
+    let commoddict = new System.Collections.Concurrent.ConcurrentDictionary<Instrument, Commod>()
+
     let conversionFactors = 
         [ 
             //ins, from, to 
@@ -52,17 +55,19 @@ module Markets =
 
     let inline applyMapUnit case s = s |> Map.map( fun k v -> UnitPrice.applyCase case v )
 
-    let getCommod ins = 
-        let getCommod' q lotsize ins = 
+    let createCommod = 
+        let getCommod' ins = 
+            let (q,s) = 
+                match ins with
+                | BRT |DBRT | JCC | DUB | SJET | SGO  -> USDBBL 1M<USD/bbl>, BBL 1000M<bbl>
+                | FO180 | FO380 | MFO | FO35 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
+                | NG | JKM | NBP | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
             let cals = getCalendar ins 
             let contracts = getContracts ins    
-            { Instrument = ins; Calendar = cals; Contracts = contracts; Quotation = q; LotSize = lotsize}  
-        let (q,s) = 
-            match ins with
-            | BRT |DBRT | JCC | DUB | SJET | SGO  -> USDBBL 1M<USD/bbl>, BBL 1000M<bbl>
-            | FO180 | FO380 | MFO | FO35 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
-            | NG | JKM | NBP | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
-        getCommod' q s ins
+            { Instrument = ins; Calendar = cals; Contracts = contracts; Quotation = q; LotSize = s}  
+        fun ins -> getCommod' ins
+               
+    let getCommod ins = commoddict.GetOrAdd(ins, createCommod) 
 
     // these depends on the data format
     // commod curve pillars are either MMM-yy or TODAY or BOM, all in upper case.

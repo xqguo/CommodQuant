@@ -12,7 +12,7 @@ module Pricer =
         let a = priceSwap s f
         a.Value / s.Quantity.Value  |> float
 
-    let SpreadOptionPricer inst1 start1 end1 inst2 start2 end2 slope freight callput expDate  
+    let SpreadOptionPricer inst1 start1 end1 avg1 inst2 start2 end2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
         rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
         let getTTM expDate d = max ((( min d expDate ) - pricingDate ).TotalDays / 365.) 0.
@@ -39,7 +39,7 @@ module Pricer =
         ///take refmonth and return a tuple of 3 lists: 
         ///fixingdate, contract, weight, s
         ///lope is applied here into the weights.
-        let getFixings refMonth (com:Commod) lags slope =     
+        let getFixings refMonth (com:Commod) lags slope avg =     
             let refDate = refMonth |> pillarToDate 
             //get reference contract, swap for oil, bullet for gas
             let avgfwd = getAvgFwd com.Instrument
@@ -50,15 +50,11 @@ module Pricer =
                 let contract = refMonth |> formatPillar
                 let d1,d2 = 
                     match com.Instrument with 
-                    | BRT 
-                    | DBRT -> 
-                        refMonth, dateAdjust' "e" refMonth
-                    | _ -> //for gas, use the 1d bullet on expiration date
-                        let (ContractDates cnts) = com.Contracts
-                        let d = cnts.[contract]
-                        d,d
-
-                let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 
+                    | JKM | TTF | NG -> //for gas, use the contract month
+                        getContractMonth contracts' contract
+                    | _ ->   refMonth, dateAdjust' "e" refMonth
+                //let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 
+                let dates = getFixingDates avg com.Calendar d1 d2 
                 //let contracts = List.replicate dates.Length contract
                 let contracts = getFixingContracts contracts' dates
                 let weights = (getEqualWeights dates) |> Array.map( fun x -> x /(float lags.Length) * (float slope))
@@ -123,7 +119,7 @@ module Pricer =
 
         //for the final portfolio we need just functions that take price curve and return price. 
 
-        let getInputs expDate refMonth lags inst slope (pricecurve:PriceCurve) (volcurve:VolCurve) priceOverride volOverride = 
+        let getInputs expDate refMonth lags avg inst slope (pricecurve:PriceCurve) (volcurve:VolCurve) priceOverride volOverride = 
             let com = getCommod inst
             let getPrices1 c = 
                match priceOverride with
@@ -142,7 +138,7 @@ module Pricer =
                     else
                         failwithf "try to get vol:%s from %A" c volcurve
 
-            let (com1fixings, com1contracts, com1weights)  = getFixings refMonth com lags slope
+            let (com1fixings, com1contracts, com1weights)  = getFixings refMonth com lags slope avg
             let (pastDetails1, futureDetails1 ) = splitDetails com1fixings com1weights com1contracts 
             let (f1, fw1, t1, v1 ) = getFutureInputs futureDetails1 getPrices1 getVol expDate
             let ( pw1, p1 ) = getPastInputs pastDetails1 (fun _ c -> getPrices1 c ) //ignore fixing date and return contract price from jcc curve
@@ -153,8 +149,8 @@ module Pricer =
             //let rho = 0.4
             //let refMonth = "Dec20"
             //let freight = if refMonth = "JUL-21" then 0.85 else 1.0
-            let (f1,fw1,t1,v1,pw1,p1) = getInputs expDate refMonth lags1 inst1 slope pricecurve1 volcurve1 price1 vol1
-            let (f2,fw2,t2,v2,pw2,p2) = getInputs expDate refMonth lags2 inst2 1.0M pricecurve2 volcurve2 price2 vol2
+            let (f1,fw1,t1,v1,pw1,p1) = getInputs expDate refMonth lags1 avg1 inst1 slope pricecurve1 volcurve1 price1 vol1
+            let (f2,fw2,t2,v2,pw2,p2) = getInputs expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 volcurve2 price2 vol2
             // put optionality:
             // exercise when JCC + freight < JKM, => -freight - ( JCC - JKM) > 0
             // so a put on ( JCC - JKM ) with strike  = -freight 

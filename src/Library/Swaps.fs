@@ -15,7 +15,10 @@ module Swaps =
         let diff:UnitPrice = p0 - k0
         diff * q
 
-    type AverageFrequency = BusinessDays
+    type AverageFrequency = 
+        | BusinessDays
+        | LastBD 
+
     //type PeriodFrequency = |CalMonth  //allow broken period both ends
     type AverageSpecs=
         {
@@ -47,6 +50,7 @@ module Swaps =
     let getFixingDates freq hols d1 d2 = 
         match freq with
         | BusinessDays -> bdRange hols d1 d2
+        | LastBD -> [| dateAdjust hols "p" d2 |]
 
     ///roll and nrby adjust the contracts
     let getNrbyContracts (s:AverageSpecs) = 

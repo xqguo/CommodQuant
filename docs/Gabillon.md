@@ -6,7 +6,7 @@ MathJax = {
     ],
   },
   svg: {
-    fontCache: 'global'
+    fontCache: 'global' 
   }
 };
 </script>

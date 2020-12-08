@@ -7,7 +7,8 @@ MathJax = {
   },
   svg: {
     fontCache: 'global' 
-  }
+  },
+  jax: ["input/TeX","output/CommonHTML"]
 };
 </script>
 <script type="text/javascript" id="MathJax-script" async

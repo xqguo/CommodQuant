@@ -13,6 +13,7 @@
     <Compile Include="Markets.fs" />
     <Compile Include="Rates.fs" />
     <Compile Include="Swaps.fs" />
+    <Compile Include="Gabillon.fs" />
     <Compile Include="MonteCarlo.fs" />
     <Compile Include="Options.fs" />
     <Compile Include="Pricer.fs" />

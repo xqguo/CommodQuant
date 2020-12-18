@@ -29,7 +29,19 @@ There are two part of model parameter fitting. Firstly, the structural parameter
 
 In the second step, we choose to calibrate a piecewise constant time dependent $dW_s(t)$ to the market implied volatilities of listed options. These are pseudo-realtime and are always recalibrated on the fly when the market vol changes. 
 
-The forward variance of $\ln F(t,T_i)$ is
+The forward covariance of two futures with different maturity $\ln F(t,T_i) * \ln F(t,T_j)$ is
+
+$$\int_{t_m}^{t_n}\left[ e^{-k(T_i+T_j-2t )} \sigma_s^2(t) + \left( 1 - e^{-k(T_i-t)}\right) \left( 1 - e^{-k(T_j-t)}\right)\sigma_l^2 + \left( e^{-k(T_i-t)}\left( 1- e^{-k(T_j-t)}\right) + e^{-k(T_j-t)}\left( 1- e^{-k(T_i-t)}\right)\right) \sigma_s(t) \sigma_l  \rho \right] dt$$
+
+The integration results are:
+
+$$\int_{t_m}^{t_n}e^{-k(T_i+T_j-2t)} \sigma_s^2(t) dt = \frac{\sigma^2_s(t_n)}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right )$$
+
+$$\int_{t_m}^{t_n}\left( 1 - e^{-k(T_i-t)}\right)\left( 1 - e^{-k(T_j-t)}\right) \sigma_l^2 dt = \sigma^2_l \left ( t_n - t_m -\frac{1}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)} + e^{-k(T_j-t_n)}-e^{-k(T_j-t_m)}\right) + \frac{1}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right) \right)$$
+
+$$\int_{t_m}^{t_n} \left( e^{-k(T_i-t)}\left( 1- e^{-k(T_j-t)}\right) + e^{-k(T_j-t)}\left( 1- e^{-k(T_i-t)} \right) \right) \sigma_s(t) \sigma_l  \rho  dt = \rho \sigma_s(t_n)\sigma_l \left ( \frac{1}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)} + e^{-k(T_j-t_n)}-e^{-k(T_j-t_m)}\right) - \frac{1}{k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right) \right)$$
+
+When $i = j$, the forward variance of $\ln F(t,T_i)$ is
 
 $$\int_{t_m}^{t_n}\left[ e^{-2k(T_i-t)} \sigma_s^2(t) + \left( 1 - e^{-k(T_i-t)}\right)^2 \sigma_l^2 + 2 e^{-k(T_i-t)}\left( 1- e^{-k(T_i-t)}\right) \sigma_s(t) \sigma_l  \rho \right] dt$$
 

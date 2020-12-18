@@ -19,7 +19,7 @@ MathJax = {
 
 ## SDE
 
-$$dF(t,T_i) = F(t,T_i)(e^{-k(T_i-t)} \sigma_s(t) d W_s(t) + (1- e^{-k(T_i-t)}) \sigma_l d W_l(t))$$
+$$dF(t,T_i) = F(t,T_i)\left(e^{-k(T_i-t)} \sigma_s(t) d W_s(t) + (1- e^{-k(T_i-t)}) \sigma_l d W_l(t)\right)$$
 
 $$E(dW_s(t)dW_l(t)) = \rho dt$$
 

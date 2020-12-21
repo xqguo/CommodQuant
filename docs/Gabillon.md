@@ -43,18 +43,16 @@ $$\int_{t_m}^{t_n}\left[
 
 The integration results are:
 
-$$\int_{t_m}^{t_n}e^{-k(T_i+T_j-2t)} \sigma_s(t,T_i)\sigma_s(t,T_j) dt 
-= \frac{\sigma_s(t_n,T_i)\sigma_s(t_n,T_j)}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right )$$
-
-$$\int_{t_m}^{t_n}\left( 1 - e^{-k(T_i-t)}\right)\left( 1 - e^{-k(T_j-t)}\right) \sigma_l^2 dt 
-= \sigma^2_l \left ( t_n - t_m -\frac{1}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)} + e^{-k(T_j-t_n)}-e^{-k(T_j-t_m)}\right) + \frac{1}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right) \right)$$
-
-$$\int_{t_m}^{t_n} e^{-k(T_i-t)}\left( 1- e^{-k(T_j-t)}\right)\sigma_s(t,T_i) \sigma_l  \rho  dt 
-= \rho  \sigma_s(t_n, T_i) \sigma_l \left ( \frac{1}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)}\right)- \frac{1}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right) \right)$$
-
-$$\int_{t_m}^{t_n} e^{-k(T_j-t)}\left( 1- e^{-k(T_i-t)}\right)\sigma_s(t,T_j) \sigma_l  \rho  dt 
-= \rho  \sigma_s(t_n, T_j) \sigma_l \left ( \frac{1}{k}\left(e^{-k(T_j-t_n)}-e^{-k(T_j-t_m)}\right)- \frac{1}{2k} \left( e^{-k(T_j + T_i - 2t_n)} - e^{-k(T_j + T_i - 2t_m)} \right) \right)$$
-
+$$\begin{aligned}
+&\int_{t_m}^{t_n}e^{-k(T_i+T_j-2t)} \sigma_s(t,T_i)\sigma_s(t,T_j) dt \\
+=& \frac{\sigma_s(t_n,T_i)\sigma_s(t_n,T_j)}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right ) \\
+&\int_{t_m}^{t_n}\left( 1 - e^{-k(T_i-t)}\right)\left( 1 - e^{-k(T_j-t)}\right) \sigma_l^2 dt \\
+=& \sigma^2_l \left ( t_n - t_m -\frac{1}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)} + e^{-k(T_j-t_n)}-e^{-k(T_j-t_m)}\right) + \frac{1}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right) \right) \\
+&\int_{t_m}^{t_n} e^{-k(T_i-t)}\left( 1- e^{-k(T_j-t)}\right)\sigma_s(t,T_i) \sigma_l  \rho  dt \\
+=& \rho  \sigma_s(t_n, T_i) \sigma_l \left ( \frac{1}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)}\right)- \frac{1}{2k} \left( e^{-k(T_i + T_j - 2t_n)} - e^{-k(T_i + T_j - 2t_m)} \right) \right) \\
+&\int_{t_m}^{t_n} e^{-k(T_j-t)}\left( 1- e^{-k(T_i-t)}\right)\sigma_s(t,T_j) \sigma_l  \rho  dt \\
+=& \rho  \sigma_s(t_n, T_j) \sigma_l \left ( \frac{1}{k}\left(e^{-k(T_j-t_n)}-e^{-k(T_j-t_m)}\right)- \frac{1}{2k} \left( e^{-k(T_j + T_i - 2t_n)} - e^{-k(T_j + T_i - 2t_m)} \right) \right)
+\end{aligned}$$
 
 When $i = j$, the forward variance of $F(t,T_i)$ is
 

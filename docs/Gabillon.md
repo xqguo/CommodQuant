@@ -48,12 +48,12 @@ $$\int_{t_m}^{t_n} e^{-k(T_j-t)}\left( 1- e^{-k(T_i-t)}\right)\sigma_s(t,T_j) \s
 
 When $i = j$, the forward variance of $F(t,T_i)$ is
 
-$$\int_{t_m}^{t_n}\left[ e^{-2k(T_i-t)} \sigma_s^2(t) + \left( 1 - e^{-k(T_i-t)}\right)^2 \sigma_l^2 + 2 e^{-k(T_i-t)}\left( 1- e^{-k(T_i-t)}\right) \sigma_s(t) \sigma_l  \rho \right] dt$$
+$$\int_{t_m}^{t_n}\left[ e^{-2k(T_i-t)} \sigma_s^2(t,T_i) + \left( 1 - e^{-k(T_i-t)}\right)^2 \sigma_l^2 + 2 e^{-k(T_i-t)}\left( 1- e^{-k(T_i-t)}\right) \sigma_s(t,T_i) \sigma_l  \rho \right] dt$$
 
 The integration results are:
 
-$$\int_{t_m}^{t_n}e^{-2k(T_i-t)} \sigma_s^2(t) dt = \frac{\sigma^2_s(t_n)}{2k} \left( e^{-2k(T_i - t_n)} - e^{-2k(T_i - t_m)} \right )$$
+$$\int_{t_m}^{t_n}e^{-2k(T_i-t)} \sigma_s^2(t, T_i) dt = \frac{\sigma^2_s(t_n, T_i )}{2k} \left( e^{-2k(T_i - t_n)} - e^{-2k(T_i - t_m)} \right )$$
 
 $$\int_{t_m}^{t_n}\left( 1 - e^{-k(T_i-t)}\right)^2 \sigma_l^2 dt = \sigma^2_l \left ( t_n - t_m -\frac{2}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)}\right) + \frac{1}{2k} \left( e^{-2k(T_i - t_n)} - e^{-2k(T_i - t_m)} \right) \right)$$
 
-$$\int_{t_m}^{t_n} 2 e^{-k(T_i-t)}\left( 1- e^{-k(T_i-t)}\right) \sigma_s(t) \sigma_l  \rho  dt = \rho \sigma_s(t_n)\sigma_l \left ( \frac{2}{k}\left(e^{-k(T_i-t_n)}-e^{-k(T_i-t_m)}\right) - \frac{1}{k} \left( e^{-2k(T_i - t_n)} - e^{-2k(T_i - t_m)} \right) \right)$$
+$$\int_{t_m}^{t_n} 2 e^{-k(T_i-t)}\left( 1- e^{-k(T_i-t)}\right) \sigma_s(t, T_i ) \sigma_l  \rho  dt = \rho \sigma_s( t_n, T_i ) \sigma_l \left ( \frac{2}{k} \left( e^{-k(T_i - t_n)} - e^{-k(T_i - t_m)} \right) - \frac{1}{k} \left( e^{-2k(T_i - t_n)} - e^{-2k(T_i - t_m)} \right) \right)$$

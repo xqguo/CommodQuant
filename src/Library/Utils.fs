@@ -38,13 +38,22 @@ module Utils =
     let parseDouble = tryParseWith System.Double.TryParse
     let parseDouble10 = tryParseWith System.Double.TryParse >> Option.map (sprintf "%.10g") 
     let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", CultureInfo.InvariantCulture)
+    //DateTime.Parse("12/1/2021", CultureInfo.InvariantCulture, DateTimeStyles.None)
+    //DateTime.Parse("13/1/2021", culture)
+    //DateTime.Parse("Sep21", culture)
+
     let datestr (str:string) = (str.ToUpper()) |> String.filter Char.IsLetterOrDigit //ignores separators like - /
 
-    let parseDateExact format str= 
-        try 
-            Some( System.DateTime.ParseExact( (datestr str), format, culture) )
-        with
-        | _ -> None
+    //let parseDateExact format str= 
+    //    try 
+    //        Some( System.DateTime.ParseExact( (datestr str), format, culture) )
+    //    with
+    //    | _ -> None
+
+    let parseDateExact (format:string) str= 
+          let (s,d) = System.DateTime.TryParseExact( (datestr str), format, culture, DateTimeStyles.None)
+          if s then Some d else None
+
     // active patterns for try-parsing strings
     let (|YYYYMMDD|_|)   = parseDateExact "yyyyMMdd"
     let (|MMMYY|_|)   = parseDateExact "MMMyy"

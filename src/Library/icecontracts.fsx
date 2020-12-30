@@ -1,14 +1,11 @@
-﻿#r "../../packages/NETStandard.Library/build/netstandard2.0/ref/netstandard.dll"
-#I "../../.paket/load/netstandard2.0/"
-#load "main.group.fsx"
-//#load "FSharp.Data.fsx"
-//#load "Nager.Date.fsx"
-//#load "FsCheck.fsx"
+﻿//#load "FsCheck.fsx"
+#r "nuget:FSharp.Data"
+#r "nuget:Nager.Date"
 #r "bin/Debug/netstandard2.0/CommodLib.dll"
-open System
 open FSharp.Data
+open System
 open System.IO
-open Commod.Utils
+open Commod
 
 type iceFut = CsvProvider<"https://www.theice.com/api/productguide/spec/219/expiry/csv", Culture = "en-US">
 type iceOpt = CsvProvider<"https://www.theice.com/api/productguide/spec/218/expiry/csv", Culture = "en-US">
@@ -16,23 +13,26 @@ type iceOpt = CsvProvider<"https://www.theice.com/api/productguide/spec/218/expi
 let sources = 
     [ 
        "BRT", @"https://www.theice.com/api/productguide/spec/219/expiry/csv", @"https://www.theice.com/api/productguide/spec/218/expiry/csv"
+       "TTF", @"https://www.theice.com/api/productguide/spec/27996665/expiry/csv", @"https://www.theice.com/api/productguide/spec/71085679/expiry/csv"
     ]
 let saveIceFutDates f (futurl:string) (opturl:string)= 
     let fut = iceFut.Load futurl
     let opt = iceOpt.Load opturl
+    //dates are in mm/dd/yyyy format
+    let formatDate str = DateTime.Parse(str, Globalization.CultureInfo.InvariantCulture ).ToString("yyyy-MM-dd")
     //option contracts are shorter than futures contracts, take the common set.
     let futDates = 
         fut.Rows 
         |> Seq.map( fun r -> 
             [ r.``CONTRACT SYMBOL``.Trim([|'='|]) 
-              r.LTD.ToString("yyyy-MM-dd")]
+              r.LTD |> formatDate ]
             |> String.concat "," )
     
     let optDates = 
         opt.Rows 
         |> Seq.map( fun r -> 
             [ r.``CONTRACT SYMBOL``.Trim([|'='|]) 
-              r.``OPTIONS LTD``.ToString("yyyy-MM-dd") ]
+              r.``OPTIONS LTD`` |> formatDate ]
             |> String.concat "," )
     //save contract 
     File.WriteAllLines( __SOURCE_DIRECTORY__ +/ "holidays" +/ f + "fut.csv", futDates )

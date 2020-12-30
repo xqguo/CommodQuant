@@ -143,4 +143,5 @@ module Gabillon =
         solver.FindMinimum( o, l, u, ig)
         //solver.FindMinimum( o, ig)
             
-        
+    //get covariance for a gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
+    //let getGabillonCov = ()

@@ -42,7 +42,8 @@ module IOcsv =
         match ins with
         | DBRT | FO35 -> [PLTLDN] 
         | JKM | SGO | SJET | FO380 | FO180 |MFO | DUB -> [PLTSGP] 
-        | BRT | GO | TTF | NBP -> [ICE] 
+        | BRT | GO | NBP -> [ICE] 
+        | TTF -> [UK]
         | NG -> [CME] 
         | JCC  -> [ ALLDAYS ] 
         |> List.fold ( fun acc s -> Set.union acc ( getCalendarbyCode s ) ) Set.empty
@@ -58,6 +59,6 @@ module IOcsv =
         ROOT +/ "holidays" +/ (i.ToString() + "fut.csv") |> tryFile
 
     let tryOptExpFile i = 
-        ROOT +/ "holidays" +/ (i.ToString() + "fut.csv") |> tryFile
+        ROOT +/ "holidays" +/ (i.ToString() + "opt.csv") |> tryFile
 
     let USDOISSOURCE = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )

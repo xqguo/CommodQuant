@@ -18,10 +18,40 @@ let ``test getCalendar`` (d: Instrument) =
     | JCC -> cal = Set.empty
     | _ -> true
 
-[<Property>]
-let ``test brtContract`` () =
+[<Property( MaxTest = 1)>]
+let ``test brtContractRule`` () =
     let c = getCommod BRT 
-    c.Contracts.Item "AUG-20" = DateTime(2020,6,30)
+    let( ContractDates cnt ) = c.Contracts
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtExp) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtExp) ) 
+    r |> Map.count < 4 //3 known diffs
+
+[<Property( MaxTest = 1)>]
+let ``test ttfContractRule`` () =
+    let c = getCommod TTF 
+    let( ContractDates cnt ) = c.Contracts
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfExp) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfExp) ) 
+    r |> Map.count < 2 //1 known diffs
+
+[<Property( MaxTest = 1)>]
+let ``test ttfOptContractRule`` () =
+    let(ContractDates cnt) = getOptContracts TTF 
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfOptExp) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfOptExp) ) 
+    r |> Map.count < 2 //1 known diffs
+
+[<Property( MaxTest = 1)>]
+let ``test brtOptContractRule`` () =
+    let(ContractDates cnt) = getOptContracts BRT 
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtOptExp) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtOptExp) ) 
+    r |> Map.count < 9 //8 known diffs
+
 
 //[<Property>]
 //let ``test getJkmPeriod`` () =

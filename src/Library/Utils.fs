@@ -41,6 +41,7 @@ module Utils =
     //DateTime.Parse("12/1/2021", CultureInfo.InvariantCulture, DateTimeStyles.None)
     //DateTime.Parse("13/1/2021", culture)
     //DateTime.Parse("Sep21", culture)
+    //DateTime.Parse("2011-02", culture)
 
     let datestr (str:string) = (str.ToUpper()) |> String.filter Char.IsLetterOrDigit //ignores separators like - /
 

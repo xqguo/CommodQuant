@@ -40,31 +40,13 @@ module Contracts =
             let hol = getCalendar BRT
             dateAdjust hol "a-1m-1b" month |> prevChrismasNY hol 
 
-        //https://www.theice.com/products/218/Brent-Crude-American-style-Options
-        //Last Trading Day
-        //Trading shall cease at the end of the designated settlement period of the ICE Brent Crude Futures Contract three Business Days before the scheduled cessation of trading for the relevant contract month of the ICE Brent Crude Futures Contract.
-        //If the day on which trading in the relevant option is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the immediately preceding Business Day
-        let getBrtOptExp month =  
-            let hol = getCalendar BRT
-            getBrtExp month |> dateAdjust hol "-3b" |> prevChrismasNY hol
-
+       
         //https://www.theice.com/products/27996665/Dutch-TTF-Gas-Futures/
         //Expiration Date
         //Trading will cease at the close of business two UK Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
         let getTtfExp month =  
             let hol = getCalendar TTF
             dateAdjust hol "a-2b" month
-
-        //https://www.theice.com/products/71085679/Dutch-TTF-Gas-Options-Futures-Style-Margin
-        //Expiration Date
-        //Trading will cease when the intraday reference price is set , approximately 14:00 CET (as specified in the Operating Schedule - Appendix B.1), of the underlying futures contract five calendar days before the start of the contract month. If that day is a non-business day, expiry will occur on the nearest prior business day, except where that day is also the expiry date of the underlying futures contract, in which case expiry will occur on the preceding business day.
-        let getTtfOptExp month = 
-            let hol = getCalendar TTF
-            let fut = getTtfExp month
-            let opt = dateAdjust hol "a-5dp" month 
-            if fut = opt then 
-                dateAdjust hol "-1b" opt
-            else opt
 
         //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
         //Expiration Date
@@ -97,6 +79,35 @@ module Contracts =
             | JKM -> getJkmExp d
             | JCC -> getJccExp d
             | _ -> dateAdjust ( getCalendar ins ) "ep" d
+
+        //https://www.theice.com/products/218/Brent-Crude-American-style-Options
+        //Last Trading Day
+        //Trading shall cease at the end of the designated settlement period of the ICE Brent Crude Futures Contract three Business Days before the scheduled cessation of trading for the relevant contract month of the ICE Brent Crude Futures Contract.
+        //If the day on which trading in the relevant option is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the immediately preceding Business Day
+        let getBrtOptExp month =  
+            let hol = getCalendar BRT
+            getExp month BRT |> dateAdjust hol "-3b" |> prevChrismasNY hol
+        //getBrtOptExp (DateTime(2020,2,1))
+
+        //https://www.theice.com/products/71085679/Dutch-TTF-Gas-Options-Futures-Style-Margin
+        //Expiration Date
+        //Trading will cease when the intraday reference price is set , approximately 14:00 CET (as specified in the Operating Schedule - Appendix B.1), of the underlying futures contract five calendar days before the start of the contract month. If that day is a non-business day, expiry will occur on the nearest prior business day, except where that day is also the expiry date of the underlying futures contract, in which case expiry will occur on the preceding business day.
+        let getTtfOptExp month = 
+            let hol = getCalendar TTF
+            let fut = getExp month TTF
+            let opt = dateAdjust hol "a-5dp" month 
+            if fut = opt then 
+                dateAdjust hol "-1b" opt
+            else opt
+
+        let getOptExp d ins =
+            match ins with 
+            | BRT -> getBrtOptExp d 
+            | TTF -> getTtfOptExp d 
+            //| GO -> getGoExp d
+            //| JKM -> getJkmExp d
+            //| JCC -> getJccExp d
+            | _ -> dateAdjust ( getCalendar ins ) "ep" d
             
     let getContracts ins= 
         let f = tryFutExpFile ins
@@ -123,3 +134,20 @@ module Contracts =
         //     d0.AddDays(1.), d1
 
         // let getJkmPeriod month = getContractPeriod JKM month
+
+    let getOptContracts ins= 
+        let f = tryOptExpFile ins
+        let actuals = 
+            match f with 
+            | Some v -> Conventions.readContracts v
+            | None -> Map.empty
+        let rulebased =
+            let td = DateTime.Today |> dateAdjust' "-1ya" 
+            generateMonth (td |> dateAdjust' "a" ) true 
+            |> Seq.map ( fun x -> (formatPillar x , Conventions.getOptExp x ins))
+            |> Seq.skipWhile( fun (_,d) -> d < td )
+            |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
+            |> Map.ofSeq
+        //use actuals to override rulebased
+        let contracts = Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
+        ContractDates contracts

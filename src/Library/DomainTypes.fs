@@ -124,6 +124,7 @@ module DomainTypes  =
         | PLTLDN 
         | ICE
         | CME
+        | UK
         | ALLDAYS
     
     type Instrument = //full list of known instruments

@@ -1,15 +1,11 @@
-#r "../../packages/NETStandard.Library/build/netstandard2.0/ref/netstandard.dll"
-#I "../../.paket/load/netstandard2.0/"
-#load "main.group.fsx"
-#load "FSharp.Data.fsx"
-#load "Nager.Date.fsx"
-#load "FsCheck.fsx"
+#r "nuget:FSharp.Data"
+#r "nuget:Nager.Date"
 #r "bin/Debug/netstandard2.0/CommodLib.dll"
 open System
 open System.IO
 open Nager.Date
 open FSharp.Data
-open Commod.Utils
+open Commod
 //generate holiday csv files: yyyy-MMM-dd
 //get current year from platts website, most authorative 
 let source = HtmlDocument.Load("https://www.spglobal.com/platts/en/our-methodology/holiday")
@@ -31,6 +27,7 @@ let isPLT o (e:HtmlNode) =
 let isPLTSG (e:HtmlNode) = isPLT "Singapore" e
 let isPLTLDN (e:HtmlNode) = isPLT "London" e
 
+//exchange holiday from platts, not complete
 let isExchange s (e:HtmlNode) = 
     let d = ( e.Descendants ["div"] |> Seq.head ).InnerText() |> parseDateExact "ddMMMyyyy" 
     // let desc = ( e.Descendants ["div"] |> Seq.skip 1 |> Seq.head ).InnerText()
@@ -48,12 +45,23 @@ let formatHoliday (h : Model.PublicHoliday) =
     let y, m, d = h.Date.Year, h.Date.Month, h.Date.Day
     sprintf "(%i, %2i, %2i), // %s/%s" y m d h.Name h.LocalName
 
-let iceHol = 
-    //ice holiday is a subset of uk holidays
-    let iceEvents = [ "New year's Day"; "Good Friday"; "Christmas Day"] |> set
+let ukHol = 
     yearRange
     |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.GB) )
-    |> Seq.filter( fun y -> Set.contains y.LocalName iceEvents )
+    |> Seq.filter( fun y -> ( isNull y.Counties ) || (y.Counties |> Array.contains "GB-ENG" ))
+    |> Seq.map( fun y -> y.Date)
+    |> set
+
+let iceHol = 
+    //ice holiday is a subset of uk holidays
+    //DateSystem.GetPublicHoliday (2021 , CountryCode.GB) 
+    //|> Seq.filter( fun y -> isNull y.Counties || y.Counties |> Array.contains "GB-ENG" )
+    //|> Seq.toArray
+    let iceEvents = [ "new year's day"; "good friday"; "christmas day"] |> set
+    yearRange
+    |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.GB) )
+    |> Seq.filter( fun y -> isNull y.Counties || y.Counties |> Array.contains "GB-ENG" )
+    |> Seq.filter( fun y -> Set.contains (y.LocalName.ToLower()) iceEvents )
     |> Seq.map( fun y -> y.Date)
     |> set
     |> Set.union (isExchange "ICE" |> getHol)
@@ -86,11 +94,7 @@ let pltsgpHol =
 
 let pltldnHol = 
     //platts ldn is UK holiday
-    yearRange
-    |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.GB) )
-    |> Seq.map( fun y -> y.Date)
-    |> set
-    |> Set.union (getHol isPLTLDN)
+    Set.union (getHol isPLTLDN) ukHol
 
 //save the data into Library/holidays
 //TODO: merge instead overwrite data and validation 
@@ -106,3 +110,4 @@ saveHoliday "PLTSGP.txt" pltsgpHol
 saveHoliday "PLTLDN.txt" pltldnHol
 saveHoliday "ICE.txt" iceHol
 saveHoliday "CME.txt" nymHol
+saveHoliday "UK.txt" ukHol

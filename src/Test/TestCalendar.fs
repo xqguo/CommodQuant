@@ -9,6 +9,7 @@ open FsCheck
 open FsCheck.Xunit
 open FsCheckTypes
 open Commod
+open Commod.Contracts.Conventions
 
 let cal = [ DateTime( 2019,1,1); DateTime(2019,12,25)] |> set
 
@@ -195,4 +196,3 @@ let ``testgetPeriod``  n1 n2 =
     let test2 = (startdate.Month = n1') && (startdate.Year = 2000 + n2) && (startdate.Day=1)
     test1 |@ sprintf"should be the same year and same month %A %A" startdate enddate .&.
     test2 |@ sprintf"should be the same month and same year as the original one %s %A %A" str startdate enddate
-

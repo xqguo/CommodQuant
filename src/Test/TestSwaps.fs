@@ -46,7 +46,7 @@ let ``test nrby`` () =
     let cnt1 = getNrbyContracts avg1
     //limit d to be between today and curve end 
     let dmin = DateTime.Today
-    let (ContractDates alldates) = cnt
+    let alldates = cnt.Fut
     let opendates = alldates |> Map.toArray |> Array.choose( fun (c,x) -> if x >= dmin && allPillars.Contains c then Some x else None ) |> Array.sort
     let dates0 = opendates.[0 .. (opendates.Length - 2)] 
     let dates1 =  opendates.[1 .. (opendates.Length - 1)] 
@@ -76,7 +76,7 @@ let ``test rolladjust`` () =
     let cnt1 = getNrbyContracts avg1
     //limit d to be between today and curve end 
     let dmin = DateTime.Today
-    let (ContractDates alldates) = cnt
+    let alldates = cnt.Fut
     let opendates = alldates |> Map.toArray |> Array.choose( fun (c,x) -> if x >= dmin && allPillars.Contains c then Some x else None ) |> Array.sort
     let dates0 = opendates.[0 .. (opendates.Length - 2)] 
     let dates1 =  opendates.[1 .. (opendates.Length - 1)] 

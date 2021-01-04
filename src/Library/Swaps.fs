@@ -62,10 +62,10 @@ module Swaps =
         if nrby < 0 then (invalidArg "nrby" "invalid nrby number, expect positive int")
         cnts 
         |> Map.toArray
-        |> Array.map( fun (k,v) -> 
+        |> Array.map( fun (k,(v,o)) -> 
             let k' = (pillarToDate k).AddMonths nrby |> formatPillar
             let v' = addBusinessDay -rolladj hols ( dateAdjust hols "p" v )
-            k',v')
+            k',(v',o))
         |> Map.ofArray
         |> ContractDates
 
@@ -78,7 +78,7 @@ module Swaps =
 
     let getFixingContracts (ContractDates c) dates =  
         //cnts could be after roll/nrby adj, return the pillar used to lookup price, so we know the exact dependencies and also enable diffsharp can work
-        let s = c |> Map.toArray |> Array.map ( fun (k,v) -> (v, k)) |> Array.sortBy fst
+        let s = c |> Map.toArray |> Array.map ( fun (k,(v,_)) -> (v, k)) |> Array.sortBy fst
         dates |> Array.map( fun d -> s |> Array.find( fun x -> fst x >= d ) |> snd )
 
     let getFixingPrices c dates (PriceCurve p) =  //cnts should be after roll/nrby adj

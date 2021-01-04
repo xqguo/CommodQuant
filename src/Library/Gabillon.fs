@@ -144,4 +144,8 @@ module Gabillon =
         //solver.FindMinimum( o, ig)
             
     //get covariance for a gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
-    //let getGabillonCov = ()
+    let getGabillonCov ins (volcu:VolCurve) sl k rho ts Ts = 
+        let optd = getOptContracts ins
+        let futd = getContracts ins
+        
+        ()

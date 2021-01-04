@@ -146,10 +146,16 @@ module DomainTypes  =
         | SJET // Sing Jet
 
     type ContractDates = 
-        ContractDates of Map<string,DateTime> with //how to interprete tenor code to date
+        ContractDates of Map<string, DateTime*DateTime> with //how to interprete tenor code to date
         member this.Item s = 
             let (ContractDates c) = this
-            c.Item s
+            c.Item s |> fst
+        member this.Fut = 
+            let (ContractDates c) = this
+            c |> Map.map( fun _ v -> fst v )
+        member this.Opt = 
+            let (ContractDates c) = this
+            c |> Map.map( fun _ v -> snd v )
 
     type Commod =
         { 

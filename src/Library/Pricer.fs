@@ -15,7 +15,6 @@ module Pricer =
     let SpreadOptionPricer inst1 start1 end1 avg1 inst2 start2 end2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
         rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
-        let getTTM expDate d = max ((( min d expDate ) - pricingDate ).TotalDays / 365.) 0.
 
         // get equal weights based on the number of fixings
         let getEqualWeights x =
@@ -76,7 +75,7 @@ module Pricer =
             //consolidate future details to group weightes for same fixing dates and same contracts
             let futureDetails= 
                 futureDetails'
-                |> Array.map( fun ( d, w, c ) -> (getTTM expDate d ), w , c ) 
+                |> Array.map( fun ( d, w, c ) -> (getTTM expDate d pricingDate ), w , c ) 
                 |> Array.groupBy(fun (x,_,z) -> x,z) |> Array.map( fun ((k1,k2),v) -> k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
 
             let fw1 = 

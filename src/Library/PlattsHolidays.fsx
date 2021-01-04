@@ -138,4 +138,8 @@ saveHoliday "UKB.txt" ukBank
 //getExp month BRT |> dateAdjust hol "-3b" 
 //getExp month BRT |> dateAdjust hol "-3b" |> prevChrismasNY hol
 //dateAdjust hol "-1d" (DateTime(2021,12,25))
-
+//let test = getCommod JKM
+//let (ContractDates ctt) = test.Contracts
+//ctt.IsEmpty 
+//test.Lot > 0M
+//test.Instrument = JKM

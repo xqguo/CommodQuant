@@ -110,9 +110,9 @@ module Contracts =
             //| GO -> getGoExp d
             //| JKM -> getJkmExp d
             //| JCC -> getJccExp d
-            | _ -> dateAdjust ( getCalendar ins ) "ep" d
+            | _ -> getExp d ins 
             
-    let getContracts ins= 
+    let getFutContracts ins= 
         let f = tryFutExpFile ins
         let actuals = 
             match f with 
@@ -122,21 +122,11 @@ module Contracts =
             //generate last bd of prior month
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             generateMonth (td |> dateAdjust' "a" ) true 
+            |> Seq.takeWhile( fun d -> d.Year < 2041 )
             |> Seq.map ( fun x -> (formatPillar x , Conventions.getExp x ins))
-            |> Seq.skipWhile( fun (_,d) -> d < td )
-            |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
             |> Map.ofSeq
         //use actuals to override rulebased
-        let contracts = Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
-        ContractDates contracts
-
-        // let getContractPeriod ins d = 
-            
-        //     let d0 = getExp ( dateAdjust' "-1ma" d) ins
-        //     let d1 = getExp d ins
-        //     d0.AddDays(1.), d1
-
-        // let getJkmPeriod month = getContractPeriod JKM month
+        Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
 
     let getOptContracts ins= 
         let f = tryOptExpFile ins
@@ -147,10 +137,15 @@ module Contracts =
         let rulebased =
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             generateMonth (td |> dateAdjust' "a" ) true 
+            |> Seq.takeWhile( fun d -> d.Year < 2041 )
             |> Seq.map ( fun x -> (formatPillar x , Conventions.getOptExp x ins))
-            |> Seq.skipWhile( fun (_,d) -> d < td )
-            |> Seq.takeWhile( fun( _,d) -> d.Year < 2041 )
             |> Map.ofSeq
         //use actuals to override rulebased
-        let contracts = Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
-        ContractDates contracts
+        Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
+
+    let getContracts ins = 
+        let opt = getOptContracts ins
+        getFutContracts ins 
+        |> Map.map ( fun k v -> v, opt.[k])
+        |> ContractDates
+

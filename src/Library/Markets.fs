@@ -2,6 +2,7 @@ namespace Commod
 [<AutoOpen>]
 module Markets = 
     open IOcsv
+    open System
     //cache the commods as it involves disk IO
     let commoddict = new System.Collections.Concurrent.ConcurrentDictionary<Instrument, Commod>()
 
@@ -116,3 +117,5 @@ module Markets =
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
     let getCurveUnit (PriceCurve p) = p |> Map.toSeq |> Seq.head |> snd |> getCaseDecimal |> fst            
+
+    let getTTM expDate d (pricingDate:DateTime)= max ((( min d expDate ) - pricingDate ).TotalDays / 365.) 0.

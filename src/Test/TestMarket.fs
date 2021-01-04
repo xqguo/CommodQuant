@@ -21,7 +21,7 @@ let ``test getCalendar`` (d: Instrument) =
 [<Property( MaxTest = 1)>]
 let ``test brtContractRule`` () =
     let c = getCommod BRT 
-    let( ContractDates cnt ) = c.Contracts
+    let cnt = c.Contracts.Fut
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtExp) ) 
@@ -31,7 +31,7 @@ let ``test brtContractRule`` () =
 [<Property( MaxTest = 1)>]
 let ``test ttfContractRule`` () =
     let c = getCommod TTF 
-    let( ContractDates cnt ) = c.Contracts
+    let cnt = c.Contracts.Fut
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfExp) ) 
@@ -40,7 +40,8 @@ let ``test ttfContractRule`` () =
 
 [<Property( MaxTest = 1)>]
 let ``test ttfOptContractRule`` () =
-    let(ContractDates cnt) = getOptContracts TTF 
+    let c = getCommod TTF 
+    let cnt = c.Contracts.Opt
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfOptExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfOptExp) ) 
@@ -49,7 +50,8 @@ let ``test ttfOptContractRule`` () =
 
 [<Property( MaxTest = 1)>]
 let ``test brtOptContractRule`` () =
-    let(ContractDates cnt) = getOptContracts BRT 
+    let c = getCommod BRT 
+    let cnt = c.Contracts.Opt
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtOptExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtOptExp) ) 

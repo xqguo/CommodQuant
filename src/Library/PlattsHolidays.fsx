@@ -60,6 +60,7 @@ let ukBank =
     |> Seq.filter( fun y -> y.LocalName.ToLower().Contains("bank") )
     |> Seq.map( fun y -> y.Date)
     |> set
+    |> Set.add (DateTime(2022,5,30)) //Memorial day added due to difference of rule vs actual
 
 let iceHol = 
     //ice holiday is a subset of uk holidays
@@ -73,8 +74,10 @@ let iceHol =
     |> Seq.filter( fun y -> Set.contains (y.LocalName.ToLower()) iceEvents )
     |> Seq.map( fun y -> y.Date)
     |> set
-    |> Set.union (isExchange "ICE" |> getHol)
-    |> Set.add (DateTime(2022,5,30)) //Memorial day added due to difference of rule vs actual
+    |> Set.remove( DateTime(2022,12,27)) //chrismas vs boxing day label error in nager
+    |> Set.add( DateTime(2022,12,26))
+
+    //|> Set.union (isExchange "ICE" |> getHol) //platts ICE info not applicable to trading days
 
 let nymHol = 
     //nymex holiday is US holidays plus good friday, which I get from ice 

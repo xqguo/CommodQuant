@@ -38,12 +38,12 @@ module IOcsv =
             |> set
         | None -> Set.empty
 
+    //trading calendar to get fixing dates
     let getCalendar ins = 
         match ins with
         | DBRT | FO35 -> [PLTLDN] 
         | JKM | SGO | SJET | FO380 | FO180 |MFO | DUB -> [PLTSGP] 
-        | BRT | GO | NBP -> [ICE] 
-        | TTF -> [UK]
+        | BRT | GO | NBP | TTF -> [ICE] 
         | NG -> [CME] 
         | JCC  -> [ ALLDAYS ] 
         |> List.fold ( fun acc s -> Set.union acc ( getCalendarbyCode s ) ) Set.empty

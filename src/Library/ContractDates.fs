@@ -47,7 +47,7 @@ module Contracts =
         //Expiration Date
         //Trading will cease at the close of business two UK Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
         let getTtfExp month =  
-            let hol = Set.union (getCalendar TTF) (getCalendarbyCode ICE) //include ICE
+            let hol = Set.union (getCalendar TTF) (getCalendarbyCode UKB) //include ICE
             dateAdjust hol "a-2b" month
 
         //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
@@ -95,7 +95,8 @@ module Contracts =
         //Expiration Date
         //Trading will cease when the intraday reference price is set , approximately 14:00 CET (as specified in the Operating Schedule - Appendix B.1), of the underlying futures contract five calendar days before the start of the contract month. If that day is a non-business day, expiry will occur on the nearest prior business day, except where that day is also the expiry date of the underlying futures contract, in which case expiry will occur on the preceding business day.
         let getTtfOptExp month = 
-            let hol = getCalendar TTF
+            //let hol = getCalendar TTF
+            let hol = Set.union (getCalendar TTF) (getCalendarbyCode UK)
             let fut = getExp month TTF
             let opt = dateAdjust hol "a-5dp" month 
             if fut = opt then 

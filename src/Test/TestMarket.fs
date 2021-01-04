@@ -25,7 +25,8 @@ let ``test brtContractRule`` () =
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtExp) ) 
-    r |> Map.count < 4 //3 known diffs
+    //r |> Map.count < 4 //3 known diffs
+    Map.isEmpty r
 
 [<Property( MaxTest = 1)>]
 let ``test ttfContractRule`` () =
@@ -34,7 +35,8 @@ let ``test ttfContractRule`` () =
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfExp) ) 
-    r |> Map.count < 2 //1 known diffs
+    //r |> Map.count < 2 //1 known diffs
+    Map.isEmpty r
 
 [<Property( MaxTest = 1)>]
 let ``test ttfOptContractRule`` () =
@@ -42,7 +44,8 @@ let ``test ttfOptContractRule`` () =
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfOptExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfOptExp) ) 
-    r |> Map.count < 2 //1 known diffs
+    //r |> Map.count < 2 //1 known diffs
+    Map.isEmpty r
 
 [<Property( MaxTest = 1)>]
 let ``test brtOptContractRule`` () =
@@ -50,7 +53,8 @@ let ``test brtOptContractRule`` () =
     let r = 
         Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtOptExp) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtOptExp) ) 
-    r |> Map.count < 9 //8 known diffs
+    //r |> Map.count < 2 //1 known diffs
+    Map.isEmpty r
 
 
 //[<Property>]

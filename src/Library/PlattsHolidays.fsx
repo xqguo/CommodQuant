@@ -45,10 +45,19 @@ let formatHoliday (h : Model.PublicHoliday) =
     let y, m, d = h.Date.Year, h.Date.Month, h.Date.Day
     sprintf "(%i, %2i, %2i), // %s/%s" y m d h.Name h.LocalName
 
-let ukHol = 
+let ukFull = 
     yearRange
     |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.GB) )
     |> Seq.filter( fun y -> ( isNull y.Counties ) || (y.Counties |> Array.contains "GB-ENG" ))
+
+let ukHol = 
+    ukFull
+    |> Seq.map( fun y -> y.Date)
+    |> set
+
+let ukBank = 
+    ukFull
+    |> Seq.filter( fun y -> y.LocalName.ToLower().Contains("bank") )
     |> Seq.map( fun y -> y.Date)
     |> set
 
@@ -65,6 +74,7 @@ let iceHol =
     |> Seq.map( fun y -> y.Date)
     |> set
     |> Set.union (isExchange "ICE" |> getHol)
+    |> Set.add (DateTime(2022,5,30)) //Memorial day added due to difference of rule vs actual
 
 let nymHol = 
     //nymex holiday is US holidays plus good friday, which I get from ice 
@@ -111,3 +121,18 @@ saveHoliday "PLTLDN.txt" pltldnHol
 saveHoliday "ICE.txt" iceHol
 saveHoliday "CME.txt" nymHol
 saveHoliday "UK.txt" ukHol
+saveHoliday "UKB.txt" ukBank
+
+//open Commod
+//open System
+//open Commod.Contracts.Conventions
+//Commod.IOcsv.ROOT <- @"C:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\"
+//getExp (DateTime(2022,2,1)) BRT
+//getOptExp (DateTime(2022,2,1)) BRT
+//getCalendar BRT
+//let month = pillarToDate "Jul22"
+//let hol = Set.union (getCalendar BRT) (getCalendarbyCode UKB)
+//getExp month BRT |> dateAdjust hol "-3b" 
+//getExp month BRT |> dateAdjust hol "-3b" |> prevChrismasNY hol
+//dateAdjust hol "-1d" (DateTime(2021,12,25))
+

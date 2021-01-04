@@ -125,6 +125,7 @@ module DomainTypes  =
         | ICE
         | CME
         | UK
+        | UKB
         | ALLDAYS
     
     type Instrument = //full list of known instruments

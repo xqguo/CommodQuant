@@ -22,12 +22,13 @@ module Contracts =
                // |> ContractDates
         
         // if date is bd before Christmas or New Year, then the bd before
+        // the rule seems to be applied using calendar day
         let prevChrismasNY hol (d:DateTime) = 
             match d.Month with
             | 12 -> 
                 let cmas = DateTime(d.Year, d.Month, 25 )
                 let nyr = DateTime(d.Year + 1, 1, 1)
-                if (d = dateAdjust hol "-1b" cmas ) || ( d = dateAdjust hol "-1b" nyr ) then
+                if (d = dateAdjust' "-1b" cmas ) || ( d = dateAdjust' "-1b" nyr ) then
                     dateAdjust hol "-1b" d
                 else d
             | _ -> d
@@ -37,7 +38,8 @@ module Contracts =
         //Trading shall cease at the end of the designated settlement period on the last Business Day of the second month preceding the relevant contract month (e.g. the March contract month will expire on the last Business Day of January).
         //if the day on which trading is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the next preceding Business Day
         let getBrtExp month =  
-            let hol = getCalendar BRT
+            //let hol = getCalendar BRT
+            let hol = Set.union (getCalendar BRT) (getCalendarbyCode UKB)
             dateAdjust hol "a-1m-1b" month |> prevChrismasNY hol 
 
        
@@ -45,7 +47,7 @@ module Contracts =
         //Expiration Date
         //Trading will cease at the close of business two UK Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
         let getTtfExp month =  
-            let hol = getCalendar TTF
+            let hol = Set.union (getCalendar TTF) (getCalendarbyCode ICE) //include ICE
             dateAdjust hol "a-2b" month
 
         //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
@@ -85,7 +87,7 @@ module Contracts =
         //Trading shall cease at the end of the designated settlement period of the ICE Brent Crude Futures Contract three Business Days before the scheduled cessation of trading for the relevant contract month of the ICE Brent Crude Futures Contract.
         //If the day on which trading in the relevant option is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the immediately preceding Business Day
         let getBrtOptExp month =  
-            let hol = getCalendar BRT
+            let hol = Set.union (getCalendar BRT) (getCalendarbyCode UKB)
             getExp month BRT |> dateAdjust hol "-3b" |> prevChrismasNY hol
         //getBrtOptExp (DateTime(2020,2,1))
 

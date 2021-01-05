@@ -156,7 +156,7 @@ module Pricer =
             let k = -freight
             //let opts = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
             ////printfn "%A %A %A %A %A %A %A %A %f" f1 fw1 t1 v1 f2 fw2 t2 v2 rho
-            let opt, deltas = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+            let opt, deltas =  optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
             let p1 = ((f1 .* fw1 ).Sum() + freight) //inst1 forwd
             let p2 = ((f2 .* fw2 ).Sum()) //inst2 fwd
             let pintr = 

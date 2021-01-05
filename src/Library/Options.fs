@@ -192,10 +192,51 @@ module Options =
         | 1 -> w3
         | _ -> permprod w3 (ghw3 (dim-1))
 
-    //let ghw = ghw5
-    //let ghz = ghz5
+    ///get cov for 2 assets with constant correlation.
+    let getCov (t1:Vector<float>) (v1:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 
+            //assuming constant correlation between 2 assets.
+            let sigma12 = getSigma2 v1 t1 v2 t2 rho
+            let sigma11 = getSigma2 v1 t1 v1 t1 1.0
+            let sigma22 = getSigma2 v2 t2 v2 t2 1.0
+            sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
+
+    ///get V with Choi's method with forward weights and cov, general case
+    let getVChoi' (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) = 
+            let v = sigma.Diagonal().PointwiseSqrt()
+            let n = f.Count
+            let g' = f.*w
+            let g = (g'/ (g'.L2Norm()))
+            let c = sigma.Cholesky().Factor //cholesky
+            let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) 
+            let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
+            let V1 = (c * Q1)// need to adjust so that w_k V_k1 > 0
+            let eps = 0.01 //choose this following Choi          
+            let V1' = DenseVector.init n ( fun n -> 
+                if V1.[n,0] * w.[n] > 0. 
+                then V1.[n,0]
+                else
+                   let s = if w.[n] > 0. then 1.0 else -1.0
+                   eps * s * v.[n] )       
+            let mu = (c.Inverse() * V1').L2Norm()
+            let V1'' = V1' / mu
+            let Q1' = c.Inverse() * V1''
+            let R = householderR Q1'
+            let CR = c * R 
+            let CR' = CR.SubMatrix(0, n, 1, n-1) //drop 1st column.
+            let svd = CR'.Svd()      
+            let V = V1''.ToColumnMatrix().Append(svd.U * svd.W)
+            V
+
     ///get V with Choi's method for 2 assets with constant correlation.
     let getVChoi (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 
+            let f = appendVector f1 f2
+            let w = appendVector fw1 (fw2 * -1.)
+            let sigma = getCov t1 v1 t2 v2 rho
+            getVChoi' f w sigma
+
+    ///get V with Choi's method for 2 assets with constant correlation, deprecated. 
+    let getVChoi'' (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 
             let f1w = f1 .* fw1 //long side weighted
             let f2w = f2 .* fw2 * -1. //short side weighted
@@ -278,7 +319,7 @@ module Options =
 
     ///Choi method of analytical 1 layer + GH remianing.
     ///assuming perferect correalation in asset
-    let rec optionChoi (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
+    let rec optionChoi2Asset (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
         (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
         //validate inputs
@@ -292,7 +333,7 @@ module Options =
         if strike < 0. then 
             let v0 = Vector<float>.Build.Dense(1) 
             let callput' = match callput with | Call -> Put | Put -> Call
-            let (opt,delta) = optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -strike rho callput' v0 v0 v0 v0 //put equivalent
+            let (opt,delta) = optionChoi2Asset f2 fw2 t2 v2 f1 fw1 t1 v1 -strike rho callput' v0 v0 v0 v0 //put equivalent
             opt, (delta |> Array.rev) //delta sequence reverted.
         else
             let weights = appendVector fw1 (-1. * fw2)
@@ -413,41 +454,29 @@ module Options =
 
             (opt - adj), delta  //return deltas in long/short 2 elem array
 
-    //Choi's method using cov inputs
-    let rec optionChoi' (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
-        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
-        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+    //Choi's general method using cov inputs
+    let rec optionChoi' (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
         //validate inputs
-        if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) v1' then invalidArg "v1'" "vol needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) v2' then invalidArg "v2'" "vol needs to be positive values"
-        let f1,fw1,t1,v1 = consolidateInputs f1' fw1' t1' v1'
-        let f2,fw2,t2,v2 = consolidateInputs f2' fw2' t2' v2' 
-        let strike = k' - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
         if strike < 0. then 
-            let v0 = Vector<float>.Build.Dense(1) 
             let callput' = match callput with | Call -> Put | Put -> Call
-            let (opt,delta) = optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -strike rho callput' v0 v0 v0 v0 //put equivalent
-            opt, (delta |> Array.rev) //delta sequence reverted.
+            let (opt,delta) = optionChoi' f (w * -1.) sigma -strike callput' //put equivalent
+            opt, delta
         else
-            let weights = appendVector fw1 (-1. * fw2)
-            let V = getVChoi f1 fw1 t1 v1 f2 fw2  t2 v2 rho
+            let V = getVChoi' f w sigma
             //for each z_dot, find z1 and then C_bs, and then sum them using GH
-            let n = f1.Count + f2.Count
+            let n = f.Count 
             let fk k (z:Vector<float>) = //formula 7 
                 let vk = V.Row(k) //kth row vector
                 let vksum = vk * vk  - vk.[0] * vk.[0]
                 exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
 
-            let F = appendVector f1 f2 
             let dim = min (n-1) 4 //cap at 5 levels
             if dim = 0 then failwith "degenerated bs formula directly, not implemented yet"
             let zs = ghz5 dim 
             let ws = ghw5 dim
 
             let wf z = 
-                        weights  //for each kth fixing
+                        w  //for each kth fixing
                         |> Vector.mapi( fun k w -> 
                            let fki = fk k z 
                            w *  fki 
@@ -455,7 +484,7 @@ module Options =
             let wff z = 
                         wf z //for each kth fixing
                         |> Vector.mapi( fun k x -> 
-                           x * F.[k]  
+                           x * f.[k]  
                            )
 
             let fn z1 z = //for each risk factor scenario
@@ -508,7 +537,7 @@ module Options =
                 |> Array.sum
                             
             let deltas' = 
-                weights 
+                w
                 |> Vector.mapi( fun k w -> 
                     roots
                     |> Array.mapi( fun i d -> 
@@ -518,13 +547,9 @@ module Options =
                     |> Array.sum )            
             //just return total long/short delta, because after consolidatation, the current implementation did not 
             //trace back to original contracts. 
-            let deltas = (match callput with | Call -> deltas' |Put -> deltas' - weights) |> Vector.toArray
-            let delta1,delta2 = deltas |> Array.splitAt fw1.Count
-            let delta1sum = Array.sum delta1
-            let delta2sum = Array.sum delta2
-            let delta = [|delta1sum ; delta2sum |]
+            let deltas = (match callput with | Call -> deltas' |Put -> deltas' - w) |> Vector.toArray
             let fwderr = 
-                weights 
+                w
                 |> Vector.mapi( fun k _ -> 
                     zs
                     |> Array.mapi( fun i z' -> 
@@ -537,15 +562,38 @@ module Options =
                 let calladj = 
                     deltas' 
                     |> Vector.mapi( fun k d -> 
-                        d * F.[k] * fwderr.[k])
+                        d * f.[k] * fwderr.[k])
                     |> Vector.sum
                 match callput with
                 | Call  -> calladj
                 | Put ->
                     calladj - 
-                        (weights 
-                        |> Vector.mapi( fun k w -> w * F.[k] *fwderr.[k])
+                        (w
+                        |> Vector.mapi( fun k w -> w * f.[k] *fwderr.[k])
                         |> Vector.sum )
 
-            (opt - adj), delta  //return deltas in long/short 2 elem array
+            (opt - adj), deltas  //return deltas in input vector
+
+    ///assuming perferect correalation in asset
+    let optionChoi2Asset' (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
+        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
+        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+        //validate inputs
+        if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v1' then invalidArg "v1'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v2' then invalidArg "v2'" "vol needs to be positive values"
+        let f1,fw1,t1,v1 = consolidateInputs f1' fw1' t1' v1'
+        let f2,fw2,t2,v2 = consolidateInputs f2' fw2' t2' v2' 
+        //call general case
+        let f = appendVector f1 f2
+        let w = appendVector fw1 (fw2 * -1.) 
+        let k = k' - (p1 .* pw1 ).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
+        let sigma = getCov t1 v1 t2 v2 rho
+        let (opt,deltas) = optionChoi' f w sigma k callput 
+        let delta1,delta2 = deltas |> Array.splitAt f1.Count
+        let delta1sum = Array.sum delta1
+        let delta2sum = Array.sum delta2
+        let delta = [|delta1sum ; delta2sum |]
+        opt, delta  //return deltas in long/short 2 elem array
 

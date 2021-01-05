@@ -118,4 +118,5 @@ module Markets =
 
     let getCurveUnit (PriceCurve p) = p |> Map.toSeq |> Seq.head |> snd |> getCaseDecimal |> fst            
 
-    let getTTM expDate d (pricingDate:DateTime)= max ((( min d expDate ) - pricingDate ).TotalDays / 365.) 0.
+    let getTTM' (pd:DateTime) (d:DateTime)= max ((d - pd ).TotalDays / 365.) 0.
+    let getTTM expDate d (pricingDate:DateTime)= getTTM' pricingDate ( min d expDate ) 

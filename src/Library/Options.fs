@@ -413,3 +413,139 @@ module Options =
 
             (opt - adj), delta  //return deltas in long/short 2 elem array
 
+    //Choi's method using cov inputs
+    let rec optionChoi' (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
+        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
+        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+        //validate inputs
+        if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v1' then invalidArg "v1'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v2' then invalidArg "v2'" "vol needs to be positive values"
+        let f1,fw1,t1,v1 = consolidateInputs f1' fw1' t1' v1'
+        let f2,fw2,t2,v2 = consolidateInputs f2' fw2' t2' v2' 
+        let strike = k' - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
+        if strike < 0. then 
+            let v0 = Vector<float>.Build.Dense(1) 
+            let callput' = match callput with | Call -> Put | Put -> Call
+            let (opt,delta) = optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -strike rho callput' v0 v0 v0 v0 //put equivalent
+            opt, (delta |> Array.rev) //delta sequence reverted.
+        else
+            let weights = appendVector fw1 (-1. * fw2)
+            let V = getVChoi f1 fw1 t1 v1 f2 fw2  t2 v2 rho
+            //for each z_dot, find z1 and then C_bs, and then sum them using GH
+            let n = f1.Count + f2.Count
+            let fk k (z:Vector<float>) = //formula 7 
+                let vk = V.Row(k) //kth row vector
+                let vksum = vk * vk  - vk.[0] * vk.[0]
+                exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
+
+            let F = appendVector f1 f2 
+            let dim = min (n-1) 4 //cap at 5 levels
+            if dim = 0 then failwith "degenerated bs formula directly, not implemented yet"
+            let zs = ghz5 dim 
+            let ws = ghw5 dim
+
+            let wf z = 
+                        weights  //for each kth fixing
+                        |> Vector.mapi( fun k w -> 
+                           let fki = fk k z 
+                           w *  fki 
+                           )
+            let wff z = 
+                        wf z //for each kth fixing
+                        |> Vector.mapi( fun k x -> 
+                           x * F.[k]  
+                           )
+
+            let fn z1 z = //for each risk factor scenario
+                        (wff z //for each kth fixing
+                        |> Vector.mapi( fun k w -> 
+                           w * exp(-0.5* V.[k,0]*V.[k,0] + V.[k,0]*z1)                
+                           )
+                        |> Vector.sum) - strike
+
+
+            let difffn z1 z =
+                        wff z  //for each kth fixing
+                        |> Vector.mapi( fun k w -> 
+                            w * exp( - 0.5 * V.[k,0]*V.[k,0] + V.[k,0]*z1)                
+                            *V.[k,0])
+                        |> Vector.sum 
+
+            let roots = 
+                zs 
+                |> Array.map( fun x ->
+                    // fn is increasing in z1, linked to fixing0
+                    // adding cases for trivial k.
+                    let z = vector x
+                    let u = 10.
+                    let l = -10.
+                    (if ( fn u z <= 0. ) then u
+                        elif ( fn l z >= 0.) then l
+                        else 
+                            RootFinding.RobustNewtonRaphson.FindRoot(
+                                ( fun z1 -> fn z1 z),
+                                ( fun z1 -> difffn z1 z),
+                                l, u)) * -1.)
+                            //-1E3, 1E3, 0.01, 1000,10) * -1.)
+            let opt = 
+                roots
+                |> Array.mapi( fun i d -> 
+                    let z = vector zs.[i]
+                    let o = 
+                        match callput with
+                        | Call -> 
+                            (wff z
+                            |> Vector.mapi( fun k w -> w * normcdf( d + V.[k,0]))
+                            |> Vector.sum )- strike * normcdf(d)                       
+                        | Put ->
+                            strike * normcdf(-d) - 
+                                (wff z
+                                |> Vector.mapi( fun k w -> w * normcdf( -d - V.[k,0])) 
+                                |> Vector.sum )
+                    o * ws.[i])
+                |> Array.sum
+                            
+            let deltas' = 
+                weights 
+                |> Vector.mapi( fun k w -> 
+                    roots
+                    |> Array.mapi( fun i d -> 
+                        let z = vector zs.[i] 
+                        let wf = fk k z
+                        ws.[i] * w * wf * normcdf ( d + V.[k,0] ) )   
+                    |> Array.sum )            
+            //just return total long/short delta, because after consolidatation, the current implementation did not 
+            //trace back to original contracts. 
+            let deltas = (match callput with | Call -> deltas' |Put -> deltas' - weights) |> Vector.toArray
+            let delta1,delta2 = deltas |> Array.splitAt fw1.Count
+            let delta1sum = Array.sum delta1
+            let delta2sum = Array.sum delta2
+            let delta = [|delta1sum ; delta2sum |]
+            let fwderr = 
+                weights 
+                |> Vector.mapi( fun k _ -> 
+                    zs
+                    |> Array.mapi( fun i z' -> 
+                        let z = vector z' 
+                        let wf = fk k z
+                        ws.[i] * (wf - 1.0))
+                    |> Array.sum )
+                    
+            let adj =
+                let calladj = 
+                    deltas' 
+                    |> Vector.mapi( fun k d -> 
+                        d * F.[k] * fwderr.[k])
+                    |> Vector.sum
+                match callput with
+                | Call  -> calladj
+                | Put ->
+                    calladj - 
+                        (weights 
+                        |> Vector.mapi( fun k w -> w * F.[k] *fwderr.[k])
+                        |> Vector.sum )
+
+            (opt - adj), delta  //return deltas in long/short 2 elem array
+

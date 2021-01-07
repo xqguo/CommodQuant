@@ -200,6 +200,14 @@ module Options =
             let sigma22 = getSigma2 v2 t2 v2 t2 1.0
             sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
 
+    ///get cov for 2 assets with constant correlation with cov inputs.
+    let getCov2 (t1:Vector<float>) (sigma11:Matrix<float>) (t2:Vector<float>) (sigma22:Matrix<float>) (rho:float) = 
+            //assuming constant correlation between 2 assets.
+            let v1 = (sigma11.Diagonal() ./ t1) |> Vector.Sqrt
+            let v2 = (sigma22.Diagonal() ./ t2) |> Vector.Sqrt
+            let sigma12 = getSigma2 v1 t1 v2 t2 rho
+            sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
+
     ///get V with Choi's method with forward weights and cov, general case
     let getVChoi' (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) = 
             let v = sigma.Diagonal().PointwiseSqrt()
@@ -576,8 +584,7 @@ module Options =
 
     ///assuming perferect correalation in asset
     let optionChoi2Asset' (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
-        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k' (rho:float) callput 
-        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>) = 
+        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k (rho:float) callput =
         //validate inputs
         if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
         if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
@@ -588,8 +595,26 @@ module Options =
         //call general case
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
-        let k = k' - (p1 .* pw1 ).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
         let sigma = getCov t1 v1 t2 v2 rho
+        let (opt,deltas) = optionChoi' f w sigma k callput 
+        let delta1,delta2 = deltas |> Array.splitAt f1.Count
+        let delta1sum = Array.sum delta1
+        let delta2sum = Array.sum delta2
+        let delta = [|delta1sum ; delta2sum |]
+        opt, delta  //return deltas in long/short 2 elem array
+
+    ///using cov inputs
+    let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Matrix<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) (v2:Matrix<float>) k (rho:float) callput =
+        //validate inputs
+        if Vector.exists (fun x -> x <= 0. ) t1 then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) t2 then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) (v1.Diagonal()) then invalidArg "v1'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) (v2.Diagonal()) then invalidArg "v2'" "vol needs to be positive values"
+        //call general case
+        let f = appendVector f1 f2
+        let w = appendVector fw1 (fw2 * -1.) 
+        let sigma = getCov2 t1 v1 t2 v2 rho
         let (opt,deltas) = optionChoi' f w sigma k callput 
         let delta1,delta2 = deltas |> Array.splitAt f1.Count
         let delta1sum = Array.sum delta1

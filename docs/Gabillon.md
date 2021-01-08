@@ -50,9 +50,8 @@ $$\int_{t_m}^{t_n}
 \right]
 dt$$
 
-Where
-
 $$\begin{aligned} 
+  \text{Where}\\
   \Sigma_{11} &=
   \sigma_s1(t,T_i) \sigma_{s2}(t,T_j) \rho(s1,s2)\\  
   \Sigma_{22} &=

@@ -53,6 +53,34 @@ module Gabillon =
         let p4 = rho * sigmasj * sigmal * (1.0 / k * ejnm - e2nm /(2.0 * k) )
         p1 + p2 + p3 + p4
 
+    //compute forward covariance between tm to tn for two futures 1 2 with maturity Ti Tj 
+    //using constant Gabillon model inputs for this interval
+    //allowing different sigmas i vs j.
+    let fwdXCovariance (tm:float) tn Ti Tj sigmas1 sigmas2 sigmal1 sigmal2 k1 k2 rho11 rho12 rho21 rho22 =
+        let k12 = k1 + k2
+        let Tin = Ti - tn
+        let Tim = Ti - tm
+        let Tjn = Tj - tn
+        let Tjm = Tj - tm
+        let ein = exp(-k1 * Tin)
+        let ejn = exp(-k2 * Tjn)
+        let e2n = exp( -k1 * Tin - k2*Tjn)
+        let eim = exp(-k1* Tim)
+        let ejm = exp(-k2* Tjm)
+        let e2m = exp( -k2 * Tim - k2*Tjm)
+        let einmk = (ein - eim)/k1
+        let ejnmk = (ejn - ejm)/k2
+        let e2nmk = (e2n - e2m)/k12
+        let ss = sigmas1 * sigmas2 * rho11
+        let ll = sigmal1 * sigmal2 * rho22
+        let sl = sigmas1 * sigmal2 * rho12
+        let ls = sigmal1 * sigmas2 * rho21
+        let p1 = ss * e2nmk 
+        let p2 = ll * ( tn - tm - einmk - ejnmk + e2nmk)
+        let p3 = sl * ( einmk - e2nmk )
+        let p4 = ls * ( ejnmk - e2nmk )
+        p1 + p2 + p3 + p4
+
     let fwdCorr tm tn Ti Tj sigmasi sigmasj sigmal k rho =
         let Vi = fwdVariance tm tn Ti sigmasi sigmal k rho
         let Vj = fwdVariance tm tn Tj sigmasj sigmal k rho
@@ -79,7 +107,6 @@ module Gabillon =
         p1 + p3
 
     //dfwdVarianceds 0.0 1.0 1.0 0.4 0.2 1.0 0.5
-
 
     let findSigmaS vm vn tm tn Ti sigmal k rho = 
         let vvt = vn * vn * tn - vm * vm * tm

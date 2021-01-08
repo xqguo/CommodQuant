@@ -107,7 +107,7 @@ let ``test choi vs moment matching``() =
     let k = 0. 
     let rho = 0.9 //correlation between long/short fixing
     let so =        spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
+    let choi,delta' = optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     //(so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
     Assert.Equal ( (min so choi)/(max so choi), 1.0, 1  )
 
@@ -123,18 +123,13 @@ let ``test choi put call parity`` f1 f2 k =
     let v2 = Vector.Build.Dense(8, 0.0001) // vol for each fixing 
     let fw2 = fw1 //weights longside
 
-    let p1 = Vector.Build.Dense(8, 0.0) //  #past fixing longside
-    let pw1 = Vector.Build.Dense(8, 0.0)
-    let p2 = Vector.Build.Dense(8, 0.0)
-    let pw2 = Vector.Build.Dense(8, 0.0)
-
     let rho = 0.5  //correlation between long/short fixing
     let callput = Call
-    let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi,_ = optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
 
     let rho = 0.5 //correlation between long/short fixing
     let callput = Put
-    let choi',_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi',_ = optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     
     Assert.Equal ( choi - choi' , f1 * fw1 - f2 * fw2 - k, 3 )
 
@@ -150,17 +145,12 @@ let ``test choi spread put call equivalence `` f1 f2 v1 v2 k =
     let v2 = DenseVector.create 8 v2 // vol for each fixing 
     let fw2 = fw1 //weights longside
 
-    let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
-    let pw1 = Vector.Build.Dense(1, 0.0)
-    let p2 = Vector.Build.Dense(1, 0.0)
-    let pw2 = Vector.Build.Dense(1, 0.0)
-
     let rho = 0.5  //correlation between long/short fixing
     let callput = Call
-    let choi,_ = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
+    let choi,_ = optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
 
     let callput = Put
-    let choi',_ = optionChoi f2 fw2 t2 v2 f1 fw1 t1 v1 -k rho callput p1 pw1 p2 pw2
+    let choi',_ = optionChoi2Asset' f2 fw2 t2 v2 f1 fw1 t1 v1 -k rho callput
     
     Assert.Equal ( choi , choi' , 3 )
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
@@ -177,12 +167,10 @@ let ``test choi vs bs`` f k callput=
     let v2 = vector  [0.00001] // vol for each fixing 
     let fw2 = fw1  //weights longside
 
-    let p1 = vector [ 0.0 ] //  #past fixing longside
-
     let rho = 0. //correlation between long/short fixing
     let c = bs f k 0.25 1.0 callput 
     let delta = bsdelta f k 0.25 1.0 callput 
-    let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
+    let choi,delta' = optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     Assert.Equal( c , choi, 2 ) .&.
     Assert.Equal( delta , delta'.[0], 2 )
 
@@ -205,7 +193,7 @@ let ``test choi vs mm`` () =
 
     let rho = 0.999 //correlation between long/short fixing
     let c = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,delta' = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
+    let choi,delta' = optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     Assert.Equal( c , choi, 7) 
 //[<Property>]
 //let ``test choi vs example`` () = 

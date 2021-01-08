@@ -202,3 +202,50 @@ module Pricer =
             "vol2", ( Statistics.Mean (v2.Diagonal() ./ t2 |> Vector.Sqrt ) ); //vol1 
         |]
 
+    ///spread option using cross Gabillon model
+    let SpreadOptionPricerXGabillon inst1 start1 end1 avg1 inst2 start2 end2 avg2 slope freight callput expDate  
+        refMonth (pricingDate:DateTime)
+        rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
+        let lags1 = [|start1 .. end1|]
+        let lags2 = [|start2 .. end2|]
+
+        let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) price1 = 
+            let com1 = getCommod inst1
+            let getPrices1 = getPricesWithOverride pricecurve1 price1 
+            let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com1 lags1 slope avg1 expDate )           
+            let fixings1 = futureDetails1 |> Array.map( fun (x,_,y) -> (min x expDate),y)
+            let fw1 = futureDetails1 |> Array.map( fun (_,w,_) -> w) |> toVector
+            let f1 = fixings1 |> Array.map( fun (_,c) -> getPrices1 c) |> toVector
+            let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
+            (f1,fw1,fixings1,a1)
+
+        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 price1
+        let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 price2 
+        let k = -freight - a1 + a2 /// adapte K for past fixings
+        //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
+        let xParam = getXGabillonParam inst1 inst2
+        let sigma = getXGabillonCovFull inst1 volcurve1 x1 inst2 volcurve2 x2 xParam pricingDate 
+        let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
+        let t2 = x2 |> Array.map (fst >> getTTM pricingDate) |> toVector
+        let n = f1.Count
+        let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 f2 fw2 t2 k sigma callput
+        let p1 = ((f1 .* fw1 ).Sum() + freight) + a1  //inst1 forwd
+        let p2 = ((f2 .* fw2 ).Sum())+ a2 //inst2 fwd
+        let pintr = 
+            match callput with 
+            | Call -> (max (p1 - p2) 0.)
+            | Put -> (max (p2 - p1) 0.)
+
+        let v1 = ( sigma.Diagonal().[0..(f1.Count-1)] ./ t1 ).PointwiseSqrt()
+        let v2 = ( sigma.Diagonal().[f1.Count..] ./ t2 ).PointwiseSqrt()
+        let deltaA = deltas
+        [|   "Option", opt;
+            "Delta1", deltaA.[0];
+            "Delta2", deltaA.[1];
+            "P1", p1;
+            "P2", p2;
+            "Intrinsic", pintr;
+            "vol1", ( Statistics.Mean v1 ); //vol1 
+            "vol2", ( Statistics.Mean v2 ); //vol1 
+        |]
+

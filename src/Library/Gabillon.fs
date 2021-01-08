@@ -202,8 +202,9 @@ module Gabillon =
         DenseMatrix.init n n ( fun i j -> if i <= j then lower.[i,j] else lower.[j,i])
 
     //get covariance for two gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
-    let getXGabillonCov ins (vols:VolCurve) (sl, k, rho) (fixings: (DateTime*string) []) 
-        ins' (vols':VolCurve) (sl', k', rho') (fixings': (DateTime*string) []) pd = 
+    let getXGabillonCov ins (vols:VolCurve)  (fixings: (DateTime*string) []) 
+        ins' (vols':VolCurve) (fixings': (DateTime*string) []) 
+        (l1, l2, k1, k2, rho1, rho2, rho11, rho12, rho21, rho22 ) pd = 
         let c = getCommod ins
         let optd = c.Contracts.Opt |> Map.map(fun _ d -> getTTM pd d)
         let futd = c.Contracts.Fut |> Map.map(fun _ d -> getTTM pd d)
@@ -218,7 +219,7 @@ module Gabillon =
                 let t = optd.[c]
                 let T = futd.[c]
                 let v = vols.[c] |> float
-                (c, implySigmaS v v 0. t T sl k rho )) 
+                (c, implySigmaS v v 0. t T l1 k1 rho1 )) 
             |> Map.ofSeq        
 
         let c' = getCommod ins'
@@ -235,24 +236,99 @@ module Gabillon =
                 let t = optd'.[c]
                 let T = futd'.[c]
                 let v = vols'.[c] |> float
-                (c, implySigmaS v v 0. t T sl' k' rho' )) 
+                (c, implySigmaS v v 0. t T l2 k2 rho2 )) 
             |> Map.ofSeq        
-        //compute cov
+
+        //compute cov, this one is not symmetric in general
         let n = fixings.Length
+        DenseMatrix.init n n ( fun i j -> 
+                let t = min ts.[i] ts'.[j]
+                let ci = cs.[i]
+                let cj = cs'.[j]
+                fwdXCovariance 0.0 t futd.[ci] futd'.[cj] ss.[ci] ss'.[cj] l1 l2 k1 k2 rho11 rho12 rho21 rho22 )
+
+    //get covariance for two gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
+    let getXGabillonCovFull ins (vols:VolCurve)  (fixings: (DateTime*string) []) 
+        ins' (vols':VolCurve) (fixings': (DateTime*string) []) 
+        (l1, l2, k1, k2, rho1, rho2, rho11, rho12, rho21, rho22 ) pd = 
+        let c = getCommod ins
+        let optd = c.Contracts.Opt |> Map.map(fun _ d -> getTTM pd d)
+        let futd = c.Contracts.Fut |> Map.map(fun _ d -> getTTM pd d)
+        let (ds,cs) = fixings |> Array.unzip 
+        let ts = ds |> Array.map (getTTM pd)
+
+        //calibrate ss
+        let ss =
+            cs
+            |> set
+            |> Set.map( fun c ->            
+                let t = optd.[c]
+                let T = futd.[c]
+                let v = vols.[c] |> float
+                (c, implySigmaS v v 0. t T l1 k1 rho1 )) 
+            |> Map.ofSeq        
+
+        let c' = getCommod ins'
+        let optd' = c'.Contracts.Opt |> Map.map(fun _ d -> getTTM pd d)
+        let futd' = c'.Contracts.Fut |> Map.map(fun _ d -> getTTM pd d)
+        let (ds',cs') = fixings' |> Array.unzip 
+        let ts' = ds' |> Array.map (getTTM pd)
+
+        //calibrate ss
+        let ss' =
+            cs'
+            |> set
+            |> Set.map( fun c ->            
+                let t = optd'.[c]
+                let T = futd'.[c]
+                let v = vols'.[c] |> float
+                (c, implySigmaS v v 0. t T l2 k2 rho2 )) 
+            |> Map.ofSeq        
+
+        //compute cov, this one is not symmetric in general
+        let n = fixings.Length
+        let m = fixings'.Length
+        let sigma12 = DenseMatrix.init n m ( fun i j -> 
+                let t = min ts.[i] ts'.[j]
+                let ci = cs.[i]
+                let cj = cs'.[j]
+                fwdXCovariance 0.0 t futd.[ci] futd'.[cj] ss.[ci] ss'.[cj] l1 l2 k1 k2 rho11 rho12 rho21 rho22 )
+        
+        //compute sigma11 
         let lower = Array2D.init n n ( fun i j -> 
             if i <= j then 
                 let t = min ts.[i] ts.[j]
                 let ci = cs.[i]
                 let cj = cs.[j]
-                fwdCovariance 0.0 t futd.[ci] futd.[cj] ss.[ci] ss.[cj] sl k rho 
+                fwdCovariance 0.0 t futd.[ci] futd.[cj] ss.[ci] ss.[cj] l1 k1 rho1 
             else 0.0 )
 
-        DenseMatrix.init n n ( fun i j -> if i <= j then lower.[i,j] else lower.[j,i]) |> ignore // not implemented yet
-       
+        let sigma11 = DenseMatrix.init n n ( fun i j -> if i <= j then lower.[i,j] else lower.[j,i])
 
+        //compute sigma22 
+        let lower' = Array2D.init m m ( fun i j -> 
+            if i <= j then 
+                let t = min ts'.[i] ts'.[j]
+                let ci = cs'.[i]
+                let cj = cs'.[j]
+                fwdCovariance 0.0 t futd'.[ci] futd'.[cj] ss'.[ci] ss'.[cj] l2 k2 rho2 
+            else 0.0 )
+
+        let sigma22 = DenseMatrix.init m m ( fun i j -> if i <= j then lower'.[i,j] else lower'.[j,i])
+
+        sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
+        
     //hardcoded defaults, could read from files.
     let getGabillonParam ins = 
         match ins with
         | TTF -> (0.2, 2.5, 0.3)
         | BRT | DBRT -> ( 0.2, 0.8, 0.5)
         | _ -> ( 0.001, 0.001, 0.0 ) //bs equivalent
+
+    let getXGabillonParam ins1 ins2 = 
+        let (l1,k1,r1) = getGabillonParam ins1
+        let (l2,k2,r2) = getGabillonParam ins2
+        match ins1,ins2 with
+        | (BRT,TTF) ->             
+            (l1,l2,k1,k2,r1,r2,0.2, 0.4, 0.4, 0.4)
+        | _ -> failwith "Not implemented"

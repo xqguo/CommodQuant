@@ -604,17 +604,15 @@ module Options =
         opt, delta  //return deltas in long/short 2 elem array
 
     ///using cov inputs
-    let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Matrix<float>) 
-        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) (v2:Matrix<float>) k (rho:float) callput =
+    let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>)  k (sigma:Matrix<float>) callput =
         //validate inputs
         if Vector.exists (fun x -> x <= 0. ) t1 then invalidArg "t1'" "time to matuirty needs to be positive values"
         if Vector.exists (fun x -> x <= 0. ) t2 then invalidArg "t1'" "time to matuirty needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) (v1.Diagonal()) then invalidArg "v1'" "vol needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) (v2.Diagonal()) then invalidArg "v2'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) (sigma.Diagonal()) then invalidArg "sigma'" "vol needs to be positive values"
         //call general case
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
-        let sigma = getCov2 t1 v1 t2 v2 rho
         let (opt,deltas) = optionChoi' f w sigma k callput 
         let delta1,delta2 = deltas |> Array.splitAt f1.Count
         let delta1sum = Array.sum delta1

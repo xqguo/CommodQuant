@@ -236,8 +236,8 @@ module Pricer =
             | Call -> (max (p1 - p2) 0.)
             | Put -> (max (p2 - p1) 0.)
 
-        let v1 = ( sigma.Diagonal().[0..(f1.Count-1)] ./ t1 ).PointwiseSqrt()
-        let v2 = ( sigma.Diagonal().[f1.Count..] ./ t2 ).PointwiseSqrt()
+        let v1 = ( sigma.Diagonal().[0..n-1] ./ t1 ).PointwiseSqrt()
+        let v2 = ( sigma.Diagonal().[n..] ./ t2 ).PointwiseSqrt()
         let deltaA = deltas
         [|   "Option", opt;
             "Delta1", deltaA.[0];

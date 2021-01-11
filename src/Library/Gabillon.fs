@@ -316,12 +316,19 @@ module Gabillon =
 
         let sigma22 = DenseMatrix.init m m ( fun i j -> if i <= j then lower'.[i,j] else lower'.[j,i])
 
-        sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
+        let cov = sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
+
+        //check for eigenvalue and fix the cov matrix to be posive definite
+        let evd = cov.Evd()
+        let l = evd.EigenValues |> Vector.map ( fun x -> x.Real)
+        let o = evd.EigenVectors
+        let l' = l |> Vector.map( fun x -> max x 1E-10 )
+        o * (DenseMatrix.ofDiag l') * (o.Transpose())
         
     //hardcoded defaults, could read from files.
     let getGabillonParam ins = 
         match ins with
-        | TTF -> (0.2, 2.5, 0.3)
+        | TTF | JKM -> (0.2, 2.5, 0.3)
         | BRT | DBRT -> ( 0.2, 0.8, 0.5)
         | _ -> ( 0.001, 0.001, 0.0 ) //bs equivalent
 
@@ -329,6 +336,6 @@ module Gabillon =
         let (l1,k1,r1) = getGabillonParam ins1
         let (l2,k2,r2) = getGabillonParam ins2
         match ins1,ins2 with
-        | (BRT,TTF) ->             
+        | (BRT,TTF) | (DBRT,TTF) | (BRT, JKM ) | (DBRT, JKM )->             
             (l1,l2,k1,k2,r1,r2,0.2, 0.4, 0.4, 0.4)
         | _ -> failwith "Not implemented"

@@ -81,20 +81,14 @@ module Pricer =
         pastDetails |> Array.map(fun ( d, w, c ) -> float (getFixingFunc d c) * w ) |> Array.sum
 
     //for the final portfolio we need just functions that take price curve and return price. 
-    let getInputs pricingDate expDate refMonth lags avg inst slope (pricecurve:PriceCurve) (volcurve:VolCurve) priceOverride volOverride = 
+    let getInputs pricingDate expDate refMonth lags avg inst slope (pricecurve:PriceCurve) (volcurve:VolCurve) = 
         let com = getCommod inst
         let getPrices1 c = 
-           match priceOverride with
-           | Some v -> v
-           | None ->
                 if pricecurve.Pillars.Contains c then
                     (pricecurve.Item c).Value
                 else
                     failwithf "try to getPrice:%s from %A" c pricecurve
         let getVol c = 
-           match volOverride with
-           | Some v -> v
-           | None -> 
                 if volcurve.Pillars.Contains c then
                     volcurve.Item c
                 else
@@ -111,17 +105,15 @@ module Pricer =
           p1)
 
         ///spread option of inst1 (e.g DBRT ) vs inst2 (e.g. JKM) 
-    let SpreadOptionPricerBS inst1 start1 end1 avg1 inst2 start2 end2 avg2 slope freight callput expDate  
+    let SpreadOptionPricerBS inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
-        let lags1 = [|start1 .. end1|]
-        let lags2 = [|start2 .. end2|]
+        rho pricecurve1 volcurve1 pricecurve2 volcurve2 =
         let optPricer inst1 inst2 rho refMonth = 
             //let rho = 0.4
             //let refMonth = "Dec20"
             //let freight = if refMonth = "JUL-21" then 0.85 else 1.0
-            let (f1,fw1,t1,v1,a1) = getInputs pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 volcurve1 price1 vol1
-            let (f2,fw2,t2,v2,a2) = getInputs pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 volcurve2 price2 vol2
+            let (f1,fw1,t1,v1,a1) = getInputs pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 volcurve1 
+            let (f2,fw2,t2,v2,a2) = getInputs pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 volcurve2 
             // put optionality:
             // exercise when JCC + freight < JKM, => -freight - ( JCC - JKM) > 0
             // so a put on ( JCC - JKM ) with strike  = -freight 
@@ -159,15 +151,13 @@ module Pricer =
                 failwithf "try to getPrice:%s from %A" c crv
 
     ///spread option using Gabillon model
-    let SpreadOptionPricerGabillon inst1 start1 end1 avg1 inst2 start2 end2 avg2 slope freight callput expDate  
+    let SpreadOptionPricerGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
-        let lags1 = [|start1 .. end1|]
-        let lags2 = [|start2 .. end2|]
+        rho pricecurve1 volcurve1 pricecurve2 volcurve2 =
 
-        let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) volcurve1 price1 vol1 exp = 
+        let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) volcurve1 = 
             let com1 = getCommod inst1
-            let getPrices1 = getPricesWithOverride pricecurve1 price1 
+            let getPrices1 = getPricesWithOverride pricecurve1 None
             let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com1 lags1 slope avg1 expDate )           
             let fixings1 = futureDetails1 |> Array.map( fun (x,_,y) -> (min x expDate),y)
             let fw1 = futureDetails1 |> Array.map( fun (_,w,_) -> w) |> toVector
@@ -177,8 +167,8 @@ module Pricer =
             let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
             (f1,fw1,t1,sigma1,a1)
 
-        let (f1,fw1,t1,v1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 volcurve1 price1 vol1 expDate
-        let (f2,fw2,t2,v2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 volcurve2 price2 vol2 expDate
+        let (f1,fw1,t1,v1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 volcurve1
+        let (f2,fw2,t2,v2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 volcurve2
         let k = -freight - a1 + a2 /// adapte K for past fixings
         //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
         let v1' = ( v1.Diagonal() ./ t1 ).PointwiseSqrt()
@@ -203,15 +193,13 @@ module Pricer =
         |]
 
     ///spread option using cross Gabillon model
-    let SpreadOptionPricerXGabillon inst1 start1 end1 avg1 inst2 start2 end2 avg2 slope freight callput expDate  
+    let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        rho pricecurve1 volcurve1 pricecurve2 volcurve2 price1 vol1 price2 vol2 =
-        let lags1 = [|start1 .. end1|]
-        let lags2 = [|start2 .. end2|]
+        rho pricecurve1 volcurve1 pricecurve2 volcurve2 =
 
-        let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) price1 = 
+        let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) = 
             let com1 = getCommod inst1
-            let getPrices1 = getPricesWithOverride pricecurve1 price1 
+            let getPrices1 = getPricesWithOverride pricecurve1 None 
             let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com1 lags1 slope avg1 expDate )           
             let fixings1 = futureDetails1 |> Array.map( fun (x,_,y) -> (min x expDate),y)
             let fw1 = futureDetails1 |> Array.map( fun (_,w,_) -> w) |> toVector
@@ -219,11 +207,11 @@ module Pricer =
             let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
             (f1,fw1,fixings1,a1)
 
-        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 price1
-        let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 price2 
+        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 
+        let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 
         let k = -freight - a1 + a2 /// adapte K for past fixings
         //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
-        let xParam = getXGabillonParam inst1 inst2
+        let xParam = getXGabillonParam inst1 inst2 rho 
         let sigma = getXGabillonCovFull inst1 volcurve1 x1 inst2 volcurve2 x2 xParam pricingDate 
         let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
         let t2 = x2 |> Array.map (fst >> getTTM pricingDate) |> toVector

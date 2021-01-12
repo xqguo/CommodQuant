@@ -178,6 +178,12 @@ module DomainTypes  =
         member this.Item s = 
             let (PriceCurve c) = this
             c.Item s
+        member this.flatten s = 
+            let (PriceCurve c) = this
+            c |> Map.map( fun _ v -> UnitPrice.applyCase v.Case s) |> PriceCurve
+        member this.shift s = 
+            let (PriceCurve c) = this
+            c |> Map.map( fun _ v -> UnitPrice.applyCase v.Case (v.Value + s)) |> PriceCurve
 
     type Vol = 
         | PercentVol of decimal //percentage vol e.g. 20
@@ -193,6 +199,12 @@ module DomainTypes  =
             match c.Item s with //always return absolute vol
             | PercentVol v -> v / 100M
             | AbsoluteVol v -> v
+        member this.flatten s = 
+            let (VolCurve c) = this
+            c |> Map.map( fun _ _ -> AbsoluteVol s) |> VolCurve
+        member this.shift s = 
+            let (VolCurve c) = this
+            c |> Map.map( fun k v -> AbsoluteVol ( this.Item k  + s )) |> VolCurve
 
     type RateCurves = 
         | USDOIS of PiecewiseYieldCurve

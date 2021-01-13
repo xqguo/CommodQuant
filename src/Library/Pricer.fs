@@ -62,6 +62,43 @@ module Pricer =
         |||> Array.zip3
         |> Array.groupBy(fun (x,_,z) -> x,z) |> Array.map( fun ((k1,k2),v) -> k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
 
+    //https://www.argusmedia.com/-/media/Files/methodology/argus-lng-daily.ashx
+    //The construction of the oil-price average is expressed as three figures,
+    //for example 601, representing the number of months over which the oil
+    //price is averaged, the delay, or lag, in months between the end of the
+    //oil price average period and the delivery period for the LNG, and the
+    //number of months of delivery for which the average oil price pertains.
+    //Argus produces prices for
+    //• 601 – six-month average, no lag, for one month of delivery
+    //• 301 – three-month average, no lag, for one month of delivery
+    //• 311 – three-month average, one-month lag, for one month of
+    //delivery
+    //• 101 – one-month average, no lag, for one month of delivery
+    //• 603 – six-month average, no lag, for one calendar quarter of delivery
+    let applyFormula (f:string) (refMonth:DateTime) =
+        //check formula: 3 digits
+        if f.Length <> 3 || f.ToCharArray() |> Array.forall( Char.IsDigit ) |> not
+            then failwith $"Unknown formula {f}"
+        //if delivery is 3 or 6, move to calendar period start
+        let m = 
+            match f.[2] with
+            | '6' -> refMonth |> dateAdjust' "H" 
+            | '3' -> refMonth |> dateAdjust' "Q"
+            | '1' -> refMonth |> dateAdjust' "a"
+            | _ -> failwith $"Unknown formula {f}"
+        //compute total lag
+        let l =
+            match (string f.[1])  with
+            | Int i -> m.Month - refMonth.Month - i
+            | _ -> failwith $"Unknown formula {f}"
+        //apply avg
+        match f.[0] with
+        | '6' -> [|-6 .. -1|] 
+        | '3' -> [|-3 .. -1|]
+        | '1' -> [|-1|]
+        | _ -> failwith $"Unknown formula {f}"
+        |> Array.map ((+) l)
+
     ///generate inputs for option pricing 
     /// inputs are
     /// futureDetails is a list of tuple of fixingdate, weight, ContractPillar 

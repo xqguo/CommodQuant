@@ -93,12 +93,6 @@ module Markets =
             |> PriceCurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
-    let getPriceCurve ins o = 
-        let c = getPrices ins
-        match o with 
-        | Some p -> c.flatten p
-        | None -> c
-
     // these depends on the data format
     // commod curve pillars are either MMM-yy or TODAY or BOM, all in upper case.
     // vols data in market quote ( percent ), e.g. 20.1
@@ -122,10 +116,26 @@ module Markets =
             |> VolCurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
+    type CurveOveride =
+        | Flatten
+        | Shift
+
+    let getPriceCurve ins o = 
+        let c = getPrices ins
+        match o with 
+        | Some (m,p) -> 
+            match m with
+            | Flatten -> c.flatten p
+            | Shift -> c.shift p
+        | None -> c
+
     let getVolCurve ins o = 
         let c = getVols ins
         match o with 
-        | Some p -> c.flatten p
+        | Some (m,p) -> 
+            match m with
+            | Flatten -> c.flatten p
+            | Shift -> c.shift p
         | None -> c
 
     let getCurveUnit (PriceCurve p) = p |> Map.toSeq |> Seq.head |> snd |> getCaseDecimal |> fst            

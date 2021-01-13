@@ -195,7 +195,7 @@ module Pricer =
     ///spread option using cross Gabillon model
     let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        rho pricecurve1 volcurve1 pricecurve2 volcurve2 =
+        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 =
 
         let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) = 
             let com1 = getCommod inst1
@@ -211,7 +211,7 @@ module Pricer =
         let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 
         let k = -freight - a1 + a2 /// adapte K for past fixings
         //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
-        let xParam = getXGabillonParam inst1 inst2 rho 
+        //let xParam = getXGabillonParam inst1 inst2 rho 
         let sigma = getXGabillonCovFull inst1 volcurve1 x1 inst2 volcurve2 x2 xParam pricingDate 
         let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
         let t2 = x2 |> Array.map (fst >> getTTM pricingDate) |> toVector

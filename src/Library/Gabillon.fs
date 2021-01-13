@@ -332,9 +332,7 @@ module Gabillon =
         | BRT | DBRT -> ( 0.2, 0.8, 0.5)
         | _ -> ( 0.001, 0.001, 0.0 ) //bs equivalent
 
-    let getXGabillonParam ins1 ins2 rho = 
-        let (l1,k1,r1) = getGabillonParam ins1
-        let (l2,k2,r2) = getGabillonParam ins2
+    let combineGabillonParam (l1,k1,r1) (l2,k2,r2) rho = 
         match rho with 
         | [r] -> 
             (l1,l2,k1,k2,r1,r2, r, r, r, r)
@@ -342,3 +340,8 @@ module Gabillon =
             (l1,l2,k1,k2,r1,r2, r11, r12, r21, r22)
         | _ -> 
             failwith "Rho should be a list of float of either 1 or 4 elements"
+
+    let getXGabillonParam ins1 ins2 rho = 
+        let p1 = getGabillonParam ins1
+        let p2 = getGabillonParam ins2
+        combineGabillonParam p1 p2 rho

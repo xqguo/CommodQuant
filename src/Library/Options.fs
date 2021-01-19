@@ -13,6 +13,8 @@ module Options =
 
     let normcdf = fun x -> Normal.CDF ( 0., 1., x )  
     let normpdf = fun x -> Normal.PDF ( 0., 1., x )  
+    let norminvcdf = fun x -> Normal.InvCDF( 0., 1., x )
+
     ///returns black scholes fwd price
     let bs f k v t (o:Payoff) = 
         if ( f<=0. || k <= 0. || v<=0. || t<=0. ) then 
@@ -36,10 +38,33 @@ module Options =
             | Put ->  if f <= k  then 1.0 else 0.
         else
             let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
-            let d2 = d1 - v*sqrt(t)
+            //let d2 = d1 - v*sqrt(t)
             match o with
             | Call -> normcdf(d1)
             | Put -> -normcdf(-d1)
+
+    ///bs delta to strike
+    let bsstrike f v t (o:Payoff) delta = 
+        let d =  //call delta
+            match o with 
+            | Call -> delta
+            | Put ->  1.0  - delta 
+        //let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
+        let d1 = norminvcdf d 
+        f * exp( - d1*v*sqrt(t) + 0.5*v*v*t )
+
+    ///bs quick delta in call
+    //computed using atm vol, and center at atmf.
+    let bsqdelta f k v t = 
+        let d1 = (log(f/k))/(v*sqrt(t))
+        normcdf(d1)
+
+    ///bs qdelta to strike
+    let bsqstrike f v t delta = 
+        //let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
+        let d1 = norminvcdf delta 
+        f * exp( - d1*v*sqrt(t) )
+
     // a time matrix for VCV using min ( T1 T2 )
     let private getTmatrix (T1:Vector<float>) (T2:Vector<float>) =
         let onesT1 = Vector.Build.Dense (T1.Count, 1.)

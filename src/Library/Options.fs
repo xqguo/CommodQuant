@@ -93,7 +93,7 @@ module Options =
             h.EvaluatePartialDerivative( g, d, 0, 1 ) //delta
             h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
             h.EvaluatePartialDerivative( g, d, 1, 1 ) //vega 
-            h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
+            -h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
         |]
 
     let bsGreeks f k v t o  =        
@@ -106,7 +106,7 @@ module Options =
             h.EvaluatePartialDerivative( g, d, 0, 1 ) //delta
             h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
             h.EvaluatePartialDerivative( g, d, 1, 1 ) //vega 
-            h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
+            -h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
         |]
             
     // a time matrix for VCV using min ( T1 T2 )

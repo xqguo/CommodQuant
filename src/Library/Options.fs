@@ -6,6 +6,8 @@ module Options =
     open MathNet.Numerics.Distributions
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Integration
+    open MathNet.Numerics.Differentiation
+    open MathNet.Numerics.Interpolation
     
     type Payoff = 
         | Call 
@@ -65,6 +67,48 @@ module Options =
         let d1 = norminvcdf delta 
         f * exp( - d1*v*sqrt(t) )
 
+    //interpolate vol from delta smile
+    //deltas should be in range (0, 1) 
+    //vols are abs values, e.g 0.2 for 20% vol.
+    let getVolfromDeltaSmile f k t (deltas:double[]) (vols:double[]) =        
+        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        RootFinding.Brent.FindRoot(
+            (fun x ->  
+                let d = bsdelta f k x t Call
+                x - cs.Interpolate(d)),
+            0.001, 1E3 )
+
+    let bsDeltaSmile f k t o (deltas:double[]) (vols:double[]) =        
+        let v = getVolfromDeltaSmile f k t deltas vols 
+        bs f k v t o 
+
+    let bsAdaptedGreeks f k t o (deltas:double[]) (vols:double[]) =        
+        let h = NumericalDerivative()
+        let d = [|f;0.0;t|]
+        let g = 
+            ( fun (d:double[]) ->                 
+                let vols' = vols |> Array.map( fun x -> x + d.[1])
+                bsDeltaSmile d.[0] k d.[2] o deltas vols' )
+        [| 
+            h.EvaluatePartialDerivative( g, d, 0, 1 ) //delta
+            h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
+            h.EvaluatePartialDerivative( g, d, 1, 1 ) //vega 
+            h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
+        |]
+
+    let bsGreeks f k v t o  =        
+        let h = NumericalDerivative()
+        let d = [|f;v;t|]
+        let g = 
+            ( fun (d:double[]) ->                 
+                bs d.[0] k d.[1] d.[2] o )
+        [| 
+            h.EvaluatePartialDerivative( g, d, 0, 1 ) //delta
+            h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
+            h.EvaluatePartialDerivative( g, d, 1, 1 ) //vega 
+            h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
+        |]
+            
     // a time matrix for VCV using min ( T1 T2 )
     let private getTmatrix (T1:Vector<float>) (T2:Vector<float>) =
         let onesT1 = Vector.Build.Dense (T1.Count, 1.)

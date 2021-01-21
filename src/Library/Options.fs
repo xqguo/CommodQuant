@@ -689,3 +689,8 @@ module Options =
         let delta = [|delta1sum ; delta2sum |]
         opt, delta  //return deltas in long/short 2 elem array
 
+    //asian Choi method
+    let asianoptionChoi (f:Vector<float>) (w:Vector<float>) k (sigma:Matrix<float>) callput =
+        let (opt,deltas) = optionChoi' f w sigma k callput 
+        let delta= Array.sum deltas
+        opt, delta  //return deltas in long/short 2 elem array

@@ -229,12 +229,7 @@ module Pricer =
             "vol2", ( Statistics.Mean (v2.Diagonal() ./ t2 |> Vector.Sqrt ) ); //vol1 
         |]
 
-    ///spread option using cross Gabillon model
-    let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
-        refMonth (pricingDate:DateTime)
-        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 =
-
-        let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) = 
+    let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) = 
             let com1 = getCommod inst1
             let getPrices1 = getPricesWithOverride pricecurve1 None 
             let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com1 lags1 slope avg1 expDate )           
@@ -244,6 +239,10 @@ module Pricer =
             let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
             (f1,fw1,fixings1,a1)
 
+    ///spread option using cross Gabillon model
+    let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
+        refMonth (pricingDate:DateTime)
+        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 =
         let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 
         let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 
         let k = -freight - a1 + a2 /// adapte K for past fixings
@@ -264,7 +263,7 @@ module Pricer =
         let v1 = ( sigma.Diagonal().[0..n-1] ./ t1 ).PointwiseSqrt()
         let v2 = ( sigma.Diagonal().[n..] ./ t2 ).PointwiseSqrt()
         let deltaA = deltas
-        [|   "Option", opt;
+        [|  "Option", opt;
             "Delta1", deltaA.[0];
             "Delta2", deltaA.[1];
             "P1", p1;
@@ -272,5 +271,27 @@ module Pricer =
             "Intrinsic", pintr;
             "vol1", ( Statistics.Mean v1 ); //vol1 
             "vol2", ( Statistics.Mean v2 ); //vol1 
+        |]
+
+    ///asian and swaption pricer using Gabillon model
+    let AsianOptionPricerGabillon inst lags avg k callput expDate  
+        refMonth (pricingDate:DateTime)
+        gParam pricecurve volcurve =
+        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags avg inst 1.0M pricecurve 
+        let k' =  k - a1 // adapte K for past fixings
+        let sigma = getGabillonCov inst volcurve gParam x1 pricingDate
+        let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
+        let opt, delta =  asianoptionChoi f1 fw1 k' sigma callput
+        let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
+        let pintr = 
+            match callput with 
+            | Call -> (max (p1 - k) 0.)
+            | Put -> (max (k - p1) 0.)
+        let v1 = ( sigma.Diagonal()./ t1 ).PointwiseSqrt().Mean()
+        [|  "Option", opt;
+            "Delta", delta;
+            "P1", p1;
+            "Intrinsic", pintr;
+            "vol1", v1
         |]
 

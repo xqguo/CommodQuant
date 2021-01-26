@@ -46,11 +46,8 @@ module Options =
             | Put -> -normcdf(-d1)
 
     ///bs delta to strike
-    let bsstrike f v t (o:Payoff) delta = 
-        let d =  //call delta
-            match o with 
-            | Call -> delta
-            | Put ->  1.0  - delta 
+    let bsstrike f v t delta = 
+        let d =  if delta < 0.0 then 1.0 + delta else delta //call delta
         //let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
         let d1 = norminvcdf d 
         f * exp( - d1*v*sqrt(t) + 0.5*v*v*t )
@@ -66,6 +63,16 @@ module Options =
         //let d1 = (log(f/k)+ 0.5*v*v*t)/(v*sqrt(t))
         let d1 = norminvcdf delta 
         f * exp( - d1*v*sqrt(t) )
+
+    //interpolate vol from delta smile using delta
+    //deltas should be in range (0, 1) 
+    //vols are abs values, e.g 0.2 for 20% vol.
+    let getVolStrikefromDeltaSmile f t delta (deltas:double[]) (vols:double[]) =        
+        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        let d =  if delta < 0.0 then 1.0 + delta else delta //call delta
+        let v = cs.Interpolate(d)
+        let k = bsstrike f v t d
+        [|v;k|]
 
     //interpolate vol from delta smile
     //deltas should be in range (0, 1) 
@@ -96,6 +103,11 @@ module Options =
     let bsDeltaSmile f k t o (deltas:double[]) (vols:double[]) =        
         let v = getVolfromDeltaSmile f k t deltas vols 
         bs f k v t o 
+
+    let bsDeltaSmileWithDelta f d t (deltas:double[]) (vols:double[]) =        
+        let r = getVolStrikefromDeltaSmile f t d deltas vols 
+        let o = if d >= 0.0 then Call else Put
+        (bs f r.[1] r.[0] t o , r.[0], r.[1]) // prem, v, strike.
 
     let bsAdaptedGreeks f k t o (deltas:double[]) (vols:double[]) =        
         let h = NumericalDerivative()

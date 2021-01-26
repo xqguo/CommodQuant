@@ -89,7 +89,7 @@ module Options =
                 let ss = implySigmaS v v 0. optT futT sl k rho  
                 let v2t = fwdVariance 0.0 t futT ss sl k rho 
                 let v0 = v2t / t |> sqrt 
-                let d = bsdelta f x v0 optT Call
+                let d = bsdelta f x v0 t Call
                 v - cs.Interpolate(d)),
             0.001, 1E3 )
 

@@ -78,6 +78,21 @@ module Options =
                 x - cs.Interpolate(d)),
             0.001, 1E3 )
 
+    //interpolate vol from delta smile of
+    //deltas should be in range (0, 1) 
+    //vols are abs values, e.g 0.2 for 20% vol.
+    //using Gabillon model: option exp/fut exp/long vol/ k / correlation
+    let getVolfromDeltaSmileGabillon f x t (deltas:double[]) (vols:double[]) (optT, futT, sl,k,rho)=        
+        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        RootFinding.Brent.FindRoot(
+            (fun v ->
+                let ss = implySigmaS v v 0. optT futT sl k rho  
+                let v2t = fwdVariance 0.0 t futT ss sl k rho 
+                let v0 = v2t / t |> sqrt 
+                let d = bsdelta f x v0 optT Call
+                v - cs.Interpolate(d)),
+            0.001, 1E3 )
+
     let bsDeltaSmile f k t o (deltas:double[]) (vols:double[]) =        
         let v = getVolfromDeltaSmile f k t deltas vols 
         bs f k v t o 

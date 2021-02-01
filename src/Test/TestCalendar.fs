@@ -142,8 +142,8 @@ let ``testmonthOfYear`` (d0:DateTime) n=
     delta_months = delta |@ sprintf"diff between returned month and expected month should be the same" .&.
     c |@ sprintf"if we find one next month say July, we find last July, the difference days should be zero(if we are in July) or one year"
 
-[<Property( MaxTest = 500, Arbitrary = [| typeof<BeginOfCalenderInt>|])>]
-let ``testbeginOfCalendarPeriod`` (d0:DateTime) (n:int) = 
+[<Property( Arbitrary = [| typeof<MyGenerator>|])>]
+let ``testbeginOfCalendarPeriod`` (d0:DateTime) (BeginOfCalendarInt n) = 
     let d1 = beginOfCalendarPeriod d0 n
     if (n=0) || (n=1) then
         ((d1.Month = d0.Month) && (d1.Day=1) && (d1.Year = d0.Year)) |@ sprintf"When n=0 or 1, the result should have the same month and same year and day1 %A"d1

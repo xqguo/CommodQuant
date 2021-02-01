@@ -1,11 +1,6 @@
 ﻿module FsCheckTypes
 open FsCheck
 
-type SmallInt =
-    static member Int() =
-        Arb.Default.Int32()
-        |> Arb.filter (fun t -> (t > 1) && (t < 11))
-
 type PositiveSmallFloat = 
     static member Float() = 
         Arb.Default.Float()
@@ -23,17 +18,18 @@ type PositiveFloat =
         |> Arb.convert float NormalFloat
         |> Arb.mapFilter abs ( fun x  -> x > 0.0 )
 
-type BeginOfCalenderInt =
-    static member Int() =
-        let sample = [0;1;3;6;12]|>Set
-        Arb.Default.Int32()
-        |> Arb.filter (fun t -> (sample.Contains t))
+type BeginOfCalendarInt = BeginOfCalendarInt of int
+type MonthString = MonthString of string
 
-type MonthString = 
-    static member String() =
-        let month = ["Jan";"Feb";"Mar";"Apr";"May";"Jun";"Jul";"Aug";"Sep";"Oct";"Nov";"Dec"] |>Set
-        Arb.Default.String()
-        |> Arb.filter (fun t -> month.Contains t)
+type MyGenerator = 
+    static member BeginOfCalenderInt() =
+        Gen.elements [0;1;3;6;12] 
+        |> Arb.fromGen 
+        |> Arb.convert BeginOfCalendarInt (fun (BeginOfCalendarInt x) -> x ) 
+    static member MonthString() =
+        Gen.elements ["Jan";"Feb";"Mar";"Apr";"May";"Jun";"Jul";"Aug";"Sep";"Oct";"Nov";"Dec"] 
+        |> Arb.fromGen
+        |> Arb.convert MonthString (fun (MonthString x) -> x ) 
 
 type IntLessThan100 = 
     static member Int()=

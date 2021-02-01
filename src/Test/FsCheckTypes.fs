@@ -18,18 +18,21 @@ type PositiveFloat =
         |> Arb.convert float NormalFloat
         |> Arb.mapFilter abs ( fun x  -> x > 0.0 )
 
-type BeginOfCalendarInt = BeginOfCalendarInt of int
-type MonthString = MonthString of string
+type BeginOfCalendarInt = BeginOfCalendarInt of int with
+    static member op_Explicit(BeginOfCalendarInt i) = i
+
+type MonthString = MonthString of string with 
+    static member op_Explicit(MonthString i) = i
 
 type MyGenerator = 
     static member BeginOfCalenderInt() =
         Gen.elements [0;1;3;6;12] 
         |> Arb.fromGen 
-        |> Arb.convert BeginOfCalendarInt (fun (BeginOfCalendarInt x) -> x ) 
+        |> Arb.convert BeginOfCalendarInt int 
     static member MonthString() =
         Gen.elements ["Jan";"Feb";"Mar";"Apr";"May";"Jun";"Jul";"Aug";"Sep";"Oct";"Nov";"Dec"] 
         |> Arb.fromGen
-        |> Arb.convert MonthString (fun (MonthString x) -> x ) 
+        |> Arb.convert MonthString string 
 
 type IntLessThan100 = 
     static member Int()=

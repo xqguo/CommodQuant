@@ -91,16 +91,16 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2=
     Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
 
 [<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test choi vs moment matching`` f1 f2 t v1 v2 k rho callput ( PositiveInt n) = 
+let ``test choi vs moment matching`` f1 f2 (PositiveInt t) v1 v2 k rho callput ( PositiveInt n) = 
     //let f = 1.
     //let callput = Call
     let n = min n 1 //limit array size
     let f1 = DenseVector.create n f1
     let f2 = DenseVector.create n f2
-    let t1 = vector [ t .. t + float(n-1) ] / 365. //fixing dates
+    let t1 = vector [ float t .. float (t + n-1) ] / 365. //fixing dates
     let t2 = t1
-    let v1 = DenseVector.create n ( min v1 2.) // vol for each fixing
-    let v2 = DenseVector.create n ( min v2 2.) // vol for each fixing
+    let v1 = DenseVector.create n ( min v1 1.) // vol for each fixing
+    let v2 = DenseVector.create n ( min v2 1.) // vol for each fixing
     let fw1 = DenseVector.create n 1.0/float n
     let fw2 = fw1 //weights longside
     let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
@@ -108,10 +108,7 @@ let ``test choi vs moment matching`` f1 f2 t v1 v2 k rho callput ( PositiveInt n
     let so =        spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
     let choi,_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     //(so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
-    if so < 1E-5 && choi < 1E-5 then 
-        Assert.True(true) 
-    else 
-        Assert.Equal ( choi, so, 0  )
+    near choi so 1E-2
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi put call parity`` f1 f2 k = 

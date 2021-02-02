@@ -157,7 +157,7 @@ module Pricer =
             let k = -freight - a1 + a2 /// adapte K for past fixings
             //let opts = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
             ////printfn "%A %A %A %A %A %A %A %A %f" f1 fw1 t1 v1 f2 fw2 t2 v2 rho
-            let opt, deltas =  optionChoi2Asset' f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
+            let opt, deltas =  optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
             let p1 = ((f1 .* fw1 ).Sum() + freight) + a1  //inst1 forwd
             let p2 = ((f2 .* fw2 ).Sum())+ a2 //inst2 fwd
             let pintr = 
@@ -210,7 +210,7 @@ module Pricer =
         //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
         let v1' = ( v1.Diagonal() ./ t1 ).PointwiseSqrt()
         let v2' = ( v2.Diagonal() ./ t2 ).PointwiseSqrt()
-        let opt, deltas =  optionChoi2Asset' f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput
+        let opt, deltas =  optionChoi2Asset f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput
         let p1 = ((f1 .* fw1 ).Sum() + freight) + a1  //inst1 forwd
         let p2 = ((f2 .* fw2 ).Sum())+ a2 //inst2 fwd
         let pintr = 

@@ -247,47 +247,69 @@ module Options =
             yield x.[i] * y.[j] 
         |]
 
-    let rec ghz5 dim =     
-        let s2 = sqrt 2.0
-        let z3 = [|-2.02018287; -0.95857246;  0.; 0.95857246;  2.02018287|] |> Array.map ( fun x -> x* s2)
-
-        match dim with
-        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
-        | 1 ->     
-            [| for x in z3 do yield [|x|] |]
-            //let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752] |> List.map (*) cons
-        | _ -> 
-            permutate z3 (ghz5 (dim-1)) //previous layer)
-
-    let rec ghw5 dim =     
-        let cons = 1.0/sqrt(System.Math.PI)
-        let w3 = [|0.01995324; 0.39361932; 0.94530872; 0.39361932; 0.01995324|] |> Array.map ( fun x -> x * cons )
-        match dim with
-        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
-        | 1 -> w3
-        | _ -> permprod w3 (ghw5 (dim-1))
-
     //recursive version with dim input
     //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
     // 1 <= dim 
-    let rec ghz3 dim =     
+    let rec ghzn n dim =     
         let s2 = sqrt 2.0
-        let z3 = [|-1.2247448714;  0. ;1.2247448714|] |> Array.map ( fun x -> x* s2)
+        let z = 
+            //https://keisan.casio.com/exec/system/1281195844
+            match n with 
+            | 3 -> [|-1.2247448714;  0. ;1.2247448714|] 
+            | 5 -> [|
+                    -2.020182870456085632929
+                    -0.9585724646138185071128
+                    0.
+                    0.9585724646138185071128
+                    2.020182870456085632929 |]
+            | 7 -> [|
+                    -2.651961356835233492447
+                    -1.673551628767471445032
+                    -0.8162878828589646630387
+                    0.
+                    0.8162878828589646630387
+                    1.673551628767471445032
+                    2.651961356835233492447 |]
+            | _ -> failwith "Not implemented"
+            |> Array.map ( fun x -> x * s2)
         match dim with
         | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
         | 1 ->     
-            [| for x in z3 do yield [|x|]|]
-            //let w3 = [0.2954089752; 1.1816359006 ; 0.2954089752] |> List.map (*) cons
+            [| for x in z do yield [|x|]|]
         | _ -> 
-            permutate z3 (ghz3 (dim-1)) //previous layer)
+            permutate z (ghzn n (dim-1)) //previous layer)
 
-    let rec ghw3 dim =     
+    let rec ghwn n dim =     
         let cons = sqrt(System.Math.PI)
-        let w3 = [|0.2954089752; 1.1816359006 ; 0.2954089752|] |> Array.map ( fun x -> x / cons )
+        let w = 
+            //https://keisan.casio.com/exec/system/1281195844
+            match n with 
+            | 3 -> [|0.2954089752; 1.1816359006 ; 0.2954089752|] 
+            | 5 -> [|
+                    0.01995324205904591320774
+                    0.3936193231522411598285
+                    0.9453087204829418812257
+                    0.393619323152241159828
+                    0.01995324205904591320774 |] 
+            | 7 -> [|
+                    9.71781245099519154149E-4
+                    0.05451558281912703059218
+                    0.4256072526101278005203
+                    0.810264617556807326765
+                    0.4256072526101278005203
+                    0.0545155828191270305922
+                    9.71781245099519154149E-4 |]
+            | _ -> failwith "Not implemented"
+            |> Array.map ( fun x -> x / cons )
         match dim with
         | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
-        | 1 -> w3
-        | _ -> permprod w3 (ghw3 (dim-1))
+        | 1 -> w
+        | _ -> permprod w (ghwn n (dim-1))
+
+    let ghz5 = ghzn 5
+    let ghw5 = ghwn 5      
+    let ghz3 = ghzn 3
+    let ghw3 = ghwn 3      
 
     ///get cov for 2 assets with constant correlation.
     let getCov (t1:Vector<float>) (v1:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 
@@ -680,7 +702,7 @@ module Options =
             (opt - adj), deltas  //return deltas in input vector
 
     ///assuming perferect correalation in asset
-    let optionChoi2Asset' (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
+    let optionChoi2Asset (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
         (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k (rho:float) callput =
         //validate inputs
         if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"

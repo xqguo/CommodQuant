@@ -26,46 +26,46 @@ module MC =
         with
         |_ -> invalidOp ("Cholesky factorize failure.")
 
-    ///generate 1 sample of multivariate normal random numbers using vols and correlations, 
-    ///and a random source for contination and repeatable results
-    ///output is a vector of returns 
-    let genReturns (corrs:Matrix<float>) (source:System.Random)  =
-        if corrs.ColumnCount <> corrs.RowCount then 
-            invalidOp "Correlation dimension mismatch!"
-        let mapdup = // map dependent indices to first independent index
-            corrs 
-            |> Matrix.toSeqi 
-            |> Seq.filter( fun (i,j,r) -> r = 1.0 && i>j ) 
-            |> Seq.map( fun (i,j,_) -> i,j)
-            |> dict
-        let maporig = //all old index to reduced index
-            List.init corrs.ColumnCount ( fun i -> 
-                let m = if mapdup.ContainsKey i then mapdup.[i] else i
-                i,m)
-            |> dict
-        let mapnew =  //reduced to new index
-            maporig.Values |> Seq.distinct |> Seq.sortDescending |> Seq.mapi( fun i o -> o,i) |> dict
-        let dupkeys = mapdup.Keys |> Seq.sortDescending
-        let newcorrs = 
-            Seq.fold( fun (state:Matrix<float>) i -> 
-                let s = state.RemoveRow i
-                s.RemoveColumn i
-                ) corrs dupkeys
-        let k = CreateMatrix.DenseIdentity<float> 1 
-        let means = DenseMatrix.create newcorrs.ColumnCount 1 0.
-        let mnormal = MatrixNormal(means, newcorrs, k)
-        mnormal.RandomSource <- source 
-        let reducedpath = mnormal.Sample()
-        let sample = reducedpath.Column 0 
-        //printfn "generated %i rows" reducedpath.RowCount
-        //reconstruct original dimensions and scale the dependent ones using vols
-        DenseVector.init corrs.ColumnCount 
-            (fun i -> 
-                let i' = maporig.[i]
-                //printfn "old index %i is derived from index %i" i i'
-                let j = mapnew.[i']
-                //printfn "old index %i is mapped to row %i" i' j
-                sample.[j])
+    /////generate 1 sample of multivariate normal random numbers using vols and correlations, 
+    /////and a random source for contination and repeatable results
+    /////output is a vector of returns 
+    //let genReturns (corrs:Matrix<float>) (source:System.Random)  =
+    //    if corrs.ColumnCount <> corrs.RowCount then 
+    //        invalidOp "Correlation dimension mismatch!"
+    //    let mapdup = // map dependent indices to first independent index
+    //        corrs 
+    //        |> Matrix.toSeqi 
+    //        |> Seq.filter( fun (i,j,r) -> r = 1.0 && i>j ) 
+    //        |> Seq.map( fun (i,j,_) -> i,j)
+    //        |> dict
+    //    let maporig = //all old index to reduced index
+    //        List.init corrs.ColumnCount ( fun i -> 
+    //            let m = if mapdup.ContainsKey i then mapdup.[i] else i
+    //            i,m)
+    //        |> dict
+    //    let mapnew =  //reduced to new index
+    //        maporig.Values |> Seq.distinct |> Seq.sortDescending |> Seq.mapi( fun i o -> o,i) |> dict
+    //    let dupkeys = mapdup.Keys |> Seq.sortDescending
+    //    let newcorrs = 
+    //        Seq.fold( fun (state:Matrix<float>) i -> 
+    //            let s = state.RemoveRow i
+    //            s.RemoveColumn i
+    //            ) corrs dupkeys
+    //    let k = CreateMatrix.DenseIdentity<float> 1 
+    //    let means = DenseMatrix.create newcorrs.ColumnCount 1 0.
+    //    let mnormal = MatrixNormal(means, newcorrs, k)
+    //    mnormal.RandomSource <- source 
+    //    let reducedpath = mnormal.Sample()
+    //    let sample = reducedpath.Column 0 
+    //    //printfn "generated %i rows" reducedpath.RowCount
+    //    //reconstruct original dimensions and scale the dependent ones using vols
+    //    DenseVector.init corrs.ColumnCount 
+    //        (fun i -> 
+    //            let i' = maporig.[i]
+    //            //printfn "old index %i is derived from index %i" i i'
+    //            let j = mapnew.[i']
+    //            //printfn "old index %i is mapped to row %i" i' j
+    //            sample.[j])
 
     ///simulaton multivariate correlated normal random numbers
     ///mapps fully correlated variable to the independent ones.

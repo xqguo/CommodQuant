@@ -102,6 +102,7 @@ module MC =
         genMultivariateNormal corrs r |> Seq.take npath |> matrix
 
     let callPayoff strike price = max (price - strike) 0.0
+    let putPayoff strike price = max ( strike - price ) 0.0
     let europeanPayoff payoff assetPath = assetPath |> Seq.last |> payoff
     let europeanCallPayoff strike assetPath = assetPath |> europeanPayoff (callPayoff strike)
     let asianArithmeticMeanCallPayoff strike (assetPath:seq<float>) = assetPath.Mean() |> callPayoff strike
@@ -136,33 +137,30 @@ module MC =
         let result = priceAsianArithmeticMeanMC S0 strike r T sigma numTrajectories numSamples
         printfn "Asian arithmetic mean:%f stddev:%f" (fst result) (snd result)
 
-    let asianAmavMonteCarloCall (f1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) k num = 
-        let accu1 x y = 
-            exp(-0.5 * x * x * y)
-        let accu2 (tdiff:Vector<float>) (z:Vector<float>) = 
-            let temp = sqrt(tdiff).PointwiseMultiply(z).Sum()
-            temp
-        let timeDiff (t:Vector<float>) =
-            let length = t.Count
-            let lag = DenseVector.create length 0.
-            if length > 1 then
-                lag.[1..length-1] <- t.[0..length-2]
-            else
-                lag.[0] <- 0.
-            (t -  lag)
-        let getAccumulator2  (t:Vector<float>) (v1:Vector<float>) (normal:Vector<float>)= 
-            let accumulators = DenseVector.create (t.Count) 0. 
-            let tdiff = timeDiff t      
-            for i in 0..(t.Count-1) do 
-                accumulators.[i] <- (accu1 v1.[i] t.[i]) *  exp(v1.[i] * (accu2 tdiff.[0..i] normal.[0 ..i]))
-            accumulators
-        let payoff = DenseVector.create num 0.
-        for i in 0 .. num-1 do
-            let n' = Normal( 0.0, 1.0)
-            n'.RandomSource <- System.Random(i)
-            let normal = DenseVector.random<float> (t1.Count) n'
-            let accumulators2 = getAccumulator2 t1 v1 normal
-            //let accumulators = getAccumulator t1 v1 normal
-            let future_price = f1.PointwiseMultiply(accumulators2)
-            payoff.[i] <- max (future_price.Mean() - k) 0.
-        (payoff.Mean(), payoff.StandardDeviation()/sqrt(float num))
+    let asianMC (f1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) k callput num = 
+        let length = t1.Count
+        let tdiff = 
+            match length with
+            | 1 -> [|t1.[0]|] |> vector
+            | _ -> 
+                let v = t1.[1..length-1] - t1.[0..length-2] 
+                Array.append [|t1.[0]|] (v.ToArray()) |> vector           
+        let tdiffsq = sqrt tdiff
+        let f = f1 .* exp( -0.5 * v1 .* v1 .* t1 )
+        let getP (sample:Vector<float>)= 
+            let p = 
+                DenseVector.init t1.Count 
+                    ( fun i -> f.[i] * exp( v1.[i] * (tdiffsq.[0..i].DotProduct sample.[0 ..i]) ))
+            p.Mean()
+        let payoff = match callput with | Call -> callPayoff k | Put -> putPayoff k
+        let o = 
+            [| 1 .. num /2 |]
+            |>Array.Parallel.map( fun i ->
+                let n' = Normal( 0.0, 1.0)
+                n'.RandomSource <- System.Random(i*10) // use separate seed per path
+                let normal = DenseVector.random<float> (t1.Count) n'
+                //use antithetic
+                [| payoff (getP normal) ; 
+                   payoff (getP -normal) |]  )
+            |> Array.concat
+        (o.Mean(), o.StandardDeviation()/sqrt(float num))

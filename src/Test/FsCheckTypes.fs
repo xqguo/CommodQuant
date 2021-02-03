@@ -41,3 +41,6 @@ type IntLessThan100 =
 
 let inline near a b eps = 
     (a - eps < b && a + eps > b) |@ sprintf "%A vs %A with %A" a b eps
+
+let inline nearstr a b eps str = 
+    (a - eps < b && a + eps > b) |@ sprintf "%s: %A vs %A with %A" str a b eps

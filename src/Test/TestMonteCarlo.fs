@@ -4,10 +4,8 @@ open MathNet.Numerics.Distributions
 open MathNet.Numerics.Statistics
 open FsCheck
 open FsCheck.Xunit
-open Commod.Options
-open Commod.MC
+open Commod
 open FsCheckTypes
-
 
 let generateCorrsMatrix s seed =
     let n' = Normal( 0.0, 1.0)
@@ -80,23 +78,37 @@ let ``test multivariateNormal satisfy our aimed vols and correlation`` size seed
     (mse_krt_errors < 0.2) |@ sprintf "mse of krt errors is large %f" mse_krt_errors .&.
     (jbTest < criticalValue) |@ sprintf "Jarque Bera statistics is large: %f" jbTest
 
-[<Property(MaxTest = 50, Arbitrary = [| typeof<SmallInt>; typeof<PositiveSmallFloat> |] )>]
-let testDifferentSizeStrikeStart nf  k' fstart tstart sstart= 
-    let num = 10000
-    //let nf = 2
+let testAsianChoivsMCFun nf  k fstart tstart sstart npath maxfixing tol = 
+    let num = npath
+    let nf = min (nf+1) maxfixing
     //let k' = 72.
     //let fstart = 4.86
     //let tstart = 68.
-    //let sstart = 30.
-    let fpp = DenseVector.init nf (fun i -> + float (i+1) * 0.2 + fstart)
-    let tt = DenseVector.init nf ( fun i -> float (i+1) * 0.2 + tstart / 10. )
+    let sstart = min sstart 1. // limit vol to 100%
+    let fpp = DenseVector.create nf fstart
+    let tt = DenseVector.init nf ( fun i -> float (i+1)/250. + tstart )
     let fww = DenseVector.create nf 1./(float nf) 
-    let voll = DenseVector.init nf ( fun i -> (float i) *0.01 + sstart / 100.)
-    let v0 = asianoption fpp fww tt voll k' Call 0.
-    let v1,std =  asianAmavMonteCarloCall fpp tt voll k' num
+    let vol = DenseVector.create nf sstart
+    //let asianoptionChoi (f:Vector<float>) (w:Vector<float>) k (sigma:Matrix<float>) callput =
+    let sigma = getSigma2 vol tt vol tt 1.0 |> fixCov
+    let v0,_ = asianoptionChoi fpp fww k sigma Call 
+    let v1,std =  asianMC fpp tt vol k Call num
     // In some cases, std could be zero
-    if (std <> 0.) && (v1 >0.0001) then
-        abs(v1-v0) <  3. * std
-    else
-        v0 < 0.005   // In some extreme cases such as strike price 42 and forward
-        //price is very low, price of formua is 0.0025, but monte carlo is 0
+    let v2 = asianoption fpp fww tt vol k Call 0.
+    nearstr v1 v0 (std * 3.0 + 1E-4) "Choi vs mc" .&. //choi and mc close
+    nearstr v1 v2 (std * 3.0 + tol) "MM vs mc" .&. // mm is less accurate
+    nearstr v0 v2 (std * 3.0 + tol) "Choi vs MM"
+
+[<Property(MaxTest = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart= 
+    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 500 0.001
+
+//[<Property(MaxTest = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+////MM is ok with less than 3m avg
+//let testAsianChoivsMCLoose (PositiveInt nf)  k fstart tstart sstart= 
+//    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 60 0.0001
+
+//[<Property(MaxTest = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+////Everything is ok with less avg
+//let testAsianChoivsMCEasy (PositiveInt nf)  k fstart tstart sstart= 
+//    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 20 0.0001

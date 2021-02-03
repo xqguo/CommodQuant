@@ -5,6 +5,21 @@ module Gabillon =
     open MathNet.Numerics
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Optimization
+
+    //check for eigenvalue and fix the cov matrix to be posive definite
+    let fixCov (cov:Matrix<float>) = 
+        let evd = cov.Evd()
+        let l = evd.EigenValues |> Vector.map ( fun x -> x.Real)
+        let o = evd.EigenVectors
+        let l' = l |> Vector.map( fun x -> max x 1E-10 )
+        o * (DenseMatrix.ofDiag l') * (o.Transpose())
+
+    //fix corr matrix
+    let fixCorr (corr:Matrix<float>) = 
+        let cov = fixCov corr
+        let vol = cov.Diagonal().PointwiseSqrt()
+        cov ./ (vol.OuterProduct vol)
+
     //compute forward variance between tm to tn for a future with maturity Ti 
     //using constant Gabillon model inputs for this interval
     let fwdVariance tm tn Ti sigmas sigmal k rho =
@@ -318,12 +333,8 @@ module Gabillon =
 
         let cov = sigma11.Append( sigma12 ).Stack((sigma12.Transpose().Append(sigma22)))
 
-        //check for eigenvalue and fix the cov matrix to be posive definite
-        let evd = cov.Evd()
-        let l = evd.EigenValues |> Vector.map ( fun x -> x.Real)
-        let o = evd.EigenVectors
-        let l' = l |> Vector.map( fun x -> max x 1E-10 )
-        o * (DenseMatrix.ofDiag l') * (o.Transpose())
+
+        fixCov cov
         
     //hardcoded defaults, could read from files.
     let getGabillonParam ins = 

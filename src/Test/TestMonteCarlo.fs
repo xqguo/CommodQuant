@@ -100,7 +100,7 @@ let testAsianChoivsMCFun nf  k fstart tstart sstart npath maxfixing tol =
     nearstr v1 v2 (std * 3.0 + tol) "MM vs mc" .&. // mm is less accurate
     nearstr v0 v2 (std * 3.0 + tol) "Choi vs MM"
 
-[<Property(MaxTest = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property(MaxTest = 20, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart= 
     testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 500 0.001
 
@@ -118,8 +118,8 @@ let testSpreadChoivsMC fa fb k t1 t2 v1 v2 rho nf1 nf2 callput =
     let num = int 1E6
     let nf1 = min nf1 60
     let nf2 = min nf2 60
-    let v1 = min v1 1. |> DenseVector.create nf1 
-    let v2 = min v2 1. |> DenseVector.create nf2 
+    let v1 = min v1 0.5 |> DenseVector.create nf1 
+    let v2 = min v2 0.5 |> DenseVector.create nf2 
     let f1 = DenseVector.create nf1 fa
     let f2 = DenseVector.create nf2 fb
     let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/250. + t1 )
@@ -128,10 +128,10 @@ let testSpreadChoivsMC fa fb k t1 t2 v1 v2 rho nf1 nf2 callput =
     let fw2 = DenseVector.create nf2 1./(float nf2) 
     let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let (c,std) = spreadMC f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput num
-    let choi,_ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 5 7 
+    let choi,_ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 7 
     nearstr choi c (std * 3.0 + 1E-2) "Choi vs mc" //choi and mc close
 
-[<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property( MaxTest=20, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test spread option Choi vs MC`` fa fb k t1 t2 v1 v2 (NormalFloat rho) (PositiveInt nf1) (PositiveInt nf2) callput = 
     testSpreadChoivsMC fa fb k t1 t2 v1 v2 rho nf1 nf2 callput
 

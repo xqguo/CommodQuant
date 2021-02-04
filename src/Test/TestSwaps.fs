@@ -5,7 +5,7 @@ open FsCheck
 open FsCheck.Xunit
 open Commod
 
-[<Property>]
+[<Property(MaxTest=3)>]
 let ``test futPricing`` (ins:Instrument) =
     //let ins = BRT
     let cmd = getCommod ins
@@ -24,7 +24,7 @@ let ``test futPricing`` (ins:Instrument) =
     Assert.Equal<decimal list>( mv, exp)  |@ "All Fut at matrket price have mtk value"
 
 //TODO add nrby and swap tests
-[<Property>]
+[<Property(MaxTest=1)>]
 let ``test nrby`` () =
     let ins = BRT
     // let (PositiveInt i ) = i    
@@ -54,7 +54,7 @@ let ``test nrby`` () =
     let p' = getFixingPrices cnt1 dates0 crv //nrby 1 on current month
     Assert.Equal<seq<UnitPrice>>( p, p')  |@ "nrby 1 will shift price pillar out by 1 month"
 
-[<Property>]
+[<Property(MaxTest=1)>]
 let ``test rolladjust`` () =
     let ins = BRT
     // let (PositiveInt i ) = i    

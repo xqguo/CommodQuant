@@ -86,13 +86,13 @@ let ``test getCommod `` (ins:Instrument) =
 //     let s = p.Values |> Seq.filter( fun v -> v.Value < 0M)
 //     Assert.Empty s  |@ "All prices are greater than 0"
 
-[<Property( MaxTest = 100)>]
+[<Property( MaxTest = 5)>]
 let ``test getPrices`` (ins:Instrument) =
     let (PriceCurve p) = getPrices ins
     let s = p |> Map.filter( fun _ v -> v.Value < 0M)
     Assert.Empty s |@ "All prices are greater than 0" 
 
-[<Property( MaxTest = 100)>]
+[<Property( MaxTest = 1)>]
 let ``test getVols`` () =
     let v = getVols JCC
     let s = 

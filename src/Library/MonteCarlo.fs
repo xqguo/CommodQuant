@@ -89,6 +89,7 @@ module MC =
                 let s = state.RemoveRow i
                 s.RemoveColumn i
                 ) corrs dupkeys
+            |> fixCorr
         let m = newcorrs.ColumnCount
         let ch = newcorrs.Cholesky().Factor
         let normal = Normal()
@@ -98,6 +99,7 @@ module MC =
             let s' =  (ch* (samples |> Seq.take m |> vector ) )
             [| for i in 0 .. (corrs.ColumnCount-1) do yield s'.[mapnew.[maporig.[i]]] |])
 
+    //each row is a separate sample, total npath rows.
     let multivariateNormal corrs npath r =
         genMultivariateNormal corrs r |> Seq.take npath |> matrix
 
@@ -125,18 +127,6 @@ module MC =
         let stddevMC = discountFactor * payoffs.StandardDeviation() / sqrt(float numTrajectories)
         (priceMC, stddevMC)
 
-    let asian () =
-        let S0 = 100.0
-        let strike = 90.0
-        let r = 0.05
-        let T = 1.0
-        let sigma = 0.2
-        let numTrajectories = 100000
-        let numSamples = 12
-
-        let result = priceAsianArithmeticMeanMC S0 strike r T sigma numTrajectories numSamples
-        printfn "Asian arithmetic mean:%f stddev:%f" (fst result) (snd result)
-
     let asianMC (f1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) k callput num = 
         let length = t1.Count
         let tdiff = 
@@ -159,6 +149,29 @@ module MC =
                 let n' = Normal( 0.0, 1.0)
                 n'.RandomSource <- System.Random(i*10) // use separate seed per path
                 let normal = DenseVector.random<float> (t1.Count) n'
+                //use antithetic
+                [| payoff (getP normal) ; 
+                   payoff (getP -normal) |]  )
+            |> Array.concat
+        (o.Mean(), o.StandardDeviation()/sqrt(float num))
+
+    let spreadMC (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput num = 
+        let cov = getCov t1 v1 t2 v2 rho |> fixCov
+        let var = cov.Diagonal()
+        let ch = cov.Cholesky().Factor
+        let f = appendVector (f1.*fw1) (-f2.*fw2)
+        let f' = f .* exp( -0.5 * var )
+        let getP (sample:Vector<float>)= 
+            let p = f' .* exp( ch * sample)
+            p.Sum()
+        let payoff = match callput with | Call -> callPayoff k | Put -> putPayoff k
+        let n' = Normal( 0.0, 1.0)
+        n'.RandomSource <- System.Random(SEED) 
+        let o = 
+            [| 1 .. num /2 |]
+            |>Seq.map( fun i ->
+                let normal = DenseVector.random<float> (f.Count) n'
                 //use antithetic
                 [| payoff (getP normal) ; 
                    payoff (getP -normal) |]  )

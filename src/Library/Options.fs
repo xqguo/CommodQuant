@@ -32,6 +32,11 @@ module Options =
             | Call -> f*normcdf(d1)-k*normcdf(d2)
             | Put -> k*normcdf(-d2)-f*normcdf(-d1)
 
+    let kirk f1 f2 k v1 v2 rho t o =
+        let f = f1 / ( f2 + k )
+        let v = sqrt( v1 * v1 + ( v2 * f2 / ( f2 + k )) ** 2.0 - 2.0 * rho * v1 * v2 * f2 /(f2+k))
+        bs f1 (f2+k) v t o
+
     ///bs fwd delta
     let bsdelta f k v t (o:Payoff) = 
         if ( f<=0. || k <= 0. || v<=0. || t<=0. ) then 
@@ -423,7 +428,7 @@ module Options =
 
     let consolidateInputs (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) =
         //consolidate future details to group same fixing dates
-        //but retian the same weights, so that the delta still works
+        //but retain the same weights, so that the delta still works
         let (f, t, v ) = 
             Array.zip3  ((f1 .* fw1).ToArray()) (t1.ToArray())  (v1.ToArray())              
             |> Array.groupBy(fun (_,t,_) -> t) 
@@ -582,13 +587,18 @@ module Options =
     //        (opt - adj), delta  //return deltas in long/short 2 elem array
 
     //Choi's general method using cov inputs
-    let rec optionChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
+    let rec optionChoiG (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput l d=
         //validate inputs
         if strike < 0. then 
             let callput' = match callput with | Call -> Put | Put -> Call
-            let (opt,delta) = optionChoi f (w * -1.) sigma -strike callput' //put equivalent
+            let (opt,delta) = optionChoiG f (w * -1.) sigma -strike callput' l d //put equivalent
             opt, delta
         else
+            if f.Count = 1 then // use bs
+                let o = bs (f.[0]*w.[0]) strike (sqrt sigma.[0,0]) 1.0 callput 
+                let delta = ( bsdelta (f.[0]*w.[0]) strike (sqrt sigma.[0,0]) 1.0 callput ) * w.[0]
+                o, [|delta|]
+            else 
             let V = getVChoi f w sigma
             //for each z_dot, find z1 and then C_bs, and then sum them using GH
             let n = f.Count 
@@ -597,10 +607,9 @@ module Options =
                 let vksum = vk * vk  - vk.[0] * vk.[0]
                 exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
 
-            let dim = min (n-1) 4 //cap at 5 levels
-            if dim = 0 then failwith "degenerated bs formula directly, not implemented yet"
-            let zs = ghz5 dim 
-            let ws = ghw5 dim
+            let dim = min (n-1) l //cap at l levels
+            let zs = ghzn d dim 
+            let ws = ghwn d dim
 
             let wf z = 
                         w  //for each kth fixing
@@ -701,6 +710,9 @@ module Options =
 
             (opt - adj), deltas  //return deltas in input vector
 
+    let optionChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
+        optionChoiG f w sigma strike callput 4 5
+        
     ///assuming perferect correalation in asset
     let optionChoi2Asset (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
         (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k (rho:float) callput =
@@ -716,6 +728,27 @@ module Options =
         let w = appendVector fw1 (fw2 * -1.) 
         let sigma = getCov t1 v1 t2 v2 rho
         let (opt,deltas) = optionChoi f w sigma k callput 
+        let delta1,delta2 = deltas |> Array.splitAt f1.Count
+        let delta1sum = Array.sum delta1
+        let delta2sum = Array.sum delta2
+        let delta = [|delta1sum ; delta2sum |]
+        opt, delta  //return deltas in long/short 2 elem array
+
+    ///assuming perferect correalation in asset
+    let optionChoi2AssetG (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
+        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k (rho:float) callput l d =
+        //validate inputs
+        if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v1' then invalidArg "v1'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v2' then invalidArg "v2'" "vol needs to be positive values"
+        let f1,fw1,t1,v1 = consolidateInputs f1' fw1' t1' v1'
+        let f2,fw2,t2,v2 = consolidateInputs f2' fw2' t2' v2' 
+        //call general case
+        let f = appendVector f1 f2
+        let w = appendVector fw1 (fw2 * -1.) 
+        let sigma = getCov t1 v1 t2 v2 rho
+        let (opt,deltas) = optionChoiG f w sigma k callput l d
         let delta1,delta2 = deltas |> Array.splitAt f1.Count
         let delta1sum = Array.sum delta1
         let delta2sum = Array.sum delta2

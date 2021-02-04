@@ -217,18 +217,61 @@ let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t
 //    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
 //    choi > 0.0 |@ sprintf "choi example are close: %f, %f" choi choi
 
-[<Fact>]
+[<Property(MaxTest = 1)>]
 let ``test guass hemite weights sum to 1`` () = 
     let dim = 3
     let ws = ghw5 dim |> vector
     let r = ws.Sum()
     Assert.Equal( 1., r, 6 )
 
-[<Fact>]
+[<Property(MaxTest=1)>]
 let ``test guass hemite expect normal mean is 0 `` () = 
-    let dim = 3
-    let ws = ghw5 dim |> vector
-    let hs = ghz5 dim |> Array.map( Array.reduce (+)) |> vector
-    let r = ws* hs
-    Assert.Equal( 0., r, 6 )
+    let dim = 4
+    [|3;5;7|]
+    |> Array.iter( fun n -> 
+        let ws = ghwn n dim |> vector
+        let hs = ghzn n dim |> Array.map( Array.reduce (+)) |> vector
+        let r = ws* hs
+        Assert.Equal( 0., r, 6 ))
 
+[<Property(MaxTest = 50, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let testSpreadChoivsConv fa fb k t1 t2 v1 v2 (NormalFloat rho) ( PositiveInt nf1) (PositiveInt nf2) callput = 
+    let nf1 = min nf1 60
+    let nf2 = min nf2 60
+    let v1 = min v1 0.5 |> DenseVector.create nf1 
+    let v2 = min v2 0.5 |> DenseVector.create nf2 
+    let f1 = DenseVector.create nf1 fa
+    let f2 = DenseVector.create nf2 fb
+    let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/250. + t1 )
+    let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/250. + t2 )
+    let fw1 = DenseVector.create nf1 1./(float nf1) 
+    let fw2 = DenseVector.create nf2 1./(float nf2) 
+    let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 3 
+    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 5 
+    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 7 
+    nearstr v5 v7 0.02 "Choi 5 vs 7" .&.
+    nearstr v3 v7 0.05 "Choi 3 vs 7" 
+
+[<Property(MaxTest = 1000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
+    //this is a anlytical case that can be used to test Choi convergence
+    let k = 0.
+    let nf1 = 1
+    let nf2 = 1
+    let v1 = min v1 0.5
+    let v2 = min v2 0.5
+    let v1' = DenseVector.create nf1 v1
+    let v2' = DenseVector.create nf2 v2
+    let f1 = DenseVector.create nf1 fa
+    let f2 = DenseVector.create nf2 fb
+    let t1 = DenseVector.create nf1 t
+    let t2 = t1
+    let fw1 = DenseVector.create nf1 1.
+    let fw2 = DenseVector.create nf2 1.
+    let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 5 
+    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 7 
+    let o = kirk fa fb k v1 v2 rho t callput   
+    nearstr v5 o 0.03 "Choi5 vs Kirk" .&.
+    nearstr v7 o 0.01 "Choi7 vs Kirk" 

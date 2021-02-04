@@ -94,21 +94,22 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2=
 let ``test choi vs moment matching`` f1 f2 (PositiveInt t) v1 v2 k rho callput ( PositiveInt n) = 
     //let f = 1.
     //let callput = Call
-    let n = min n 1 //limit array size
+    let s = t*30 
+    let n = min n 20 //limit array size
     let f1 = DenseVector.create n f1
     let f2 = DenseVector.create n f2
-    let t1 = vector [ float t .. float (t + n-1) ] / 365. //fixing dates
+    let t1 = vector [ float s .. float (s + n-1) ] / 365. //fixing dates
     let t2 = t1
     let v1 = DenseVector.create n ( min v1 1.) // vol for each fixing
     let v2 = DenseVector.create n ( min v2 1.) // vol for each fixing
     let fw1 = DenseVector.create n 1.0/float n
     let fw2 = fw1 //weights longside
     let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
-    let rho = max (min rho 0.99) -0.99 //correlation between long/short fixing
+    let rho = max (min rho 0.9) -0.9 //correlation between long/short fixing
     let so =        spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
     let choi,_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     //(so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
-    near choi so 1E-2
+    near choi so 0.07
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi put call parity`` f1 f2 k = 
@@ -173,27 +174,26 @@ let ``test choi vs bs`` f k v t callput=
     near c choi eps .&.
     near delta delta'.[0] eps
 
-[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test choi vs mm`` () = 
-    let f = 1.
+[<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t v1 v2 (NormalFloat rho) = 
     let callput = Call
     let k = 0.
-    let f1 = vector [f]
-    let t1 = vector [1.] //fixing dates
-    let v1 = vector [0.5] // vol for each fixing
-    let fw1 = vector [2. ] //weights longside
+    let f1 = vector [fa]
+    let t1 = vector [t] //fixing dates
+    let v1 = vector [min v1 0.5] // vol for each fixing
+    let fw1 = vector [1. ] //weights long side
 
-    let f2 = vector [f] // forwards short side
+    let f2 = vector [fb] // forwards short side
     let t2 = t1 //fixing dates
-    let v2 = vector  [0.5 ] // vol for each fixing 
-    let fw2 = vector [1.]  //weights longside
+    let v2 = vector  [min v2 0.5 ] // vol for each fixing 
+    let fw2 = vector [1.]  //weights short side
 
     let p1 = vector [ 0.0 ] //  #past fixing longside
 
-    let rho = 0.999 //correlation between long/short fixing
+    let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let c = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,delta' = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
-    near c choi 1E-7
+    let choi,_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
+    near c choi 0.05
 //[<Property>]
 //let ``test choi vs example`` () = 
 //    let f1 = DenseVector.create 1 ( exp 0.5)
@@ -217,14 +217,14 @@ let ``test choi vs mm`` () =
 //    let choi = optionChoi f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
 //    choi > 0.0 |@ sprintf "choi example are close: %f, %f" choi choi
 
-[<Property>]
+[<Fact>]
 let ``test guass hemite weights sum to 1`` () = 
     let dim = 3
     let ws = ghw5 dim |> vector
     let r = ws.Sum()
     Assert.Equal( 1., r, 6 )
 
-[<Property>]
+[<Fact>]
 let ``test guass hemite expect normal mean is 0 `` () = 
     let dim = 3
     let ws = ghw5 dim |> vector

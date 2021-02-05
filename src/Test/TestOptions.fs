@@ -253,7 +253,7 @@ let testSpreadChoivsConv fa fb k t1 t2 v1 v2 (NormalFloat rho) ( PositiveInt nf1
     nearstr v5 v7 0.02 "Choi 5 vs 7" .&.
     nearstr v3 v7 0.05 "Choi 3 vs 7" 
 
-[<Property(MaxTest = 10000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property(MaxTest = 100, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
     //this is a anlytical case that can be used to test Choi convergence
     let k = 0.
@@ -275,6 +275,38 @@ let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput =
     let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 7 
     let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 2 17 
     let o = kirk fa fb k v1 v2 rho t callput   
+    //with high vol and long tenor, high correlation especially, need more nodes
+    //but here is the worst case, average case is much better
     nearstr v17 o 0.01 "Choi17 vs Kirk" .&.
     nearstr v7 o 0.06 "Choi7 vs Kirk" .&.
-    nearstr v5 o 0.08 "Choi5 vs Kirk" 
+    nearstr v5 o 0.1 "Choi5 vs Kirk" 
+
+[<Property(MaxTest = 100, Verbose = true, StartSize=8, EndSize = 10, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let testSpreadChoivsKirkZeroStrikeSmall fb (NormalFloat rho) callput = 
+    //this is a anlytical case that can be used to test Choi convergence
+    let k = 0.
+    //let fb = max (min fb 1.3) 0.7
+    let nf1 = 1
+    let nf2 = 1
+    let v1 = 0.2
+    let v2 = 0.1
+    let t = 1.0
+    let v1' = DenseVector.create nf1 v1
+    let v2' = DenseVector.create nf2 v2
+    let f1 = DenseVector.create nf1 1.0
+    let f2 = DenseVector.create nf2 fb
+    let t1 = DenseVector.create nf1 t
+    let t2 = t1
+    let fw1 = DenseVector.create nf1 1.
+    let fw2 = DenseVector.create nf2 1.
+    let rho = max (min rho 0.8) -0.8  //correlation between long/short fixing
+    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 3 
+    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 5 
+    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 7 
+    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 17 
+    let o = kirk 1.0 fb k v1 v2 rho t callput   
+    //good precison for different cases, even with 3 nodes
+    nearstr v17 o 1E-9 "Choi17 vs Kirk" .&.
+    nearstr v7 o 1E-7 "Choi7 vs Kirk" .&.
+    nearstr v5 o 1E-6 "Choi5 vs Kirk" .&.
+    nearstr v3 o 1E-4 "Choi3 vs Kirk" 

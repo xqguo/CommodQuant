@@ -255,9 +255,9 @@ module Options =
     //recursive version with dim input
     //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
     // 1 <= dim 
-    let rec ghzn n dim =     
+    let rec ghzn (o:int list) =     
         let s2 = sqrt 2.0
-        let z = 
+        let z n= 
             //https://keisan.casio.com/exec/system/1281195844
             match n with 
             | 3 -> [|-1.2247448714;  0. ;1.2247448714|] 
@@ -295,16 +295,16 @@ module Options =
                     4.871345193674403088349|]
             | _ -> failwith "Not implemented"
             |> Array.map ( fun x -> x * s2)
-        match dim with
-        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
-        | 1 ->     
-            [| for x in z do yield [|x|]|]
-        | _ -> 
-            permutate z (ghzn n (dim-1)) //previous layer)
+        match o with
+        | [] -> invalidArg "o" "order should not be empty list"
+        | [h] ->     
+            [| for x in (z h) do yield [|x|]|]
+        | h::t -> 
+            permutate (z h) (ghzn t) //previous layer)
 
-    let rec ghwn n dim =     
+    let rec ghwn (o:int list) =     
         let cons = sqrt(System.Math.PI)
-        let w = 
+        let w n = 
             //https://keisan.casio.com/exec/system/1281195844
             match n with 
             | 3 -> [|0.2954089752; 1.1816359006 ; 0.2954089752|] 
@@ -343,15 +343,23 @@ module Options =
                     |]
             | _ -> failwith "Not implemented"
             |> Array.map ( fun x -> x / cons )
-        match dim with
-        | x when x <= 0 -> invalidArg "dim" "Dim should be an int >= 1"
-        | 1 -> w
-        | _ -> permprod w (ghwn n (dim-1))
+        match o with
+        | [] -> invalidArg "o" "order should not be empty"
+        | [h] -> w h
+        | h::t -> permprod (w h) (ghwn t)
 
-    let ghz5 = ghzn 5
-    let ghw5 = ghwn 5      
-    let ghz3 = ghzn 3
-    let ghw3 = ghwn 3      
+    let ghz5 d = ghzn (List.replicate d 5)
+    let ghw5 d = ghwn  (List.replicate d 5)     
+    let ghz3 d = ghzn (List.replicate d 3)
+    let ghw3 d = ghwn (List.replicate d 3)      
+
+    let gh o = ghzn o , ghwn o 
+
+    // o is a list of order of Ghass Hermite for each dim of integration
+    let ghint (o:int list) (f:(float[]->float)) =
+        let zs,ws = gh o 
+        let o = zs |> Array.map f
+        (o,ws) ||> Array.map2 (*) |> Array.sum
 
     ///get cov for 2 assets with constant correlation.
     let getCov (t1:Vector<float>) (v1:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 
@@ -624,11 +632,11 @@ module Options =
     //        (opt - adj), delta  //return deltas in long/short 2 elem array
 
     //Choi's general method using cov inputs
-    let rec optionChoiG (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput l d=
+    let rec optionChoiG (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput (o:int list)=
         //validate inputs
         if strike < 0. then 
             let callput' = match callput with | Call -> Put | Put -> Call
-            let (opt,delta) = optionChoiG f (w * -1.) sigma -strike callput' l d //put equivalent
+            let (opt,delta) = optionChoiG f (w * -1.) sigma -strike callput' o //put equivalent
             opt, delta
         else
             if f.Count = 1 then // use bs
@@ -644,9 +652,8 @@ module Options =
                 let vksum = vk * vk  - vk.[0] * vk.[0]
                 exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
 
-            let dim = min (n-1) l //cap at l levels
-            let zs = ghzn d dim 
-            let ws = ghwn d dim
+            let dim = min (n-1) (o.Length ) //cap at l levels
+            let zs,ws = gh o.[ 0 .. (dim - 1)] 
 
             let wf z = 
                         w  //for each kth fixing
@@ -748,7 +755,7 @@ module Options =
             (opt - adj), deltas  //return deltas in input vector
 
     let optionChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
-        optionChoiG f w sigma strike callput 4 5
+        optionChoiG f w sigma strike callput [5;5;5;5]
         
     ///assuming perferect correalation in asset
     let optionChoi2Asset (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
@@ -773,7 +780,7 @@ module Options =
 
     ///assuming perferect correalation in asset
     let optionChoi2AssetG (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 
-        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k (rho:float) callput l d =
+        (f2':Vector<float>) (fw2':Vector<float>) (t2':Vector<float>) v2' k (rho:float) callput o =
         //validate inputs
         if Vector.exists (fun x -> x <= 0. ) t1' then invalidArg "t1'" "time to matuirty needs to be positive values"
         if Vector.exists (fun x -> x <= 0. ) t2' then invalidArg "t1'" "time to matuirty needs to be positive values"
@@ -785,7 +792,7 @@ module Options =
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
         let sigma = getCov t1 v1 t2 v2 rho
-        let (opt,deltas) = optionChoiG f w sigma k callput l d
+        let (opt,deltas) = optionChoiG f w sigma k callput o
         let delta1,delta2 = deltas |> Array.splitAt f1.Count
         let delta1sum = Array.sum delta1
         let delta2sum = Array.sum delta2

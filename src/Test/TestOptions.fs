@@ -224,34 +224,55 @@ let ``test guass hemite weights sum to 1`` () =
     let r = ws.Sum()
     Assert.Equal( 1., r, 6 )
 
-[<Property(MaxTest=1)>]
-let ``test guass hemite expect normal mean is 0 `` () = 
-    let dim = 4
-    [|3;5;7|]
-    |> Array.iter( fun n -> 
-        let ws = ghwn n dim |> vector
-        let hs = ghzn n dim |> Array.map( Array.reduce (+)) |> vector
-        let r = ws* hs
-        Assert.Equal( 0., r, 6 ))
+type GHTest =
+    static member GHList() =
+        Gen.elements [3;5;7;17] 
+        |> Gen.nonEmptyListOf
+        |> Arb.fromGen
 
-[<Property(MaxTest = 50, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
-let testSpreadChoivsConv fa fb k t1 t2 v1 v2 (NormalFloat rho) ( PositiveInt nf1) (PositiveInt nf2) callput = 
-    let nf1 = min nf1 60
-    let nf2 = min nf2 60
-    let v1 = min v1 0.5 |> DenseVector.create nf1 
-    let v2 = min v2 0.5 |> DenseVector.create nf2 
+[<Property(MaxTest=20, Verbose=true, EndSize = 4, Arbitrary=[|typeof<GHTest>|])>]
+let ``test guass hemite expect normal mean is 0 `` (o:int list) = 
+        //let o = Array.toList o
+        let ws = ghwn o |> vector
+        let hs = ghzn o |> Array.map( Array.reduce (+)) |> vector
+        let r = ws* hs
+        Assert.Equal( 0., r, 6 )
+
+[<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let testSpreadChoiDimConv fa fb k rho (dir:bool)  callput = 
+    let nf1 = 60
+    let nf2 = 20
+    let v1 = 0.5 |> DenseVector.create nf1 
+    let v2 = 0.3 |> DenseVector.create nf2 
     let f1 = DenseVector.create nf1 fa
     let f2 = DenseVector.create nf2 fb
-    let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/250. + t1 )
-    let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/250. + t2 )
+    let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/250. + 1.0 )
+    let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/250. + 1.0 )
     let fw1 = DenseVector.create nf1 1./(float nf1) 
     let fw2 = DenseVector.create nf2 1./(float nf2) 
-    let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
-    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 3 
-    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 5 
-    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput 4 7 
-    nearstr v5 v7 0.02 "Choi 5 vs 7" .&.
-    nearstr v3 v7 0.05 "Choi 3 vs 7" 
+    let rho = max (min ((if dir then 1. else -1.)*rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    let v, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [3;3;3] 
+    let v', _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [3;3;3;3;3] 
+    //for a typical 1m vs 3m avg spread, 3 dim is good enough
+    nearstr v v' 0.0001 "Choi 4 vs 6 dim"
+
+[<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+let testSpreadChoiOrderConv fa fb k rho (dir:bool)  callput = 
+    let nf1 = 60
+    let nf2 = 20
+    let v1 = 0.5 |> DenseVector.create nf1 
+    let v2 = 0.3 |> DenseVector.create nf2 
+    let f1 = DenseVector.create nf1 fa
+    let f2 = DenseVector.create nf2 fb
+    let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/250. + 1.0 )
+    let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/250. + 1.0 )
+    let fw1 = DenseVector.create nf1 1./(float nf1) 
+    let fw2 = DenseVector.create nf2 1./(float nf2) 
+    let rho = max (min ((if dir then 1. else -1.)*rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    let v, _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [5;5;5] 
+    let v', _ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;7;7] 
+    //for a typical 1m vs 3m avg spread, 5 is good enough
+    nearstr v v' 0.01 "Choi 5 vs 7 order"
 
 [<Property(MaxTest = 100, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
@@ -271,9 +292,9 @@ let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput =
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
     let rho = max (min (rho/5.0) 0.95) -0.95  //correlation between long/short fixing
-    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 5 
-    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 7 
-    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 2 17 
+    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
+    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7]
+    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
     let o = kirk fa fb k v1 v2 rho t callput   
     //with high vol and long tenor, high correlation especially, need more nodes
     //but here is the worst case, average case is much better
@@ -300,10 +321,10 @@ let testSpreadChoivsKirkZeroStrikeSmall fb (NormalFloat rho) callput =
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
     let rho = max (min rho 0.8) -0.8  //correlation between long/short fixing
-    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 3 
-    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 5 
-    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 7 
-    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 1 17 
+    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
+    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
+    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7] 
+    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
     let o = kirk 1.0 fb k v1 v2 rho t callput   
     //good precison for different cases, even with 3 nodes
     nearstr v17 o 1E-9 "Choi17 vs Kirk" .&.

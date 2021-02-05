@@ -253,7 +253,7 @@ let testSpreadChoivsConv fa fb k t1 t2 v1 v2 (NormalFloat rho) ( PositiveInt nf1
     nearstr v5 v7 0.02 "Choi 5 vs 7" .&.
     nearstr v3 v7 0.05 "Choi 3 vs 7" 
 
-[<Property(MaxTest = 1000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property(MaxTest = 10000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
     //this is a anlytical case that can be used to test Choi convergence
     let k = 0.
@@ -261,6 +261,7 @@ let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput =
     let nf2 = 1
     let v1 = min v1 0.5
     let v2 = min v2 0.5
+    let t = min t 4.0
     let v1' = DenseVector.create nf1 v1
     let v2' = DenseVector.create nf2 v2
     let f1 = DenseVector.create nf1 fa
@@ -269,9 +270,11 @@ let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput =
     let t2 = t1
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    let rho = max (min (rho/5.0) 0.95) -0.95  //correlation between long/short fixing
     let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 5 
     let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 4 7 
+    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput 2 17 
     let o = kirk fa fb k v1 v2 rho t callput   
-    nearstr v5 o 0.03 "Choi5 vs Kirk" .&.
-    nearstr v7 o 0.01 "Choi7 vs Kirk" 
+    nearstr v17 o 0.01 "Choi17 vs Kirk" .&.
+    nearstr v7 o 0.06 "Choi7 vs Kirk" .&.
+    nearstr v5 o 0.08 "Choi5 vs Kirk" 

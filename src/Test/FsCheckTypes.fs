@@ -24,6 +24,9 @@ type BeginOfCalendarInt = BeginOfCalendarInt of int with
 type MonthString = MonthString of string with 
     static member op_Explicit(MonthString i) = i
 
+type Corr = Corr of float with 
+    static member op_Explicit(Corr i) = i
+
 type MyGenerator = 
     static member BeginOfCalenderInt() =
         Gen.elements [0;1;3;6;12] 
@@ -33,6 +36,10 @@ type MyGenerator =
         Gen.elements ["Jan";"Feb";"Mar";"Apr";"May";"Jun";"Jul";"Aug";"Sep";"Oct";"Nov";"Dec"] 
         |> Arb.fromGen
         |> Arb.convert MonthString string 
+    static member Corr() =
+        Gen.elements [-0.99 .. 0.03 .. 0.99 ] 
+        |> Arb.fromGen
+        |> Arb.convert Corr float
 
 type IntLessThan100 = 
     static member Int()=

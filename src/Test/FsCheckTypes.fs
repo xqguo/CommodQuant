@@ -41,6 +41,7 @@ type MyGenerator =
         |> Arb.fromGen
         |> Arb.convert Corr float
 
+
 type IntLessThan100 = 
     static member Int()=
         Arb.Default.Int32()
@@ -51,3 +52,4 @@ let inline near a b eps =
 
 let inline nearstr a b eps str = 
     (a - eps < b && a + eps > b) |@ sprintf "%s: %A vs %A with %A" str a b eps
+

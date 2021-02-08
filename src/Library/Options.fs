@@ -824,17 +824,19 @@ module Options =
             //let k' = -w.[0]
             //f'.[0] <- k / f.[0]
             //w.[0] <- -1.0
-            let f' = f 
-            let k' = -w.[0] * f.[0]
-            f'.[0] <- k
-            w.[0] <- -1.0
-            let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,0] - sigma.[j,0] + sigma.[0,0]) |> fixCov
-            let (opt',deltas') = optionChoiG f' w sigma' k' callput o
-            //let opt = opt' * f.[0]
-            let opt = opt' 
-            //let d0 = (Array.sum deltas'.[1..] ) * -k / f.[0] + opt'
-            let d0 = (Array.sum deltas'.[1..] ) * -k + opt'
-            let deltas = Array.append [|d0|] deltas'.[1..]
+            let n = f.Count-1
+            let k' = -w.[n] * f.[n]
+            if k >= 0.0 then 
+                f.[n] <- k
+                w.[n] <- -1.0
+            else
+                f.[n] <- -k
+                w.[n] <- 1.0
+            let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) |> fixCov
+            let (opt,deltas) = optionChoiG f w sigma' k' callput o
+            //todo check delta conversion
+            let dn = (Array.sum deltas - deltas.[n] ) * k + opt
+            deltas.[n] <- dn
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1
             let delta2sum = Array.sum delta2

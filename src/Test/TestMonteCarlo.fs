@@ -128,7 +128,7 @@ let testSpreadChoivsMC fa fb k t1 t2 v1 v2 rho nf1 nf2 callput =
     let fw2 = DenseVector.create nf2 1./(float nf2) 
     let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let (c,std) = spreadMC f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput num
-    let choi,_ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [5;5;5;5] 
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;2;2] 
     nearstr choi c (std * 3.0 + 1E-2) "Choi vs mc" //choi and mc close
 
 [<Property( MaxTest=20, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]

@@ -818,7 +818,13 @@ module Options =
             else
                 f.[n] <- -k
                 w.[n] <- 1.0
-            let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) |> fixCov
+            let sigma' = 
+                sigma |> Matrix.mapi ( fun i j v -> 
+                    if i = n || j = n then
+                        -v + sigma.[n,n]
+                    else
+                        v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) 
+            sigma'.[n,n] <- sigma.[n,n]
             let (opt,deltas) = optionChoiG f w sigma' k' callput o
             //todo check delta conversion
             let dn = (Array.sum deltas - deltas.[n] ) * k + opt

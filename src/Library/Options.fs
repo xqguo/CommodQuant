@@ -799,6 +799,48 @@ module Options =
         let delta = [|delta1sum ; delta2sum |]
         opt, delta  //return deltas in long/short 2 elem array
 
+    ///assuming perferect correalation in asset
+    ///change of Numeraire to work with high correlation > 0.75 precision issue
+    let optionChoi2AssetN (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput o =
+        //validate inputs
+        if Vector.exists (fun x -> x <= 0. ) t1 then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) t2 then invalidArg "t1'" "time to matuirty needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v1 then invalidArg "v1'" "vol needs to be positive values"
+        if Vector.exists (fun x -> x <= 0. ) v2 then invalidArg "v2'" "vol needs to be positive values"
+        //call general case
+        let f = appendVector f1 f2
+        let w = appendVector fw1 (fw2 * -1.) 
+        let sigma = getCov t1 v1 t2 v2 rho
+        if rho < 0.75 then 
+            let (opt,deltas) = optionChoiG f w sigma k callput o
+            let delta1,delta2 = deltas |> Array.splitAt f1.Count
+            let delta1sum = Array.sum delta1
+            let delta2sum = Array.sum delta2
+            let delta = [|delta1sum ; delta2sum |]
+            opt, delta  //return deltas in long/short 2 elem array
+        else // use f.[0] as numeraire, normalize to 1.
+            //let f' = f / f.[0]
+            //let k' = -w.[0]
+            //f'.[0] <- k / f.[0]
+            //w.[0] <- -1.0
+            let f' = f 
+            let k' = -w.[0] * f.[0]
+            f'.[0] <- k
+            w.[0] <- -1.0
+            let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,0] - sigma.[j,0] + sigma.[0,0]) |> fixCov
+            let (opt',deltas') = optionChoiG f' w sigma' k' callput o
+            //let opt = opt' * f.[0]
+            let opt = opt' 
+            //let d0 = (Array.sum deltas'.[1..] ) * -k / f.[0] + opt'
+            let d0 = (Array.sum deltas'.[1..] ) * -k + opt'
+            let deltas = Array.append [|d0|] deltas'.[1..]
+            let delta1,delta2 = deltas |> Array.splitAt f1.Count
+            let delta1sum = Array.sum delta1
+            let delta2sum = Array.sum delta2
+            let delta = [|delta1sum ; delta2sum |]
+            opt, delta  //return deltas in long/short 2 elem array
+
     ///using cov inputs
     let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>)  k (sigma:Matrix<float>) callput =

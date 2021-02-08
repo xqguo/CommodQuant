@@ -274,36 +274,66 @@ let testSpreadChoiOrderConv fa fb k rho (dir:bool)  callput =
     //for a typical 1m vs 3m avg spread, 5 is good enough
     nearstr v v' 0.01 "Choi 5 vs 7 order"
 
-[<Property(MaxTest = 100, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
-let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
-    //this is a anlytical case that can be used to test Choi convergence
-    let k = 0.
-    let nf1 = 1
-    let nf2 = 1
-    let v1 = min v1 0.5
-    let v2 = min v2 0.5
-    let t = min t 4.0
-    let v1' = DenseVector.create nf1 v1
-    let v2' = DenseVector.create nf2 v2
-    let f1 = DenseVector.create nf1 fa
-    let f2 = DenseVector.create nf2 fb
-    let t1 = DenseVector.create nf1 t
-    let t2 = t1
-    let fw1 = DenseVector.create nf1 1.
-    let fw2 = DenseVector.create nf2 1.
-    let rho = max (min (rho/5.0) 0.95) -0.95  //correlation between long/short fixing
-    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
-    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7]
-    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
-    let o = kirk fa fb k v1 v2 rho t callput   
-    //with high vol and long tenor, high correlation especially, need more nodes
-    //but here is the worst case, average case is much better
-    nearstr v17 o 0.01 "Choi17 vs Kirk" .&.
-    nearstr v7 o 0.06 "Choi7 vs Kirk" .&.
-    nearstr v5 o 0.1 "Choi5 vs Kirk" 
+//[<Property(MaxTest = 100, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+//let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
+//    //this is a anlytical case that can be used to test Choi convergence
+//    let k = 0.
+//    let nf1 = 1
+//    let nf2 = 1
+//    let v1 = min v1 0.5
+//    let v2 = min v2 0.5
+//    let t = min t 4.0
+//    let v1' = DenseVector.create nf1 v1
+//    let v2' = DenseVector.create nf2 v2
+//    let f1 = DenseVector.create nf1 fa
+//    let f2 = DenseVector.create nf2 fb
+//    let t1 = DenseVector.create nf1 t
+//    let t2 = t1
+//    let fw1 = DenseVector.create nf1 1.
+//    let fw2 = DenseVector.create nf2 1.
+//    let rho = max (min (rho/5.0) 0.95) -0.95  //correlation between long/short fixing
+//    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
+//    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7]
+//    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
+//    let o = kirk fa fb k v1 v2 rho t callput   
+//    //with high vol and long tenor, high correlation especially, need more nodes
+//    //but here is the worst case, average case is much better
+//    nearstr v17 o 0.01 "Choi17 vs Kirk" .&.
+//    nearstr v7 o 0.06 "Choi7 vs Kirk" .&.
+//    nearstr v5 o 0.1 "Choi5 vs Kirk" 
 
-[<Property(MaxTest = 100, Verbose = true, StartSize=8, EndSize = 10, Arbitrary = [|typeof<PositiveFloat>; typeof<MyGenerator> |] )>]
-let testSpreadChoivsKirkZeroStrikeSmall fb (Corr rho) callput = 
+//[<Property(MaxTest = 100, Verbose = true, StartSize=8, EndSize = 10, Arbitrary = [|typeof<PositiveFloat>; typeof<MyGenerator> |] )>]
+//let testSpreadChoivsKirkZeroStrikeSmall fb (Corr rho) callput = 
+//    //this is a anlytical case that can be used to test Choi convergence
+//    let k = 0.
+//    //let fb = max (min fb 1.3) 0.7
+//    let nf1 = 1
+//    let nf2 = 1
+//    let v1 = 0.2
+//    let v2 = 0.1
+//    let t = 1.0
+//    let v1' = DenseVector.create nf1 v1
+//    let v2' = DenseVector.create nf2 v2
+//    let f1 = DenseVector.create nf1 1.0
+//    let f2 = DenseVector.create nf2 fb
+//    let t1 = DenseVector.create nf1 t
+//    let t2 = t1
+//    let fw1 = DenseVector.create nf1 1.
+//    let fw2 = DenseVector.create nf2 1.
+//    let rho = min rho 0.8 //correlation between long/short fixing
+//    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
+//    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
+//    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7] 
+//    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
+//    let o = kirk 1.0 fb k v1 v2 rho t callput   
+//    //good precison for different cases, even with 3 nodes
+//    nearstr v17 o 1E-9 "Choi17 vs Kirk" .&.
+//    nearstr v7 o 1E-7 "Choi7 vs Kirk" .&.
+//    nearstr v5 o 1E-6 "Choi5 vs Kirk" .&.
+//    nearstr v3 o 1E-4 "Choi3 vs Kirk" 
+
+[<Property(MaxTest = 100, Verbose = true, StartSize=8, EndSize = 100, Arbitrary = [|typeof<PositiveFloat>; typeof<MyGenerator> |] )>]
+let testSpreadChoivsKirkZeroStrikeNSmallVol fb (Corr rho) callput = 
     //this is a anlytical case that can be used to test Choi convergence
     let k = 0.
     //let fb = max (min fb 1.3) 0.7
@@ -320,14 +350,75 @@ let testSpreadChoivsKirkZeroStrikeSmall fb (Corr rho) callput =
     let t2 = t1
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let rho = min rho 0.8 //correlation between long/short fixing
-    let v3, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
-    let v5, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
-    let v7, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7] 
-    let v17, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
+    //let rho = min rho 0.8 //correlation between long/short fixing
+    let v3, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
+    let v5, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
+    let v7, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7] 
+    let v17, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
     let o = kirk 1.0 fb k v1 v2 rho t callput   
     //good precison for different cases, even with 3 nodes
     nearstr v17 o 1E-9 "Choi17 vs Kirk" .&.
     nearstr v7 o 1E-7 "Choi7 vs Kirk" .&.
-    nearstr v5 o 1E-6 "Choi5 vs Kirk" .&.
-    nearstr v3 o 1E-4 "Choi3 vs Kirk" 
+    nearstr v5 o 1E-7 "Choi5 vs Kirk" .&.
+    nearstr v3 o 1E-5 "Choi3 vs Kirk" 
+
+[<Property(MaxTest = 1000, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput = 
+    //this is a anlytical case that can be used to test Choi convergence
+    let k = 0.
+    let nf1 = 1
+    let nf2 = 1
+    let v1 = min v1 0.5
+    let v2 = min v2 0.5
+    let t = min t 4.0
+    let v1' = DenseVector.create nf1 v1
+    let v2' = DenseVector.create nf2 v2
+    let f1 = DenseVector.create nf1 fa
+    let f2 = DenseVector.create nf2 fb
+    let t1 = DenseVector.create nf1 t
+    let t2 = t1
+    let fw1 = DenseVector.create nf1 1.
+    let fw2 = DenseVector.create nf2 1.
+    let v3, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
+    let v5, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
+    let v7, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7]
+    let v17, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
+    let o = kirk fa fb k v1 v2 rho t callput   
+    //with high vol and long tenor, high correlation especially, need more nodes
+    //but here is the worst case, average case is much better
+    nearstr v17 o 1E-4 "Choi17 vs Kirk" .&.
+    nearstr v7 o 1E-3 "Choi7 vs Kirk" .&.
+    nearstr v5 o 1E-2 "Choi5 vs Kirk" .&.
+    nearstr v3 o 0.05 "Choi3 vs Kirk" 
+
+[<Property(MaxTest = 1000, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let testSpreadChoiNConv fa fb k (PositiveInt nf1) (PositiveInt nf2) t v1 v2 (Corr rho) callput = 
+    //this is a anlytical case that can be used to test Choi convergence
+    //let nf1 = min nf1 60
+    //let nf2 = min nf2 60
+    let nf1 = 3
+    let nf2 = 2
+    let v1 = min v1 0.5
+    let v2 = min v2 0.5
+    let t = min t 4.0
+    let v1' = DenseVector.create nf1 v1
+    let v2' = DenseVector.create nf2 v2
+    let f1 = DenseVector.create nf1 fa
+    let f2 = DenseVector.create nf2 fb
+    let t1 = DenseVector.init nf1 (fun i -> t + (float i)/250.)
+    let t2 = DenseVector.init nf2 (fun i -> t + (float i)/250.)
+    let fw1 = DenseVector.create nf1 1.
+    let fw2 = DenseVector.create nf2 1.
+    let g n = 
+        let dim = List.replicate 4 n
+        let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput dim
+        o
+    let v3 = g 3 
+    let v5 = g 5 
+    let v7 = g 7 
+    let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;7;5;3]
+    //with high vol and long tenor, high correlation especially, need more nodes
+    //but here is the worst case, average case is much better
+    nearstr v7 o 0.02 "Choi7 vs 17" .&.
+    nearstr v5 o 0.03 "Choi5 vs 17" .&.
+    nearstr v3 o 0.07 "Choi3 vs 17" 

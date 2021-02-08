@@ -260,6 +260,7 @@ module Options =
         let z n= 
             //https://keisan.casio.com/exec/system/1281195844
             match n with 
+            | 2 -> [|-0.7071067811865475244008;0.7071067811865475244008|]
             | 3 -> [|-1.2247448714;  0. ;1.2247448714|] 
             | 5 -> [|
                     -2.020182870456085632929
@@ -307,6 +308,7 @@ module Options =
         let w n = 
             //https://keisan.casio.com/exec/system/1281195844
             match n with 
+            | 2 -> [|0.8862269254527580136491; 0.8862269254527580136491|]
             | 3 -> [|0.2954089752; 1.1816359006 ; 0.2954089752|] 
             | 5 -> [|
                     0.01995324205904591320774
@@ -652,7 +654,15 @@ module Options =
                 let vksum = vk * vk  - vk.[0] * vk.[0]
                 exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
 
-            let dim = min (n-1) (o.Length ) //cap at l levels
+            let e = V.Svd().S
+            let et = e.Sum()
+            let m = 
+                e 
+                |> Vector.toArray 
+                |> Array.scan (fun t x -> t + x ) 0. 
+                |> Array.map( fun x -> x / et) 
+                |> Array.findIndex( fun x -> x > 0.9 ) 
+            let dim = min (n-1) ( min m (o.Length )) //cap at l levels
             let zs,ws = gh o.[ 0 .. (dim - 1)] 
 
             let wf z = 
@@ -753,9 +763,11 @@ module Options =
                         |> Vector.sum )
 
             (opt - adj), deltas  //return deltas in input vector
-
+    
+    //Choi model with 4 dim and descretize 7/2/2
+    //This is generally accurate within 1c err
     let optionChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
-        optionChoiG f w sigma strike callput [5;5;5;5]
+        optionChoiG f w sigma strike callput [7;2;2]
         
     ///assuming perferect correalation in asset
     let optionChoi2Asset (f1':Vector<float>) (fw1':Vector<float>) (t1':Vector<float>) (v1':Vector<float>) 

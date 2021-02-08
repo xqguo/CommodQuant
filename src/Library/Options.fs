@@ -653,15 +653,16 @@ module Options =
                 let vk = V.Row(k) //kth row vector
                 let vksum = vk * vk  - vk.[0] * vk.[0]
                 exp( -0.5 * vksum + vk.SubVector(1,z.Count) * z ) //fk for some z
-            let e = V.Svd().S
-            let et = e.Sum()
-            let m = 
-                e 
-                |> Vector.toArray 
-                |> Array.scan (fun t x -> t + x ) 0. 
-                |> Array.map( fun x -> x / et) 
-                |> Array.findIndex( fun x -> x > 0.9 ) 
-            let dim = min (n-1) ( min m (o.Length )) //cap at l levels
+            //let e = V.Svd().S
+            //let et = e.Sum()
+            //let m = 
+            //    e 
+            //    |> Vector.toArray 
+            //    |> Array.scan (fun t x -> t + x ) 0. 
+            //    |> Array.map( fun x -> x / et) 
+            //    |> Array.findIndex( fun x -> x > 0.9 ) 
+            //let dim = min (n-1) ( min m (o.Length )) //cap at l levels
+            let dim = min (n-1) ( o.Length ) //cap at l levels
             let zs,ws = gh o.[ 0 .. (dim - 1)] 
             let wf z = 
                         w  //for each kth fixing
@@ -798,7 +799,7 @@ module Options =
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
         let sigma = getCov t1 v1 t2 v2 rho
-        if rho <= 0. then 
+        if rho <= 0.7 then 
             let (opt,deltas) = optionChoiG f w sigma k callput o
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1
@@ -810,14 +811,18 @@ module Options =
             //let k' = -w.[0]
             //f'.[0] <- k / f.[0]
             //w.[0] <- -1.0
-            let n = f.Count-1
+            let n,sign = //use small vol asset of either the 1st or last as numeraire
+                if sigma.[0,0] > sigma.[f.Count-1,f.Count-1] then 
+                    f.Count-1 , -1.
+                else 0 , 1.
             let k' = -w.[n] * f.[n]
             if k >= 0.0 then 
                 f.[n] <- k
-                w.[n] <- -1.0
+                w.[n] <- sign
             else
                 f.[n] <- -k
-                w.[n] <- 1.0
+                w.[n] <- -sign
+            f.[n] <- max f.[n] 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
             let sigma' = 
                 sigma |> Matrix.mapi ( fun i j v -> 
                     if i = n || j = n then

@@ -174,11 +174,12 @@ let ``test choi vs bs`` f k v t callput=
     near c choi eps .&.
     near delta delta'.[0] eps
 
-[<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t v1 v2 (NormalFloat rho) = 
+[<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t v1 v2 (Corr rho) = 
     let callput = Call
     let k = 0.
     let f1 = vector [fa]
+    let t = min t 4.
     let t1 = vector [t] //fixing dates
     let v1 = vector [min v1 0.5] // vol for each fixing
     let fw1 = vector [1. ] //weights long side
@@ -190,10 +191,10 @@ let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t
 
     let p1 = vector [ 0.0 ] //  #past fixing longside
 
-    let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    //let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let c = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
-    near c choi 0.05
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;5;3]
+    near c choi 0.001
 //[<Property>]
 //let ``test choi vs example`` () = 
 //    let f1 = DenseVector.create 1 ( exp 0.5)
@@ -408,8 +409,9 @@ let testSpreadChoiNConv fa fb k nf1 nf2 t v1 v2 (Corr rho) callput =
     let t2 = DenseVector.init nf2 (fun i -> t + (float i)/250.)
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7;2;2]
+    let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7;5;3]
     let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;5;3;2]
-    //general case 722 test < 1c
+    //general case 732 test < 0.1%
     //ere is the worst case, average case is much better
-    nearstr v o 0.01 "Choi7/2/2 vs 17/5/3/2/2" 
+    let err = List.max [ 1.; fa; fb; k] * 0.01
+    nearstr v o err "Choi7/5/3 vs 17/5/3/2/2" 

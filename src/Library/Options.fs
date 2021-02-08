@@ -799,7 +799,7 @@ module Options =
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
         let sigma = getCov t1 v1 t2 v2 rho
-        if rho <= 0.7 then 
+        if rho <= 0.9 then 
             let (opt,deltas) = optionChoiG f w sigma k callput o
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1
@@ -814,7 +814,8 @@ module Options =
             let n,sign = //use small vol asset of either the 1st or last as numeraire
                 if sigma.[0,0] > sigma.[f.Count-1,f.Count-1] then 
                     f.Count-1 , -1.
-                else 0 , 1.
+                else
+                    0 , 1.
             let k' = -w.[n] * f.[n]
             if k >= 0.0 then 
                 f.[n] <- k

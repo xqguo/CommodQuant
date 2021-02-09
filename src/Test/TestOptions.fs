@@ -252,10 +252,10 @@ let testSpreadChoiDimConv fa fb k (Corr rho) callput =
     let fw1 = DenseVector.create nf1 1./(float nf1) 
     let fw2 = DenseVector.create nf2 1./(float nf2) 
     //let rho = max (min ((if dir then 1. else -1.)*rho/5.0) 0.9) -0.9  //correlation between long/short fixing
-    let v, _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;2;2] 
-    let v', _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;2;2;2;2] 
+    let v, _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;2] 
+    let v', _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;5;2] 
     //for a typical 1m vs 3m avg spread, 3 dim is good enough
-    nearstr v v' 0.005 "Choi 4 vs 6 dim"
+    nearstr v v' 0.001 "Choi 3 vs 4 dim"
 
 [<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>; typeof<MyGenerator>|] )>]
 let testSpreadChoiOrderConv fa fb k (Corr rho) callput = 

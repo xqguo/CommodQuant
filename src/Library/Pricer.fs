@@ -12,7 +12,6 @@ module Pricer =
         let a = priceSwap s f
         a.Value / s.Quantity.Value  |> float
 
-
     // get equal weights based on the number of fixings
     let getEqualWeights x =
         let n = Array.length x
@@ -210,7 +209,7 @@ module Pricer =
         //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
         let v1' = ( v1.Diagonal() ./ t1 ).PointwiseSqrt()
         let v2' = ( v2.Diagonal() ./ t2 ).PointwiseSqrt()
-        let opt, deltas =  optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7;2;2]
+        let opt, deltas =  optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;2]
         let p1 = ((f1 .* fw1 ).Sum() + freight) + a1  //inst1 forwd
         let p2 = ((f2 .* fw2 ).Sum())+ a2 //inst2 fwd
         let pintr = 

@@ -114,30 +114,29 @@ let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart=
 //let testAsianChoivsMCEasy (PositiveInt nf)  k fstart tstart sstart= 
 //    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 20 0.0001
 
-let testSpreadChoivsMC fa fb k t1 t2 v1 v2 rho nf1 nf2 callput = 
+[<Property( MaxTest=100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let ``test spread option Choi vs MM vs MC`` fa fb k t1 t2 v1 v2 (Corr rho) (PositiveInt nf1) (PositiveInt nf2) callput = 
+    let t1 = min t1 4.0
+    let t2 = min t2 4.0
     let num = int 1E6
-    let nf1 = min nf1 60
-    let nf2 = min nf2 60
+    let nf1 = min nf1 3
+    let nf2 = min nf2 3
     let v1 = min v1 0.5 |> DenseVector.create nf1 
     let v2 = min v2 0.5 |> DenseVector.create nf2 
     let f1 = DenseVector.create nf1 fa
     let f2 = DenseVector.create nf2 fb
-    let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/250. + t1 )
-    let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/250. + t2 )
+    let t1 = DenseVector.init nf1 ( fun i -> float (i+1)/12. + t1 )
+    let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/12. + t2 )
     let fw1 = DenseVector.create nf1 1./(float nf1) 
     let fw2 = DenseVector.create nf2 1./(float nf2) 
     //let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
+    let p = vector [0.]
+    let c' = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p p p p
     let (c,std) = spreadMC f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput num
     let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;2] 
-    nearstr choi c (std * 3.0 + 1E-6) "Choi vs mc" //choi and mc close
-
-[<Property( MaxTest=200, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
-let ``test spread option Choi vs MC`` fa fb k t1 t2 v1 v2 (Corr rho) (PositiveInt nf1) (PositiveInt nf2) callput = 
-    let t1 = min t1 4.0
-    let t2 = min t2 4.0
-    testSpreadChoivsMC fa fb k t1 t2 v1 v2 rho nf1 nf2 callput
-
-//[<Property( MaxTest=1, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
-//let ``test spread option Choi vs MC 1`` () = 
-//    testSpreadChoivsMC 0.97 0.47 0.46 0.6 0.5 0.01 0.8 0. 1 1 Put
+    let choi',_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;7;2] 
+    let tol = 2E-3
+    nearstr choi choi' tol "choi17/2 vs choi 17/5/2" .&. //Choi17/2 vs converged one
+    nearstr c' c (std * 3.0 + tol) "mc vs mc" .&. //mm and mc close
+    nearstr choi c (std * 3.0 + tol) "Choi vs mc" //choi and mc close 
 

@@ -753,12 +753,12 @@ module Options =
                         (w
                         |> Vector.mapi( fun k w -> w * f.[k] *fwderr.[k])
                         |> Vector.sum )
-            (opt - adj), deltas  //return deltas in input vector
+            max 0. (opt - adj), deltas  //return deltas in input vector
     
-    //Choi model with 4 dim and descretize 7/2/2
-    //This is generally accurate within 1c err
+    //Choi model with 4 dim and descretize 17/2
+    //This is generally accurate within 0.1c err
     let optionChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
-        optionChoiG f w sigma strike callput [7;5;3]
+        optionChoiG f w sigma strike callput [17;2]
         
     //spread option using Choi, without change of numeraire 
     let optionChoi2Asset (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 

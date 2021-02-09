@@ -133,25 +133,24 @@ let ``test choi put call parity`` f1 f2 k =
     
     Assert.Equal ( choi - choi' , f1 * fw1 - f2 * fw2 - k, 3 )
 
-[<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property( MaxTest = 10, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi spread put call equivalence `` f1 f2 v1 v2 k = 
+    let v1 = min v1 0.5
+    let v2 = min v2 0.5
     let f1 = DenseVector.create 8 f1
     let t1 = (( [ 40; 41; 42; 43; 44; 47; 48; 49 ] |> List.map float |> vector ) + 0.01 )/ 365. //fixing dates
     let v1 = DenseVector.create 8 v1 // vol for each fixing
     let fw1 = Vector.Build.Dense( 8, 1./8. ) //weights longside
-
     let f2 = DenseVector.create 8 f2 // forwards short side
     let t2 = t1 //fixing dates
     let v2 = DenseVector.create 8 v2 // vol for each fixing 
     let fw2 = fw1 //weights longside
-
     let rho = 0.5  //correlation between long/short fixing
     let callput = Call
     let choi,_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
-
     let callput = Put
     let choi',_ = optionChoi2Asset f2 fw2 t2 v2 f1 fw1 t1 v1 -k rho callput    
-    Assert.Equal ( choi , choi' , 3 )
+    near choi choi' 1E-3
 
 [<Property( Verbose = true,  Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi vs bs`` f k v t callput= 
@@ -269,10 +268,10 @@ let testSpreadChoiOrderConv fa fb k (Corr rho) callput =
     let t2 = DenseVector.init nf2 ( fun i -> float (i+1)/250. + 1.0 )
     let fw1 = DenseVector.create nf1 1./(float nf1) 
     let fw2 = DenseVector.create nf2 1./(float nf2) 
-    let v, _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;2;2] 
-    let v', _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;7;7] 
-    //for a typical 1m vs 3m avg spread, 7 22 is good enough
-    nearstr v v' 0.001 "Choi 7/2/2 vs 17/7/7"
+    let v, _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;3] 
+    let v', _ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;7;2] 
+    //for a typical 1m vs 3m avg spread, 17 3 is good enough compared to a more dense layer and additional layer
+    nearstr v v' 0.001 "Choi 17/3 vs 17/7/2"
 
 //[<Property(MaxTest = 100, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 //let testSpreadChoivsKirkZeroStrike fa fb t v1 v2 (NormalFloat rho) callput = 
@@ -379,18 +378,12 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     let t2 = t1
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let v3, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
-    let v5, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
-    let v7, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7]
     let v17, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
     let o = kirk fa fb k v1 v2 rho t callput   
     //with high vol and long tenor, high correlation especially, need more nodes
     //but here is the worst case, average case is much better
-    // 7 is good enough < 0.1c
-    nearstr v17 o 0.001 "Choi17 vs Kirk" .&.
-    nearstr v7 o 0.002 "Choi7 vs Kirk" .&.
-    nearstr v5 o 1E-2 "Choi5 vs Kirk" .&.
-    nearstr v3 o 0.05 "Choi3 vs Kirk" 
+    // 17 is good enough < 0.1c
+    nearstr v17 o 0.001 "Choi17 vs Kirk" 
 
 [<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let testSpreadChoiNConv fa fb k nf1 nf2 t v1 v2 (Corr rho) callput = 

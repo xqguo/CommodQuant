@@ -811,18 +811,21 @@ module Options =
             //let k' = -w.[0]
             //f'.[0] <- k / f.[0]
             //w.[0] <- -1.0
-            let n,sign = //use small vol asset of either the 1st or last as numeraire
+            let n = //use small vol asset of either the 1st or last as numeraire
                 if sigma.[0,0] > sigma.[f.Count-1,f.Count-1] then 
-                    f.Count-1 , -1.
+                    f.Count-1 
                 else
-                    0 , 1.
-            let k' = -w.[n] * f.[n]
+                    0
+            //if k is on the same side of long or short.
+            let wn = w.[n]
+            let k' =  -w.[n] * f.[n]
+            //asset price is positive, weights can be either way
             if k >= 0.0 then 
                 f.[n] <- k
-                w.[n] <- sign
+                w.[n] <- -1.0
             else
                 f.[n] <- -k
-                w.[n] <- -sign
+                w.[n] <- 1.0
             f.[n] <- max f.[n] 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
             let sigma' = 
                 sigma |> Matrix.mapi ( fun i j v -> 
@@ -833,7 +836,7 @@ module Options =
             sigma'.[n,n] <- sigma.[n,n]
             let (opt,deltas) = optionChoiG f w sigma' k' callput o
             //todo check delta conversion
-            let dn = (Array.sum deltas - deltas.[n] ) * k + opt
+            let dn = ((vector deltas) * f / k'  - opt / k')*wn 
             deltas.[n] <- dn
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1
@@ -843,7 +846,7 @@ module Options =
 
     ///using cov inputs
     let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) 
-        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>)  k (sigma:Matrix<float>) callput =
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>)  k (sigma:Matrix<float>) callput o =
         //validate inputs
         if Vector.exists (fun x -> x <= 0. ) t1 then invalidArg "t1'" "time to matuirty needs to be positive values"
         if Vector.exists (fun x -> x <= 0. ) t2 then invalidArg "t1'" "time to matuirty needs to be positive values"
@@ -852,23 +855,23 @@ module Options =
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
         // use f.[0] as numeraire, normalize to 1.
-        //let f' = f / f.[0]
-        //let k' = -w.[0]
-        //f'.[0] <- k / f.[0]
-        //w.[0] <- -1.0
-        let n = f.Count-1
-        let k' = -w.[n] * f.[n]
-        if k >= 0.0 then 
-            f.[n] <- k
-            w.[n] <- -1.0
-        else
-            f.[n] <- -k
-            w.[n] <- 1.0
-        let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) |> fixCov
-        let (opt,deltas) = optionChoi f w sigma' k' callput 
+        ////let f' = f / f.[0]
+        ////let k' = -w.[0]
+        ////f'.[0] <- k / f.[0]
+        ////w.[0] <- -1.0
+        //let n = f.Count-1
+        //let k' = -w.[n] * f.[n]
+        //if k >= 0.0 then 
+        //    f.[n] <- k
+        //    w.[n] <- -1.0
+        //else
+        //    f.[n] <- -k
+        //    w.[n] <- 1.0
+        //let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) |> fixCov
+        let (opt,deltas) = optionChoiG f w sigma k callput o
         //todo check delta conversion
-        let dn = (Array.sum deltas - deltas.[n] ) * k + opt
-        deltas.[n] <- dn
+        //let dn = (Array.sum deltas - deltas.[n] ) * k + opt
+        //deltas.[n] <- dn
         let delta1,delta2 = deltas |> Array.splitAt f1.Count
         let delta1sum = Array.sum delta1
         let delta2sum = Array.sum delta2

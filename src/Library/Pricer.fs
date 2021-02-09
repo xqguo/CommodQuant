@@ -144,7 +144,7 @@ module Pricer =
         ///spread option of inst1 (e.g DBRT ) vs inst2 (e.g. JKM) 
     let SpreadOptionPricerBS inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        rho pricecurve1 volcurve1 pricecurve2 volcurve2 =
+        rho pricecurve1 volcurve1 pricecurve2 volcurve2 o =
         let optPricer inst1 inst2 rho refMonth = 
             //let rho = 0.4
             //let refMonth = "Dec20"
@@ -157,7 +157,7 @@ module Pricer =
             let k = -freight - a1 + a2 /// adapte K for past fixings
             //let opts = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
             ////printfn "%A %A %A %A %A %A %A %A %f" f1 fw1 t1 v1 f2 fw2 t2 v2 rho
-            let opt, deltas =  optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;2;2]
+            let opt, deltas =  optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput o
             let p1 = ((f1 .* fw1 ).Sum() + freight) + a1  //inst1 forwd
             let p2 = ((f2 .* fw2 ).Sum())+ a2 //inst2 fwd
             let pintr = 
@@ -242,7 +242,7 @@ module Pricer =
     ///spread option using cross Gabillon model
     let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 =
+        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 o =
         let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 
         let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 
         let k = -freight - a1 + a2 /// adapte K for past fixings
@@ -252,7 +252,7 @@ module Pricer =
         let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
         let t2 = x2 |> Array.map (fst >> getTTM pricingDate) |> toVector
         let n = f1.Count
-        let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 f2 fw2 t2 k sigma callput
+        let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 f2 fw2 t2 k sigma callput o
         let p1 = ((f1 .* fw1 ).Sum() + freight) + a1  //inst1 forwd
         let p2 = ((f2 .* fw2 ).Sum())+ a2 //inst2 fwd
         let pintr = 

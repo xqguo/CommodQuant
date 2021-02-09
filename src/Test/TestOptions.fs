@@ -171,8 +171,8 @@ let ``test choi vs bs`` f k v t callput=
     let delta = bsdelta f k v t callput 
     let choi,delta' = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     let eps = 1E-4
-    near c choi eps .&.
-    near delta delta'.[0] eps
+    nearstr c choi eps "prem:".&.
+    nearstr delta delta'.[0] 0.001 "delta:"
 
 [<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t v1 v2 (Corr rho) = 
@@ -358,8 +358,8 @@ let testSpreadChoivsKirkZeroStrikeNSmallVol fb (Corr rho) callput =
     let o = kirk 1.0 fb k v1 v2 rho t callput   
     //good precison for different cases, even with 3 nodes
     nearstr v17 o 1E-9 "Choi17 vs Kirk" .&.
-    nearstr v7 o 1E-7 "Choi7 vs Kirk" .&.
-    nearstr v5 o 1E-7 "Choi5 vs Kirk" .&.
+    nearstr v7 o 1E-6 "Choi7 vs Kirk" .&.
+    nearstr v5 o 1E-6 "Choi5 vs Kirk" .&.
     nearstr v3 o 1E-5 "Choi3 vs Kirk" 
 
 [<Property(MaxTest = 1000, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
@@ -387,8 +387,8 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     //with high vol and long tenor, high correlation especially, need more nodes
     //but here is the worst case, average case is much better
     // 7 is good enough < 0.1c
-    nearstr v17 o 1E-4 "Choi17 vs Kirk" .&.
-    nearstr v7 o 1E-3 "Choi7 vs Kirk" .&.
+    nearstr v17 o 0.001 "Choi17 vs Kirk" .&.
+    nearstr v7 o 0.002 "Choi7 vs Kirk" .&.
     nearstr v5 o 1E-2 "Choi5 vs Kirk" .&.
     nearstr v3 o 0.05 "Choi3 vs Kirk" 
 

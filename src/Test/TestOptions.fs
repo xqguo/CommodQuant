@@ -235,16 +235,10 @@ let testSpreadChoivsKirkZeroStrikeNSmallVol fb (Corr rho) callput =
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
     //let rho = min rho 0.8 //correlation between long/short fixing
-    let v3, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [3] 
-    let v5, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [5] 
-    let v7, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [7] 
     let v17, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
     let o = kirk 1.0 fb k v1 v2 rho t callput   
     //good precison for different cases, even with 3 nodes
-    nearstr v17 o 1E-9 "Choi17 vs Kirk" .&.
-    nearstr v7 o 1E-6 "Choi7 vs Kirk" .&.
-    nearstr v5 o 1E-6 "Choi5 vs Kirk" .&.
-    nearstr v3 o 1E-5 "Choi3 vs Kirk" 
+    nearstr v17 o 1E-7 "Choi17 vs Kirk" 
 
 [<Property(MaxTest = 1000, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput = 

@@ -262,7 +262,8 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     //with high vol and long tenor, high correlation especially, need more nodes
     //but here is the worst case, average case is much better
     // 17 is good enough < 0.1c
-    nearstr v17 o 0.002 "Choi17 vs Kirk" 
+    let err = List.max [ 1.; fa; fb; k] * 0.005
+    nearstr v17 o err "Choi17 vs Kirk" 
 
 [<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let testSpreadChoiNConv fa fb k nf1 nf2 t v1 v2 (Corr rho) callput = 

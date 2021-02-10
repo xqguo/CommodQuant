@@ -17,6 +17,138 @@ module Options =
     let normpdf = fun x -> Normal.PDF ( 0., 1., x )  
     let norminvcdf = fun x -> Normal.InvCDF( 0., 1., x )
 
+    /// helper function to get multi-dim GH zs 
+    /// permulate x y into x*y entries of zs.
+    let private permutate x y = 
+        let xi = Array.length x //x is the new head
+        let yi = Array.length y //y is the exisiting tail
+        [| 
+            for i in 0 .. (xi - 1 ) do 
+            for j in 0 .. (yi - 1 ) do 
+            yield Array.append [|x.[i]|] y.[j] 
+        |]
+
+    ///helper function to get multi-dim GH weigths.
+    ///cumulative prod of normalized weights
+    let private permprod x y = 
+        let xi = Array.length x //x is the new head
+        let yi = Array.length y //y is the exisiting tail
+        [| 
+            for i in 0 .. (xi - 1 ) do 
+            for j in 0 .. (yi - 1 ) do 
+            yield x.[i] * y.[j] 
+        |]
+
+    //recursive version with dim input
+    //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
+    // 1 <= dim 
+    let rec ghzn (o:int list) =     
+        let s2 = sqrt 2.0
+        let z n= 
+            //https://keisan.casio.com/exec/system/1281195844
+            match n with 
+            | 2 -> [|-0.7071067811865475244008;0.7071067811865475244008|]
+            | 3 -> [|-1.2247448714;  0. ;1.2247448714|] 
+            | 5 -> [|
+                    -2.020182870456085632929
+                    -0.9585724646138185071128
+                    0.
+                    0.9585724646138185071128
+                    2.020182870456085632929 |]
+            | 7 -> [|
+                    -2.651961356835233492447
+                    -1.673551628767471445032
+                    -0.8162878828589646630387
+                    0.
+                    0.8162878828589646630387
+                    1.673551628767471445032
+                    2.651961356835233492447 |]
+            | 17 -> [|
+                    -4.871345193674403088349
+                    -4.061946675875474306892
+                    -3.378932091141494083383
+                    -2.757762915703888730926
+                    -2.173502826666620819275
+                    -1.612924314221231333113
+                    -1.067648725743450553631
+                    -0.5316330013426547313491
+                    0.
+                    0.5316330013426547313491
+                    1.067648725743450553631
+                    1.612924314221231333113
+                    2.173502826666620819275
+                    2.757762915703888730926
+                    3.378932091141494083383
+                    4.061946675875474306892
+                    4.871345193674403088349|]
+            | _ -> failwith "Not implemented"
+            |> Array.map ( fun x -> x * s2)
+        match o with
+        | [] -> invalidArg "o" "order should not be empty list"
+        | [h] ->     
+            [| for x in (z h) do yield [|x|]|]
+        | h::t -> 
+            permutate (z h) (ghzn t) //previous layer)
+
+    let rec ghwn (o:int list) =     
+        let cons = sqrt(System.Math.PI)
+        let w n = 
+            //https://keisan.casio.com/exec/system/1281195844
+            match n with 
+            | 2 -> [|0.8862269254527580136491; 0.8862269254527580136491|]
+            | 3 -> [|0.2954089752; 1.1816359006 ; 0.2954089752|] 
+            | 5 -> [|
+                    0.01995324205904591320774
+                    0.3936193231522411598285
+                    0.9453087204829418812257
+                    0.393619323152241159828
+                    0.01995324205904591320774 |] 
+            | 7 -> [|
+                    9.71781245099519154149E-4
+                    0.05451558281912703059218
+                    0.4256072526101278005203
+                    0.810264617556807326765
+                    0.4256072526101278005203
+                    0.0545155828191270305922
+                    9.71781245099519154149E-4 |]
+            | 17 -> [|
+                    4.58057893079863330581E-11
+                    4.97707898163079405228E-8
+                    7.11228914002130958353E-6
+                    2.986432866977530411513E-4
+                    0.0050673499576275379117
+                    0.0409200341497562798095
+                    0.1726482976700970792177
+                    0.4018264694704119565776
+                    0.5309179376248635603319
+                    0.4018264694704119565776
+                    0.1726482976700970792177
+                    0.0409200341497562798095
+                    0.005067349957627537911701
+                    2.98643286697753041151E-4
+                    7.11228914002130958353E-6
+                    4.97707898163079405228E-8
+                    4.58057893079863330581E-11                    
+                    |]
+            | _ -> failwith "Not implemented"
+            |> Array.map ( fun x -> x / cons )
+        match o with
+        | [] -> invalidArg "o" "order should not be empty"
+        | [h] -> w h
+        | h::t -> permprod (w h) (ghwn t)
+
+    let ghz5 d = ghzn (List.replicate d 5)
+    let ghw5 d = ghwn  (List.replicate d 5)     
+    let ghz3 d = ghzn (List.replicate d 3)
+    let ghw3 d = ghwn (List.replicate d 3)      
+    let gh o = ghzn o , ghwn o 
+
+    // o is a list of order of Ghass Hermite for each dim of integration
+    let ghint (o:int list) (f:(float[]->float)) =
+        let zs,ws = gh o 
+        let o = zs |> Array.map f
+        (o,ws) ||> Array.map2 (*) |> Array.sum
+
     ///returns black scholes fwd price
     let bs f k v t (o:Payoff) = 
         if ( f<=0. || k <= 0. || v<=0. || t<=0. ) then 
@@ -177,6 +309,44 @@ module Options =
         bs y1 k v 1. o 
 
     ///spread option fwd pricing moment matching
+    let rec spreadoption' (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput 
+        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 
+            let f1w = f1 .* fw1 //1st asset weighted
+            let f2w = f2 .* fw2
+            //#1st moments
+            let x1 = f1w.Sum()
+            let x2 = f2w.Sum()
+            let k' = k - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
+            if k' < 0. then
+                let v0 = Vector<float>.Build.Dense(1) 
+                let callput' = match callput with | Call -> Put | Put -> Call
+                spreadoption' f2 fw2 t2 v2 f1 fw1 t1 v1 -k' rho callput' v0 v0 v0 v0 //put equivalent
+            else 
+            //#2nd moments
+                let tmatrix1 = getTmatrix t1 t1
+                let x11 = ((f1w.OuterProduct f1w).*exp( (v1.OuterProduct v1) .* tmatrix1)) |> sum
+                let tmatrix2 = getTmatrix t2 t2
+                let x22 = ((f2w.OuterProduct f2w).*exp( (v2.OuterProduct v2) .* tmatrix2)) |> sum
+                let tmatrix = getTmatrix t1 t2
+                //let x12 = ((f1w.OuterProduct f2w).*exp( (v1.OuterProduct v2) .* tmatrix * rho )) |> sum
+                let x12 = momentsx f1w v1 t1 f2w v2 t2 rho
+            //#intermediates
+                let b1 = sqrt(log(x22 / x2 / x2 ))
+                let b2 = 1. / b1 * log(x12 / (x1 * x2))
+                let cp = match callput with |Call -> 1.0 |Put -> -1.0
+                let g = cp / sqrt(max (log(x11 / x1 / x1) - b2 * b2) 1E-12) //this can be nan? 
+                let i1 = Func<float, float> (fun x -> normpdf(x) * normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x)))))
+                let i2 = Func<float, float>(fun x -> normpdf(x) * normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x)))))
+                let i3 = Func<float,float>( fun x -> normpdf(x) * normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x)))))
+                let stddevs = 6.0
+                let partitions = 100000
+                let i1' = SimpsonRule.IntegrateComposite( i1, -stddevs, stddevs, partitions)
+                let i2' = SimpsonRule.IntegrateComposite( i2, -stddevs, stddevs, partitions)
+                let i3' = SimpsonRule.IntegrateComposite( i3, -stddevs, stddevs, partitions)
+                cp * ( x1 * i1' - x2 * i2' - k * i3')
+
+    ///spread option fwd pricing moment matching
     let rec spreadoption (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 
@@ -204,15 +374,22 @@ module Options =
                 let b2 = 1. / b1 * log(x12 / (x1 * x2))
                 let cp = match callput with |Call -> 1.0 |Put -> -1.0
                 let g = cp / sqrt(max (log(x11 / x1 / x1) - b2 * b2) 1E-12) //this can be nan? 
-                let i1 = Func<float, float> (fun x -> normpdf(x) * normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x)))))
-                let i2 = Func<float, float>(fun x -> normpdf(x) * normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x)))))
-                let i3 = Func<float,float>( fun x -> normpdf(x) * normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x)))))
-                let stddevs = 6.0
-                let partitions = 100000
-                let i1' = SimpsonRule.IntegrateComposite( i1, -stddevs, stddevs, partitions)
-                let i2' = SimpsonRule.IntegrateComposite( i2, -stddevs, stddevs, partitions)
-                let i3' = SimpsonRule.IntegrateComposite( i3, -stddevs, stddevs, partitions)
+                let i1 v = 
+                    let x = Array.head v
+                    normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x))))
+                let i2 v = 
+                    let x = Array.head v
+                    normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x))))
+                let i3 v = 
+                    let x = Array.head v
+                    normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x))))
+                //let stddevs = 6.0
+                //let partitions = 100000
+                let i1' = ghint [17] i1
+                let i2' = ghint [17] i2
+                let i3' = ghint [17] i3
                 cp * ( x1 * i1' - x2 * i2' - k * i3')
+
     /// append 2 vectors
     let appendVector (v1:Vector<float>) (v2:Vector<float>) =
         v1.ToColumnMatrix().Stack(v2.ToColumnMatrix()).Column(0);
@@ -230,138 +407,6 @@ module Options =
         let tmatrix = getTmatrix t1 t2
         (v1.OuterProduct v2).*tmatrix*rho
 
-    /// helper function to get multi-dim GH zs 
-    /// permulate x y into x*y entries of zs.
-    let private permutate x y = 
-        let xi = Array.length x //x is the new head
-        let yi = Array.length y //y is the exisiting tail
-        [| 
-            for i in 0 .. (xi - 1 ) do 
-            for j in 0 .. (yi - 1 ) do 
-            yield Array.append [|x.[i]|] y.[j] 
-        |]
-
-    ///helper function to get multi-dim GH weigths.
-    ///cumulative prod of normalized weights
-    let private permprod x y = 
-        let xi = Array.length x //x is the new head
-        let yi = Array.length y //y is the exisiting tail
-        [| 
-            for i in 0 .. (xi - 1 ) do 
-            for j in 0 .. (yi - 1 ) do 
-            yield x.[i] * y.[j] 
-        |]
-
-    //recursive version with dim input
-    //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
-    // 1 <= dim 
-    let rec ghzn (o:int list) =     
-        let s2 = sqrt 2.0
-        let z n= 
-            //https://keisan.casio.com/exec/system/1281195844
-            match n with 
-            | 2 -> [|-0.7071067811865475244008;0.7071067811865475244008|]
-            | 3 -> [|-1.2247448714;  0. ;1.2247448714|] 
-            | 5 -> [|
-                    -2.020182870456085632929
-                    -0.9585724646138185071128
-                    0.
-                    0.9585724646138185071128
-                    2.020182870456085632929 |]
-            | 7 -> [|
-                    -2.651961356835233492447
-                    -1.673551628767471445032
-                    -0.8162878828589646630387
-                    0.
-                    0.8162878828589646630387
-                    1.673551628767471445032
-                    2.651961356835233492447 |]
-            | 17 -> [|
-                    -4.871345193674403088349
-                    -4.061946675875474306892
-                    -3.378932091141494083383
-                    -2.757762915703888730926
-                    -2.173502826666620819275
-                    -1.612924314221231333113
-                    -1.067648725743450553631
-                    -0.5316330013426547313491
-                    0.
-                    0.5316330013426547313491
-                    1.067648725743450553631
-                    1.612924314221231333113
-                    2.173502826666620819275
-                    2.757762915703888730926
-                    3.378932091141494083383
-                    4.061946675875474306892
-                    4.871345193674403088349|]
-            | _ -> failwith "Not implemented"
-            |> Array.map ( fun x -> x * s2)
-        match o with
-        | [] -> invalidArg "o" "order should not be empty list"
-        | [h] ->     
-            [| for x in (z h) do yield [|x|]|]
-        | h::t -> 
-            permutate (z h) (ghzn t) //previous layer)
-
-    let rec ghwn (o:int list) =     
-        let cons = sqrt(System.Math.PI)
-        let w n = 
-            //https://keisan.casio.com/exec/system/1281195844
-            match n with 
-            | 2 -> [|0.8862269254527580136491; 0.8862269254527580136491|]
-            | 3 -> [|0.2954089752; 1.1816359006 ; 0.2954089752|] 
-            | 5 -> [|
-                    0.01995324205904591320774
-                    0.3936193231522411598285
-                    0.9453087204829418812257
-                    0.393619323152241159828
-                    0.01995324205904591320774 |] 
-            | 7 -> [|
-                    9.71781245099519154149E-4
-                    0.05451558281912703059218
-                    0.4256072526101278005203
-                    0.810264617556807326765
-                    0.4256072526101278005203
-                    0.0545155828191270305922
-                    9.71781245099519154149E-4 |]
-            | 17 -> [|
-                    4.58057893079863330581E-11
-                    4.97707898163079405228E-8
-                    7.11228914002130958353E-6
-                    2.986432866977530411513E-4
-                    0.0050673499576275379117
-                    0.0409200341497562798095
-                    0.1726482976700970792177
-                    0.4018264694704119565776
-                    0.5309179376248635603319
-                    0.4018264694704119565776
-                    0.1726482976700970792177
-                    0.0409200341497562798095
-                    0.005067349957627537911701
-                    2.98643286697753041151E-4
-                    7.11228914002130958353E-6
-                    4.97707898163079405228E-8
-                    4.58057893079863330581E-11                    
-                    |]
-            | _ -> failwith "Not implemented"
-            |> Array.map ( fun x -> x / cons )
-        match o with
-        | [] -> invalidArg "o" "order should not be empty"
-        | [h] -> w h
-        | h::t -> permprod (w h) (ghwn t)
-
-    let ghz5 d = ghzn (List.replicate d 5)
-    let ghw5 d = ghwn  (List.replicate d 5)     
-    let ghz3 d = ghzn (List.replicate d 3)
-    let ghw3 d = ghwn (List.replicate d 3)      
-
-    let gh o = ghzn o , ghwn o 
-
-    // o is a list of order of Ghass Hermite for each dim of integration
-    let ghint (o:int list) (f:(float[]->float)) =
-        let zs,ws = gh o 
-        let o = zs |> Array.map f
-        (o,ws) ||> Array.map2 (*) |> Array.sum
 
     ///get cov for 2 assets with constant correlation.
     let getCov (t1:Vector<float>) (v1:Vector<float>) (t2:Vector<float>) (v2:Vector<float>) (rho:float) = 

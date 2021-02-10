@@ -192,7 +192,7 @@ let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t
 
     //let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let c = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;5;3]
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;3]
     near c choi 0.001
 
 [<Property(MaxTest = 1)>]
@@ -283,8 +283,8 @@ let testSpreadChoiNConv fa fb k nf1 nf2 t v1 v2 (Corr rho) callput =
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
     let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;3]
-    let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;7;3;2]
+    let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;7;2]
     //general case 732 test < 0.5%
     //here is the worst case, average case is much better
-    let err = List.max [ 1.; fa; fb; k] * 0.005
+    let err = List.max [ 1.; fa; fb; k] * 0.001
     nearstr v o err "Choi 17/3 vs 17/5/3/2/2" 

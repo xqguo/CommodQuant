@@ -389,13 +389,15 @@ module Options =
             let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) 
             let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
             let V1 = (c * Q1)// need to adjust so that w_k V_k1 > 0
-            let eps = 0.01 //choose this following Choi          
+            //let eps = 0.01 //choose this following Choi          
+            let eps = 1E-10 //increase eps to check if high corr case improves          
             let V1' = DenseVector.init n ( fun n -> 
                 if V1.[n,0] * w.[n] > 0. 
                 then V1.[n,0]
                 else
                    let s = if w.[n] > 0. then 1.0 else -1.0
-                   eps * s * v.[n] )       
+                   eps * s )       
+                   //eps * s * v.[n] )       
             let mu = (c.Inverse() * V1').L2Norm()
             let V1'' = V1' / mu
             let Q1' = c.Inverse() * V1''

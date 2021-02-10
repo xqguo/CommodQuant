@@ -81,6 +81,49 @@ module Options =
                     3.378932091141494083383
                     4.061946675875474306892
                     4.871345193674403088349|]
+                | 42 -> [|
+                    -8.325809389566931216288
+                    -7.644783295704741859325
+                    -7.078867873049108721921
+                    -6.57201717138747510262
+                    -6.10285233438152662139
+                    -5.660357581283057698747
+                    -5.237915885017649930593
+                    -4.831153629128275966268
+                    -4.4369817058810309607
+                    -4.053107744424767000616
+                    -3.677763316388556876407
+                    -3.30954009651092198804
+                    -2.947285782305479233738
+                    -2.590034870617126460575
+                    -2.23696078705431805169
+                    -1.887341620543484820361
+                    -1.540534800915545895967
+                    -1.195957794377809835979
+                    -0.8530729091605537180465
+                    -0.5113749183154693494509
+                    -0.170380585561816973074
+                    0.170380585561816973074
+                    0.511374918315469349451
+                    0.8530729091605537180465
+                    1.195957794377809835979
+                    1.540534800915545895967
+                    1.887341620543484820361
+                    2.23696078705431805169
+                    2.590034870617126460575
+                    2.947285782305479233738
+                    3.30954009651092198804
+                    3.677763316388556876407
+                    4.053107744424767000616
+                    4.4369817058810309607
+                    4.831153629128275966268
+                    5.237915885017649930593
+                    5.660357581283057698747
+                    6.10285233438152662139
+                    6.57201717138747510262
+                    7.078867873049108721921
+                    7.644783295704741859325
+                    8.325809389566931216288            |]
             | _ -> failwith "Not implemented"
             |> Array.map ( fun x -> x * s2)
         match o with
@@ -130,6 +173,49 @@ module Options =
                     4.97707898163079405228E-8
                     4.58057893079863330581E-11                    
                     |]
+                | 42 -> [|
+                    6.1678589258107142561E-31
+                    2.5278698640535659933E-26
+                    9.1778906956924076508E-23
+                    8.4821520800862769186E-20
+                    3.03589034781071776352E-17
+                    5.2533377155685611014E-15
+                    5.03270558218403059708E-13
+                    2.92172883723335694663E-11
+                    1.09580522880784158623E-9
+                    2.7834715265490756444E-8
+                    4.96365939357983527576E-7
+                    6.3902459677354268946E-6
+                    6.0719621077883351208E-5
+                    4.334122717212549994714E-4
+                    0.00235716139459631447181
+                    0.00987952405318850910393
+                    0.03220210128890782981979
+                    0.0822112693032937689871
+                    0.1652880012746674607125
+                    0.262738906782294764379
+                    0.331048913890856797403
+                    0.3310489138908567974027
+                    0.2627389067822947643795
+                    0.165288001274667460713
+                    0.0822112693032937689871
+                    0.03220210128890782981979
+                    0.00987952405318850910393
+                    0.00235716139459631447181
+                    4.33412271721254999471E-4
+                    6.07196210778833512076E-5
+                    6.39024596773542689462E-6
+                    4.9636593935798352758E-7
+                    2.78347152654907564443E-8
+                    1.09580522880784158623E-9
+                    2.92172883723335694663E-11
+                    5.03270558218403059708E-13
+                    5.2533377155685611014E-15
+                    3.03589034781071776352E-17
+                    8.4821520800862769186E-20
+                    9.1778906956924076508E-23
+                    2.52786986405356599327E-26
+                    6.16785892581071425612E-31|]
             | _ -> failwith "Not implemented"
             |> Array.map ( fun x -> x / cons )
         match o with
@@ -309,44 +395,6 @@ module Options =
         bs y1 k v 1. o 
 
     ///spread option fwd pricing moment matching
-    let rec spreadoption' (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
-        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput 
-        (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 
-            let f1w = f1 .* fw1 //1st asset weighted
-            let f2w = f2 .* fw2
-            //#1st moments
-            let x1 = f1w.Sum()
-            let x2 = f2w.Sum()
-            let k' = k - (p1 .* pw1).Sum() + (p2 .* pw2 ).Sum() // adapte K for past fixings
-            if k' < 0. then
-                let v0 = Vector<float>.Build.Dense(1) 
-                let callput' = match callput with | Call -> Put | Put -> Call
-                spreadoption' f2 fw2 t2 v2 f1 fw1 t1 v1 -k' rho callput' v0 v0 v0 v0 //put equivalent
-            else 
-            //#2nd moments
-                let tmatrix1 = getTmatrix t1 t1
-                let x11 = ((f1w.OuterProduct f1w).*exp( (v1.OuterProduct v1) .* tmatrix1)) |> sum
-                let tmatrix2 = getTmatrix t2 t2
-                let x22 = ((f2w.OuterProduct f2w).*exp( (v2.OuterProduct v2) .* tmatrix2)) |> sum
-                let tmatrix = getTmatrix t1 t2
-                //let x12 = ((f1w.OuterProduct f2w).*exp( (v1.OuterProduct v2) .* tmatrix * rho )) |> sum
-                let x12 = momentsx f1w v1 t1 f2w v2 t2 rho
-            //#intermediates
-                let b1 = sqrt(log(x22 / x2 / x2 ))
-                let b2 = 1. / b1 * log(x12 / (x1 * x2))
-                let cp = match callput with |Call -> 1.0 |Put -> -1.0
-                let g = cp / sqrt(max (log(x11 / x1 / x1) - b2 * b2) 1E-12) //this can be nan? 
-                let i1 = Func<float, float> (fun x -> normpdf(x) * normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x)))))
-                let i2 = Func<float, float>(fun x -> normpdf(x) * normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x)))))
-                let i3 = Func<float,float>( fun x -> normpdf(x) * normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x)))))
-                let stddevs = 6.0
-                let partitions = 100000
-                let i1' = SimpsonRule.IntegrateComposite( i1, -stddevs, stddevs, partitions)
-                let i2' = SimpsonRule.IntegrateComposite( i2, -stddevs, stddevs, partitions)
-                let i3' = SimpsonRule.IntegrateComposite( i3, -stddevs, stddevs, partitions)
-                cp * ( x1 * i1' - x2 * i2' - k * i3')
-
-    ///spread option fwd pricing moment matching
     let rec spreadoption (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput 
         (p1:Vector<float>) (pw1:Vector<float>) (p2:Vector<float>) (pw2:Vector<float>)= 
@@ -374,20 +422,14 @@ module Options =
                 let b2 = 1. / b1 * log(x12 / (x1 * x2))
                 let cp = match callput with |Call -> 1.0 |Put -> -1.0
                 let g = cp / sqrt(max (log(x11 / x1 / x1) - b2 * b2) 1E-12) //this can be nan? 
-                let i1 v = 
-                    let x = Array.head v
-                    normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x))))
-                let i2 v = 
-                    let x = Array.head v
-                    normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x))))
-                let i3 v = 
-                    let x = Array.head v
-                    normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x))))
-                //let stddevs = 6.0
-                //let partitions = 100000
-                let i1' = ghint [17] i1
-                let i2' = ghint [17] i2
-                let i3' = ghint [17] i3
+                let i1 = Func<float, float> (fun x -> normpdf(x) * normcdf(g * log(sqrt(x11) * exp(b2 * x) / (k + x2 * x12 / (x1 * sqrt(x22)) * exp(b1 * x)))))
+                let i2 = Func<float, float>(fun x -> normpdf(x) * normcdf(g * log(x1 * x12 / (x2 * sqrt(x11)) * exp(b2 * x) / (k + sqrt(x22) * exp(b1 * x)))))
+                let i3 = Func<float,float>( fun x -> normpdf(x) * normcdf(g * log(x1 * x1 / sqrt(x11) * exp(b2 * x) / (k + x2 * x2 / sqrt(x22) * exp(b1 * x)))))
+                let stddevs = 6.0
+                let partitions = 100000
+                let i1' = SimpsonRule.IntegrateComposite( i1, -stddevs, stddevs, partitions)
+                let i2' = SimpsonRule.IntegrateComposite( i2, -stddevs, stddevs, partitions)
+                let i3' = SimpsonRule.IntegrateComposite( i3, -stddevs, stddevs, partitions)
                 cp * ( x1 * i1' - x2 * i2' - k * i3')
 
     /// append 2 vectors

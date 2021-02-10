@@ -173,27 +173,22 @@ let ``test choi vs bs`` f k v t callput=
     nearstr c choi eps "prem:".&.
     nearstr delta delta'.[0] 0.001 "delta:"
 
-[<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
-let ``test spread option with zero strike and single fixing choi vs mm`` fa fb t v1 v2 (Corr rho) = 
-    let callput = Call
-    let k = 0.
+[<Property( MaxTest=100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let ``test spread option single fixing choi vs mm`` fa fb k t v1 v2 (Corr rho) callput = 
     let f1 = vector [fa]
     let t = min t 4.
     let t1 = vector [t] //fixing dates
     let v1 = vector [min v1 0.5] // vol for each fixing
     let fw1 = vector [1. ] //weights long side
-
     let f2 = vector [fb] // forwards short side
     let t2 = t1 //fixing dates
     let v2 = vector  [min v2 0.5 ] // vol for each fixing 
     let fw2 = vector [1.]  //weights short side
-
     let p1 = vector [ 0.0 ] //  #past fixing longside
-
     //let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let c = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;3]
-    near c choi 0.001
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17]
+    near c choi 0.005
 
 [<Property(MaxTest = 1)>]
 let ``test guass hemite weights sum to 1`` () = 

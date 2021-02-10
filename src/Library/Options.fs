@@ -798,8 +798,8 @@ module Options =
         //call general case
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
-        let sigma = getCov t1 v1 t2 v2 rho
-        if rho <= 0.9 then 
+        let sigma = getCov t1 v1 t2 v2 rho 
+        if rho <= 1.0 || (abs k > 0.5 * min f.[0] f.[f.Count-1]) then 
             let (opt,deltas) = optionChoiG f w sigma k callput o
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1

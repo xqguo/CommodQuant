@@ -230,10 +230,11 @@ let testSpreadChoivsKirkZeroStrikeNSmallVol fb (Corr rho) callput =
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
     //let rho = min rho 0.8 //correlation between long/short fixing
-    let v17, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
+    let m = 17
+    let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [m] 
     let o = kirk 1.0 fb k v1 v2 rho t callput   
     //good precison for different cases, even with 3 nodes
-    nearstr v17 o 1E-7 "Choi17 vs Kirk" 
+    nearstr v o 1E-7 $"Choi{m} vs Kirk" 
 
 [<Property(MaxTest = 1000, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput = 
@@ -252,16 +253,18 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     let t2 = t1
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let v17, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17] 
+    let m = 17
+    let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [m] 
+    let v', _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [m] 
     let o = kirk fa fb k v1 v2 rho t callput   
     //with high vol and long tenor, high correlation especially, need more nodes
     //but here is the worst case, average case is much better
-    // 17 is good enough < 0.1c
-    let err = List.max [ 1.; fa; fb; k] * 0.005
-    nearstr v17 o err "Choi17 vs Kirk" 
+    //good enough < 0.1c
+    let err = List.max [ 1.; fa; fb; k] * 0.003
+    nearstr v o err $"Choi{m} vs Kirk vs {v'}" 
 
-[<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
-let testSpreadChoiNConv fa fb k nf1 nf2 t v1 v2 (Corr rho) callput = 
+[<Property(MaxTest = 1000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let testSpreadChoiNConv fa fb (NormalFloat k) nf1 nf2 t v1 v2 (Corr rho) callput = 
     let nf1 = min (abs nf1 + 10) 60
     let nf2 = min (abs nf2 + 10) 60
     //let nf1 = 3
@@ -277,9 +280,11 @@ let testSpreadChoiNConv fa fb k nf1 nf2 t v1 v2 (Corr rho) callput =
     let t2 = DenseVector.init nf2 (fun i -> t + (float i)/250.)
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;3]
-    let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput [17;7;2]
+    let m = [17;3;2]
+    let m'= [17;17;5;2]
+    let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m
+    let o, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m'
     //general case 732 test < 0.5%
     //here is the worst case, average case is much better
-    let err = List.max [ 1.; fa; fb; k] * 0.001
-    nearstr v o err "Choi 17/3 vs 17/5/3/2/2" 
+    let err = (List.max [ 1.; fa; fb; abs k]) * 0.005
+    nearstr v o err $"Choi {m} vs {m'}" 

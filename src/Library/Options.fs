@@ -862,18 +862,18 @@ module Options =
         let delta = [|delta1sum ; delta2sum |]
         opt, delta  //return deltas in long/short 2 elem array
 
-    /////assuming perferect correalation in asset
-    //let optionChoi2AssetG (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
-    //    (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput o =
-    //    let f = appendVector f1 f2
-    //    let w = appendVector fw1 (fw2 * -1.) 
-    //    let sigma = getCov t1 v1 t2 v2 rho
-    //    let (opt,deltas) = optionChoiG f w sigma k callput o
-    //    let delta1,delta2 = deltas |> Array.splitAt f1.Count
-    //    let delta1sum = Array.sum delta1
-    //    let delta2sum = Array.sum delta2
-    //    let delta = [|delta1sum ; delta2sum |]
-    //    opt, delta  //return deltas in long/short 2 elem array
+    ///assuming perferect correalation in asset
+    let optionChoi2AssetG (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
+        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput o =
+        let f = appendVector f1 f2
+        let w = appendVector fw1 (fw2 * -1.) 
+        let sigma = getCov t1 v1 t2 v2 rho
+        let (opt,deltas) = optionChoiG f w sigma k callput o
+        let delta1,delta2 = deltas |> Array.splitAt f1.Count
+        let delta1sum = Array.sum delta1
+        let delta2sum = Array.sum delta2
+        let delta = [|delta1sum ; delta2sum |]
+        opt, delta  //return deltas in long/short 2 elem array
 
     ///assuming perferect correalation in asset
     ///change of Numeraire to work with high correlation > 0.75 precision issue
@@ -888,7 +888,9 @@ module Options =
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
         let sigma = getCov t1 v1 t2 v2 rho 
-        if rho <= 1.0 || (abs k > 0.5 * min f.[0] f.[f.Count-1]) then 
+        //if rho < 0.7 || (abs k > 0.5 * min f.[0] f.[f.Count-1]) then 
+        //if abs rho < 0.95 && k <> 0. then //don't change numeraire for general case
+        if true then //don't change numeraire for general case
             let (opt,deltas) = optionChoiG f w sigma k callput o
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1
@@ -900,14 +902,12 @@ module Options =
             //let k' = -w.[0]
             //f'.[0] <- k / f.[0]
             //w.[0] <- -1.0
-            let n = //use small vol asset of either the 1st or last as numeraire
-                if sigma.[0,0] > sigma.[f.Count-1,f.Count-1] then 
-                    f.Count-1 
-                else
-                    0
+            //pick a numeraire that maximize covariance over variance ratio, similar to the getVChoi condition.
+            //let n = if k > 0. && (sigma.[0,0] > sigma.[f.Count-1,f.Count-1]) then 0 else f.Count-1 
+            let n = if (sigma.[0,0] > sigma.[f.Count-1,f.Count-1]) then 0 else f.Count-1 
             //if k is on the same side of long or short.
-            let wn = w.[n]
             let k' =  -w.[n] * f.[n]
+            let fn = f.[n]
             //asset price is positive, weights can be either way
             if k >= 0.0 then 
                 f.[n] <- k
@@ -918,14 +918,15 @@ module Options =
             f.[n] <- max f.[n] 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
             let sigma' = 
                 sigma |> Matrix.mapi ( fun i j v -> 
-                    if i = n || j = n then
+                    if i = n && j = n then
+                        v
+                    elif i = n || j = n then
                         -v + sigma.[n,n]
                     else
                         v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) 
-            sigma'.[n,n] <- sigma.[n,n]
             let (opt,deltas) = optionChoiG f w sigma' k' callput o
             //todo check delta conversion
-            let dn = ((vector deltas) * f / k'  - opt / k')*wn 
+            let dn = ((vector deltas) * f  - opt ) / fn 
             deltas.[n] <- dn
             let delta1,delta2 = deltas |> Array.splitAt f1.Count
             let delta1sum = Array.sum delta1

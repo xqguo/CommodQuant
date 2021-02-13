@@ -263,7 +263,7 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     let err = List.max [ 1.; fa; fb; k] * 0.003
     nearstr v o err $"Choi{m} vs Kirk vs {v'}" 
 
-[<Property(MaxTest = 1000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+[<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let testSpreadChoiNConv fa fb (NormalFloat k) nf1 nf2 t v1 v2 (Corr rho) callput = 
     let nf1 = min (abs nf1 + 10) 60
     let nf2 = min (abs nf2 + 10) 60
@@ -280,7 +280,7 @@ let testSpreadChoiNConv fa fb (NormalFloat k) nf1 nf2 t v1 v2 (Corr rho) callput
     let t2 = DenseVector.init nf2 (fun i -> t + (float i)/250.)
     let fw1 = DenseVector.create nf1 1.
     let fw2 = DenseVector.create nf2 1.
-    let m = [17;3;2]
+    let m = [17;7;3]
     let m'= [17;17;5;2]
     let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m
     let o, _ = optionChoi2AssetG f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m'

@@ -85,7 +85,8 @@ let testAsianChoivsMCFun nf  k fstart tstart sstart npath maxfixing tol =
     //let k' = 72.
     //let fstart = 4.86
     //let tstart = 68.
-    let sstart = min sstart 1. // limit vol to 100%
+    let sstart = min sstart 0.5 // limit vol to 50%
+    let tstart = min tstart 4.0
     let fpp = DenseVector.create nf fstart
     let tt = DenseVector.init nf ( fun i -> float (i+1)/12. + tstart )
     let fww = DenseVector.create nf 1./(float nf) 
@@ -100,9 +101,9 @@ let testAsianChoivsMCFun nf  k fstart tstart sstart npath maxfixing tol =
     nearstr v1 v2 (std * 3.0 + tol) "MM vs mc" .&. // mm is less accurate
     nearstr v0 v2 tol "Choi vs MM"
 
-[<Property(MaxTest = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property(MaxTest = 100, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart= 
-    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 12 0.07
+    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 6 0.08
 
 //[<Property(MaxTest = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 ////MM is ok with less than 3m avg

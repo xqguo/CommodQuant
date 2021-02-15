@@ -90,26 +90,25 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2=
     Assert.Equal(V.Row(10).L2Norm(), v2 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
     Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
 
-[<Property( Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
-let ``test choi vs moment matching`` f1 f2 (PositiveInt t) v1 v2 k rho callput ( PositiveInt n) = 
-    //let f = 1.
-    //let callput = Call
-    let s = t*30 
-    let n = min n 20 //limit array size
+[<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let ``test choi vs moment matching`` f1 f2 t v1 v2 (NormalFloat k) (Corr rho) callput ( PositiveInt n) = 
+    //spread option  moment match and choi are not so close, but not too bad 
+    let err = (List.max [ 1.; f1; f2; abs k]) * 0.01
+    let s = min t 4.0
+    let n = min n 12 //limit array size
     let f1 = DenseVector.create n f1
     let f2 = DenseVector.create n f2
-    let t1 = vector [ float s .. float (s + n-1) ] / 365. //fixing dates
+    let t1 = s + vector [ float 0 .. float ( n-1) ] / 12. //fixing dates
     let t2 = t1
-    let v1 = DenseVector.create n ( min v1 1.) // vol for each fixing
-    let v2 = DenseVector.create n ( min v2 1.) // vol for each fixing
+    let v1 = DenseVector.create n ( min v1 0.5) // vol for each fixing
+    let v2 = DenseVector.create n ( min v2 0.5) // vol for each fixing
     let fw1 = DenseVector.create n 1.0/float n
     let fw2 = fw1 //weights longside
     let p1 = Vector.Build.Dense(1, 0.0) //  #past fixing longside
-    let rho = max (min rho 0.9) -0.9 //correlation between long/short fixing
+    //let rho = max (min rho 0.9) -0.9 //correlation between long/short fixing
     let so =        spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
-    let choi,_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
-    //(so = choi ) |@ sprintf "spread option  moment match and choi are not so close: %f, %f" so choi
-    near choi so 0.07
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;3;2]
+    near choi so err
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi put call parity`` f1 f2 k = 

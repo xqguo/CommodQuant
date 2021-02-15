@@ -847,8 +847,54 @@ module Options =
     //Choi model with 4 dim and descretize 17/2
     //This is generally accurate within 0.1c err
     let optionChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput =
-        optionChoiG f w sigma strike callput [17;2]
-        
+        optionChoiG f w sigma strike callput [7;3;2]
+
+    ///using cov inputs
+    let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>)  
+        (f2:Vector<float>) (fw2:Vector<float>) k (sigma:Matrix<float>) callput o =
+        //validate inputs
+        //call general case
+        let f = appendVector f1 f2
+        let w = appendVector fw1 (fw2 * -1.) 
+        let n = if k >= 0. then 0 else f.Count-1 
+        //let n = if (sigma.[0,0] > sigma.[f.Count-1,f.Count-1]) then 0 else f.Count-1 
+        //if k is on the same side of long or short.
+        let k' =  -w.[n] * f.[n]
+        let fn = f.[n]
+        let sigma' = 
+            sigma |> Matrix.mapi ( fun i j v -> 
+                if i = n && j = n then
+                    v
+                elif i = n || j = n then
+                    -v + sigma.[n,n]
+                else
+                    v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) 
+        //asset price is positive, weights can be either way
+        if k = 0.0 then 
+            f.[n] <- 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
+            sigma' |> Matrix.mapiInPlace ( fun i j v -> 
+                if i = n && j = n then
+                    1E-12 
+                elif i = n || j = n then
+                    0.
+                else
+                    v )
+        elif k > 0. then
+            f.[n] <- k
+            w.[n] <- -1.0
+        else
+            f.[n] <- -k
+            w.[n] <- 1.0
+        let (opt,deltas) = optionChoiG f w sigma' k' callput o
+        //todo check delta conversion
+        let dn = ((vector deltas) * f  - opt ) / fn 
+        deltas.[n] <- dn
+        let delta1,delta2 = deltas |> Array.splitAt f1.Count
+        let delta1sum = Array.sum delta1
+        let delta2sum = Array.sum delta2
+        let delta = [|delta1sum ; delta2sum |]
+        opt, delta  //return deltas in long/short 2 elem array
+
     //spread option using Choi, without change of numeraire 
     let optionChoi2Asset (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput =
@@ -885,97 +931,9 @@ module Options =
         if Vector.exists (fun x -> x <= 0. ) v1 then invalidArg "v1'" "vol needs to be positive values"
         if Vector.exists (fun x -> x <= 0. ) v2 then invalidArg "v2'" "vol needs to be positive values"
         //call general case
-        let f = appendVector f1 f2
-        let w = appendVector fw1 (fw2 * -1.) 
-        let sigma = getCov t1 v1 t2 v2 rho 
-        //if rho < 0.7 || (abs k > 0.5 * min f.[0] f.[f.Count-1]) then 
-        //if abs rho < 0.95 && k <> 0. then //don't change numeraire for general case
-        if false then //don't change numeraire for general case
-            let (opt,deltas) = optionChoiG f w sigma k callput o
-            let delta1,delta2 = deltas |> Array.splitAt f1.Count
-            let delta1sum = Array.sum delta1
-            let delta2sum = Array.sum delta2
-            let delta = [|delta1sum ; delta2sum |]
-            opt, delta  //return deltas in long/short 2 elem array
-        else // use f.[0] as numeraire, normalize to 1.
-            //let f' = f / f.[0]
-            //let k' = -w.[0]
-            //f'.[0] <- k / f.[0]
-            //w.[0] <- -1.0
-            //pick a numeraire that maximize covariance over variance ratio, similar to the getVChoi condition.
-            let n = if k >= 0. then 0 else f.Count-1 
-            //let n = if (sigma.[0,0] > sigma.[f.Count-1,f.Count-1]) then 0 else f.Count-1 
-            //if k is on the same side of long or short.
-            let k' =  -w.[n] * f.[n]
-            let fn = f.[n]
-            let sigma' = 
-                sigma |> Matrix.mapi ( fun i j v -> 
-                    if i = n && j = n then
-                        v
-                    elif i = n || j = n then
-                        -v + sigma.[n,n]
-                    else
-                        v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) 
-            //asset price is positive, weights can be either way
-            if k = 0.0 then 
-                f.[n] <- 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
-                sigma' |> Matrix.mapiInPlace ( fun i j v -> 
-                    if i = n && j = n then
-                        1E-12 
-                    elif i = n || j = n then
-                        0.
-                    else
-                        v )
-            elif k > 0. then
-                f.[n] <- k
-                w.[n] <- -1.0
-            else
-                f.[n] <- -k
-                w.[n] <- 1.0
-            let (opt,deltas) = optionChoiG f w sigma' k' callput o
-            //todo check delta conversion
-            let dn = ((vector deltas) * f  - opt ) / fn 
-            deltas.[n] <- dn
-            let delta1,delta2 = deltas |> Array.splitAt f1.Count
-            let delta1sum = Array.sum delta1
-            let delta2sum = Array.sum delta2
-            let delta = [|delta1sum ; delta2sum |]
-            opt, delta  //return deltas in long/short 2 elem array
-
-    ///using cov inputs
-    let optionChoi2AssetCov (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) 
-        (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>)  k (sigma:Matrix<float>) callput o =
-        //validate inputs
-        if Vector.exists (fun x -> x <= 0. ) t1 then invalidArg "t1'" "time to matuirty needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) t2 then invalidArg "t1'" "time to matuirty needs to be positive values"
-        if Vector.exists (fun x -> x <= 0. ) (sigma.Diagonal()) then invalidArg "sigma'" "vol needs to be positive values"
-        //call general case
-        let f = appendVector f1 f2
-        let w = appendVector fw1 (fw2 * -1.) 
-        // use f.[0] as numeraire, normalize to 1.
-        ////let f' = f / f.[0]
-        ////let k' = -w.[0]
-        ////f'.[0] <- k / f.[0]
-        ////w.[0] <- -1.0
-        //let n = f.Count-1
-        //let k' = -w.[n] * f.[n]
-        //if k >= 0.0 then 
-        //    f.[n] <- k
-        //    w.[n] <- -1.0
-        //else
-        //    f.[n] <- -k
-        //    w.[n] <- 1.0
-        //let sigma' = sigma |> Matrix.mapi ( fun i j v -> v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) |> fixCov
-        let (opt,deltas) = optionChoiG f w sigma k callput o
-        //todo check delta conversion
-        //let dn = (Array.sum deltas - deltas.[n] ) * k + opt
-        //deltas.[n] <- dn
-        let delta1,delta2 = deltas |> Array.splitAt f1.Count
-        let delta1sum = Array.sum delta1
-        let delta2sum = Array.sum delta2
-        let delta = [|delta1sum ; delta2sum |]
-        opt, delta  //return deltas in long/short 2 elem array
-
+        let sigma = getCov t1 v1 t2 v2 rho
+        optionChoi2AssetCov f1 fw1 f2 fw2 k sigma callput o
+        
     //asian Choi method
     let asianoptionChoi (f:Vector<float>) (w:Vector<float>) k (sigma:Matrix<float>) callput =
         let (opt,deltas) = optionChoi f w sigma k callput 

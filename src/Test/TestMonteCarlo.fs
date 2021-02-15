@@ -115,7 +115,7 @@ let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart=
 //let testAsianChoivsMCEasy (PositiveInt nf)  k fstart tstart sstart= 
 //    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 20 0.0001
 [<Property( MaxTest=100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
-let ``test spread option Choi vs MM vs MC`` fa fb k t1 t2 v1 v2 (Corr rho) (PositiveInt nf1) (PositiveInt nf2) callput = 
+let ``test spread option Choi vs MM vs MC`` fa fb (NormalFloat k) t1 t2 v1 v2 (Corr rho) (PositiveInt nf1) (PositiveInt nf2) callput = 
     let t1 = min t1 4.0
     let t2 = min t2 4.0
     let num = int 1E6
@@ -133,9 +133,9 @@ let ``test spread option Choi vs MM vs MC`` fa fb k t1 t2 v1 v2 (Corr rho) (Posi
     let p = vector [0.]
     let c' = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p p p p
     let (c,std) = spreadMC f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput num
-    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;3] 
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;3;2] 
     //let choi',_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;7;2] 
-    let tol = 2E-3
+    let tol = 1E-3
     //nearstr choi choi' tol "choi17/3 vs choi 17/7/2" .&. //Choi17/2 vs converged one
     nearstr choi c (std * 3.0 + tol) "Choi vs mc" .&. //choi and mc is close 
     nearstr choi c' (std * 3.0 + 0.05 ) "Choi vs mm" .&. //choi and mm can be 5c diff or more

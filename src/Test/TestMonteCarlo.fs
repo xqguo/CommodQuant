@@ -133,7 +133,7 @@ let ``test spread option Choi vs MM vs MC`` fa fb (NormalFloat k) t1 t2 v1 v2 (C
     let p = vector [0.]
     let c' = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p p p p
     let (c,std) = spreadMC f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput num
-    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7;3;2] 
+    let choi,_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;3;2] 
     //let choi',_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17;7;2] 
     let tol = 1E-3
     //nearstr choi choi' tol "choi17/3 vs choi 17/7/2" .&. //Choi17/2 vs converged one

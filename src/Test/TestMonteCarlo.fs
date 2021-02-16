@@ -101,7 +101,7 @@ let testAsianChoivsMCFun nf  k fstart tstart sstart npath maxfixing tol =
     nearstr v1 v2 (std * 3.0 + tol) "MM vs mc" .&. // mm is less accurate
     nearstr v0 v2 tol "Choi vs MM"
 
-[<Property(MaxTest = 100, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
+[<Property(MaxTest = 30, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart= 
     testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 6 0.08
 
@@ -114,7 +114,7 @@ let testAsianChoivsMC (PositiveInt nf)  k fstart tstart sstart=
 ////Everything is ok with less avg
 //let testAsianChoivsMCEasy (PositiveInt nf)  k fstart tstart sstart= 
 //    testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 20 0.0001
-[<Property( MaxTest=100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+[<Property( MaxTest=30, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let ``test spread option Choi vs MM vs MC`` fa fb (NormalFloat k) t1 t2 v1 v2 (Corr rho) (PositiveInt nf1) (PositiveInt nf2) callput = 
     let t1 = min t1 4.0
     let t2 = min t2 4.0

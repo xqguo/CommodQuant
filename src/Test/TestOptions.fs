@@ -172,7 +172,7 @@ let ``test choi vs bs`` f k v t callput=
     nearstr c choi eps "prem:".&.
     nearstr delta delta'.[0] 0.001 "delta:"
 
-[<Property( MaxTest=1000, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+[<Property( MaxTest=100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let ``test spread option single fixing choi vs mm`` fa fb (NormalFloat k) t v1 v2 (Corr rho) callput = 
     let f1 = vector [fa]
     let t = min t 4.

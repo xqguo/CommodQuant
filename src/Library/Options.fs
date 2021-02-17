@@ -856,39 +856,45 @@ module Options =
         //call general case
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.) 
-        let n = if k >= 0. then 0 else f.Count-1 
-        //let n = if (sigma.[0,0] > sigma.[f.Count-1,f.Count-1]) then 0 else f.Count-1 
-        //if k is on the same side of long or short.
-        let k' =  -w.[n] * f.[n]
-        let fn = f.[n]
-        let sigma' = 
-            sigma |> Matrix.mapi ( fun i j v -> 
-                if i = n && j = n then
-                    v
-                elif i = n || j = n then
-                    -v + sigma.[n,n]
+        let rho = sigma.[0,f.Count-1] / sqrt ( sigma.[0,0] * sigma.[f.Count-1,f.Count-1])
+        let (opt,deltas) = 
+            if rho > 0.7 then 
+                let n = if k >= 0. then 0 else f.Count-1 
+                //let n = if (sigma.[0,0] > sigma.[f.Count-1,f.Count-1]) then 0 else f.Count-1 
+                //if k is on the same side of long or short.
+                let k' =  -w.[n] * f.[n]
+                let fn = f.[n]
+                let sigma' = 
+                    sigma |> Matrix.mapi ( fun i j v -> 
+                        if i = n && j = n then
+                            v
+                        elif i = n || j = n then
+                            -v + sigma.[n,n]
+                        else
+                            v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) 
+                //asset price is positive, weights can be either way
+                if k = 0.0 then 
+                    f.[n] <- 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
+                    sigma' |> Matrix.mapiInPlace ( fun i j v -> 
+                        if i = n && j = n then
+                            1E-12 
+                        elif i = n || j = n then
+                            0.
+                        else
+                            v )
+                elif k > 0. then
+                    f.[n] <- k
+                    w.[n] <- -1.0
                 else
-                    v - sigma.[i,n] - sigma.[j,n] + sigma.[n,n]) 
-        //asset price is positive, weights can be either way
-        if k = 0.0 then 
-            f.[n] <- 1E-10 //should really remove the factor when the price is 0 or too small, to avoid getV numerical error.
-            sigma' |> Matrix.mapiInPlace ( fun i j v -> 
-                if i = n && j = n then
-                    1E-12 
-                elif i = n || j = n then
-                    0.
-                else
-                    v )
-        elif k > 0. then
-            f.[n] <- k
-            w.[n] <- -1.0
-        else
-            f.[n] <- -k
-            w.[n] <- 1.0
-        let (opt,deltas) = optionChoiG f w sigma' k' callput o
-        //todo check delta conversion
-        let dn = ((vector deltas) * f  - opt ) / fn 
-        deltas.[n] <- dn
+                    f.[n] <- -k
+                    w.[n] <- 1.0
+                let (opt,deltas) = optionChoiG f w sigma' k' callput o
+                //todo check delta conversion
+                let dn = ((vector deltas) * f  - opt ) / fn 
+                deltas.[n] <- dn
+                (opt,deltas) 
+            else 
+                optionChoiG f w sigma k callput o
         let delta1,delta2 = deltas |> Array.splitAt f1.Count
         let delta1sum = Array.sum delta1
         let delta2sum = Array.sum delta2

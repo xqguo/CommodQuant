@@ -378,14 +378,39 @@ module Options =
         let x11 = ((f.OuterProduct f) .* vv ) |> sum
         (x1, x11, 0.)
 
-    ///cross moments
+    ///cross moments matrix
     let momentsx (f1w:Vector<float>) (v1:Vector<float>) (t1:Vector<float>) (f2w:Vector<float>) (v2:Vector<float>) (t2:Vector<float>) rho = 
         let ff = f1w.OuterProduct f2w
         if (rho = 0.) then 
-            ff |> sum //all cross terms are 0.
+            ff //all cross terms are 0.
         else
             let tmatrix = getTmatrix t1 t2
-            (ff .* ((v1.OuterProduct v2).*tmatrix*rho).PointwiseExp()) |> sum 
+            (ff .* ((v1.OuterProduct v2).*tmatrix*rho).PointwiseExp()) 
+        |> sum
+
+    ///3rd cross moment from fwd and 2nd moment matrix ( which is f1f2exp(var))
+    let momentsx3 (f:Vector<float>) (v:Matrix<float>) = 
+        let n = f.Count - 1 
+        let m1 = f.Sum()
+        let m2 = v |> sum
+        let m3 = 
+            [|
+                for i in 0 .. n do
+                for j in 0 .. n do
+                for k in 0 .. n do 
+                    let f3 = f.[i] * f.[j] * f.[k]
+                    let v3 = v.[i,j] * v.[j,k] * v.[k,i]
+                    yield v3 / f3
+            |]
+            |> Array.sum
+        let u1 = m1
+        let u2 = m2 - u1 * u1
+        let u3 = m3 - 3.0*u1*u2 - u1*u1*u1
+        let z = ((u3 + sqrt(u3 * u3 + 4.0 * (pown u2 3 )))/2.0)**(1.0/3.0)
+        let y1 = u2 / ( z - u2/z )
+        let y11 = u2 + y1 * y1
+        let x = u1 - y1
+        (y1,y11,x)
 
     //asian fwd price moment matching method
     let asianoption (f1:Vector<float>) (fw1:Vector<float>) t1 v1 k' o p1w =

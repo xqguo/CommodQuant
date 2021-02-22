@@ -172,7 +172,7 @@ let ``test choi vs bs`` f k v t callput=
     nearstr c choi eps "prem:".&.
     nearstr delta delta'.[0] 0.001 "delta:"
 
-[<Property( MaxTest=100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+[<Property( MaxTest=100, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let ``test spread option single fixing choi vs mm`` fa fb (NormalFloat k) t v1 v2 (Corr rho) callput = 
     let f1 = vector [fa]
     let t = min t 4.
@@ -187,10 +187,11 @@ let ``test spread option single fixing choi vs mm`` fa fb (NormalFloat k) t v1 v
     //let rho = max (min (rho/5.0) 0.9) -0.9  //correlation between long/short fixing
     let c = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 p1 p1 p1
     let choi,_ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17]
-    let choi',_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [7]
+    let choi',_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17]
     //change of numeraire avoided the close to 1 correlation case and improved the precision
+    let err = List.max [ 1.; fa; fb; abs k] * 1E-4
     nearstr c choi 0.05 $"CN: {choi'}" .&.
-    nearstr c choi' 0.006 $"Normal: {choi}"
+    nearstr c choi' err $"Normal: {choi}"
 
 [<Property(MaxTest = 1)>]
 let ``test guass hemite weights sum to 1`` () = 

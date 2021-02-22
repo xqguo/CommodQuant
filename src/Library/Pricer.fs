@@ -288,9 +288,26 @@ module Pricer =
             | Put -> (max (k - p1) 0.)
         let v1 = ( sigma.Diagonal()./ t1 ).PointwiseSqrt().Mean()
         [|  "Option", opt;
-            "Delta", delta;
+            "Delta1", delta;
             "P1", p1;
             "Intrinsic", pintr;
             "vol1", v1
+        |]
+
+    ///asian and swaption pricer using moment matching model
+    let AsianOptionPricer inst lags avg k callput expDate  
+        refMonth (pricingDate:DateTime) pricecurve volcurve =
+        let (f1,fw1,t1,v1,a1) = getInputs pricingDate expDate refMonth lags avg inst 1.0M pricecurve volcurve 
+        let opt, delta =  asianOptionAndDelta f1 fw1 t1 v1 k callput a1
+        let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
+        let pintr = 
+            match callput with 
+            | Call -> (max (p1 - k) 0.)
+            | Put -> (max (k - p1) 0.)
+        [|  "Option", opt;
+            "Delta1", delta;
+            "P1", p1;
+            "Intrinsic", pintr;
+            "vol1", v1.Mean()
         |]
 

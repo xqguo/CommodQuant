@@ -419,6 +419,14 @@ module Options =
         let v = sqrt( log (y11/y1/y1) )
         bs y1 k v 1. o 
 
+    //asian fwd price moment matching method
+    let asianOptionAndDelta (f1:Vector<float>) (fw1:Vector<float>) t1 v1 k' o p1w =
+        let (y1, y11, delta) = moments (f1 .* fw1) v1 t1  
+        let k = k' - p1w - delta
+        let v = sqrt( log (y11/y1/y1) )
+        bs y1 k v 1. o ,
+        (bsdelta y1 k v 1. o ) * fw1.Sum()
+
     ///spread option fwd pricing moment matching
     let rec spreadoption (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) 
         (f2:Vector<float>) (fw2:Vector<float>) (t2:Vector<float>) v2 k (rho:float) callput 

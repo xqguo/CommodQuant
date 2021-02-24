@@ -189,7 +189,7 @@ let ``test spread option single fixing choi vs mm`` fa fb (NormalFloat k) t v1 v
     let choi,_ = optionChoi2AssetG f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17]
     let choi',_ = optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput [17]
     //change of numeraire avoided the close to 1 correlation case and improved the precision
-    let err = List.max [ 1.; fa; fb; abs k] * 1E-4
+    let err = List.max [ 1.; fa; fb; abs k] * 1E-3
     nearstr c choi 0.05 $"CN: {choi'}" .&.
     nearstr c choi' err $"Normal: {choi}"
 

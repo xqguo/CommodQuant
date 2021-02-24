@@ -7,6 +7,7 @@
     <None Include="paket.references" />
     <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="Math.fs" />
     <Compile Include="Charts.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="ContractDates.fs" />
@@ -15,6 +16,9 @@
     <Compile Include="Swaps.fs" />
     <Compile Include="Gabillon.fs" />
     <Compile Include="Options.fs" />
+    <Compile Include="Vols.fs" />
+    <Compile Include="Moments.fs" />
+    <Compile Include="Choi.fs" />
     <Compile Include="MonteCarlo.fs" />
     <Compile Include="Pricer.fs" />
     <None Include="PlattsHolidays.fsx" />

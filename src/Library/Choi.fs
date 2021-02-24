@@ -40,28 +40,28 @@ module Choi =
             let sigma = getCov t1 v1 t2 v2 rho
             getVChoi f w sigma
 
-    let consolidateInputs (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) =
-        //consolidate future details to group same fixing dates
-        //but retain the same weights, so that the delta still works
-        let (f, t, v ) = 
-            Array.zip3  ((f1 .* fw1).ToArray()) (t1.ToArray())  (v1.ToArray())              
-            |> Array.groupBy(fun (_,t,_) -> t) 
-            |> Array.map( fun (t0,r) -> 
-                let f,t,v = Array.unzip3 r
-                let (y1, y11, _) = moments (vector f)  (vector v) (vector t  )
-                y1, t0, sqrt( log(y11/y1/y1) / t0 ))     
-            |> Array.unzip3
-        let fv = vector f
-        let tv = vector t
-        let vv = vector v
-        //let w = DenseVector.create fv.Count 1.
-        let w = 
-            Array.zip  (fw1.ToArray()) (t1.ToArray())              
-            |> Array.groupBy( snd ) 
-            |> Array.map(fun (_, r ) -> r |> Array.sumBy fst )
-            |> vector
-        let fv' = fv / w //TODO need to handle case where w is 0??? e.g. two forward fixing opposite weight, different value?
-        fv', w, tv, vv
+    //let consolidateInputs (f1:Vector<float>) (fw1:Vector<float>) (t1:Vector<float>) (v1:Vector<float>) =
+    //    //consolidate future details to group same fixing dates
+    //    //but retain the same weights, so that the delta still works
+    //    let (f, t, v ) = 
+    //        Array.zip3  ((f1 .* fw1).ToArray()) (t1.ToArray())  (v1.ToArray())              
+    //        |> Array.groupBy(fun (_,t,_) -> t) 
+    //        |> Array.map( fun (t0,r) -> 
+    //            let f,t,v = Array.unzip3 r
+    //            let (y1, y11, _) = moments (vector f)  (vector v) (vector t  )
+    //            y1, t0, sqrt( log(y11/y1/y1) / t0 ))     
+    //        |> Array.unzip3
+    //    let fv = vector f
+    //    let tv = vector t
+    //    let vv = vector v
+    //    //let w = DenseVector.create fv.Count 1.
+    //    let w = 
+    //        Array.zip  (fw1.ToArray()) (t1.ToArray())              
+    //        |> Array.groupBy( snd ) 
+    //        |> Array.map(fun (_, r ) -> r |> Array.sumBy fst )
+    //        |> vector
+    //    let fv' = fv / w //TODO need to handle case where w is 0??? e.g. two forward fixing opposite weight, different value?
+    //    fv', w, tv, vv
 
     //Choi's general method using cov inputs
     let rec optionChoiG (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) strike callput (o:int list)=

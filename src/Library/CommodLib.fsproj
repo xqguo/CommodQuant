@@ -19,6 +19,7 @@
     <Compile Include="Vols.fs" />
     <Compile Include="Moments.fs" />
     <Compile Include="Choi.fs" />
+    <Compile Include="Smile.fs" />
     <Compile Include="MonteCarlo.fs" />
     <Compile Include="Pricer.fs" />
     <None Include="PlattsHolidays.fsx" />

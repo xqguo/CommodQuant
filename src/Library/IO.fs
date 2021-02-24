@@ -55,6 +55,9 @@ module IOcsv =
     let tryVolsFile i = 
         ROOT +/ "csv" +/ (i.ToString() + "_Vol.csv") |> tryFile
 
+    let trySmileFile i = 
+        ROOT +/ "csv" +/ (i.ToString() + "_Smile.csv") |> tryFile
+
     let tryFutExpFile i = 
         ROOT +/ "holidays" +/ (i.ToString() + "fut.csv") |> tryFile
 

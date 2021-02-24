@@ -4,6 +4,7 @@ module Smile =
     open MathNet.Numerics
     open MathNet.Numerics.Differentiation
     open MathNet.Numerics.Interpolation
+
     //interpolate vol from delta smile using delta
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
@@ -11,6 +12,18 @@ module Smile =
         let cs = CubicSpline.InterpolateNatural(deltas, vols)
         let d =  if delta < 0.0 then 1.0 + delta else delta //call delta
         cs.Interpolate(d)
+
+    let getVolCurveFromSmile d (smile:VolDeltaSmile) =
+        let p = smile.Pillars
+        let deltas = smile.Deltas
+        let vols = smile.Vols
+        let vs = 
+            match Array.tryFindIndex( fun x -> x = d ) deltas with 
+            | Some i -> 
+                vols |> Array.map( fun v -> v.[i] |> decimal |> AbsoluteVol )
+            | None -> 
+                vols |> Array.map( fun v -> interpolateVolfromDeltaSmile d deltas v |> decimal |> AbsoluteVol )
+        Array.zip p vs |> Map.ofArray |> VolCurve
 
     //interpolate vol from delta smile using delta
     //deltas should be in range (0, 1) 

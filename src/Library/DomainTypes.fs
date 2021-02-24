@@ -219,7 +219,7 @@ module DomainTypes  =
 
     type FutureContractPricer = FutureContract -> PriceCurve -> CurrencyAmount//function types
 
-    type VolDeltaSmile ( pillars:string[], deltas:float[], vols:float[,]) =
+    type VolDeltaSmile ( pillars:string[], deltas:float[], vols:float[][]) =
         member val Pillars = pillars
         member val Deltas = deltas
         member val Vols = vols

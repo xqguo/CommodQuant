@@ -14,7 +14,7 @@ open MathNet.Numerics.LinearAlgebra
 open Commod
 //open Commod.Contracts.Conventions
 
-Commod.IOcsv.ROOT <- (IO.Path.Combine( Environment.GetEnvironmentVariable "OneDrive", @"Commodities\bin"))
+Commod.IOcsv.ROOT <- (IO.Path.Combine( Environment.GetEnvironmentVariable "OneDrive", @"Commodities"))
 
 //let inst = JKM
 //let f = getPrices inst
@@ -57,3 +57,12 @@ optionChoi2AssetN f1 fw1 t1 v1 f2 fw2 t2 v2 k rho cp [17;7;5;3;2]
 spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho cp p p p p 
 
 //(1.0, 2.0, NormalFloat -1.0, 3, 2, 1.0, 1.0, 2.0, Corr 0.0, Call)
+let inst = BRT
+let pricecurve = getPriceCurve inst None
+let smile = getSmile inst
+let pd = DateTime.Today
+let refMonth = dateAdjust' "+3m" pd |> formatPillar
+let expDate = dateAdjust' "+3me" pd 
+let o1 = AsianOptionPricerSmile inst [|0|] BusinessDays 60. Call expDate refMonth pd pricecurve smile
+let g = getGabillonParam inst
+let o2 = AsianOptionPricerSmileGabillon inst [|0|] BusinessDays 60. Call expDate refMonth pd g pricecurve smile

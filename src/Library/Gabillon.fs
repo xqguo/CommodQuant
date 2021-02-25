@@ -147,7 +147,11 @@ module Gabillon =
         let a = 1.0 / ( 2.0 * k ) * e2nm 
         let c = l2 * ( tn - tm - 2.0/k*enm + e2nm /( 2.0 * k)) - vvt
         let b = rho * sigmal * (2.0/k*enm - e2nm / k )
-        (-b + sqrt( b * b - 4.0 * a * c ))/(2.0 * a ) //take the bigger root
+        let s = b*b - 4.0 * a * c 
+        if s < 0. then 
+            0.001 
+        else
+            (-b + sqrt s )/(2.0 * a ) //take the bigger root
 
     //implySigmaS 0.4 0.4 0.0 1.0 1.0 0.2 1.0 0.5
     

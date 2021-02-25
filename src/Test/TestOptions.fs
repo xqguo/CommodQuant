@@ -291,3 +291,17 @@ let testSpreadChoiNConv fa fb (NormalFloat k) nf1 nf2 t v1 v2 (Corr rho) callput
     //here is the worst case, average case is much better
     let err = (List.max [ 1.; fa; fb; abs k]) * 0.005
     nearstr v o err $"Choi {m} vs {m'}" 
+
+
+[<Property(MaxTest = 1, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let ``test smile pricing works for brt`` ()= 
+    let inst = BRT
+    let pricecurve = getPriceCurve inst None
+    let smile = getSmile inst
+    let pd = System.DateTime(2021,2,25)
+    let refMonth = dateAdjust' "+3m" pd |> formatPillar
+    let expDate = dateAdjust' "+3me" pd 
+    let o1 = AsianOptionPricerSmile inst [|0|] BusinessDays 60. Call expDate refMonth pd pricecurve smile
+    let g = getGabillonParam inst
+    let o2 = AsianOptionPricerSmileGabillon inst [|0|] BusinessDays 60. Call expDate refMonth pd g pricecurve smile
+    snd o1.[0] > 0. && snd o2.[0] > 0.

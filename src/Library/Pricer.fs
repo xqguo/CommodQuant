@@ -140,7 +140,8 @@ module Pricer =
           toVector v1,
           p1)
 
-        ///spread option of inst1 (e.g DBRT ) vs inst2 (e.g. JKM) 
+
+    ///spread option of inst1 (e.g DBRT ) vs inst2 (e.g. JKM) 
     let SpreadOptionPricerBS inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
         rho pricecurve1 volcurve1 pricecurve2 volcurve2 o =
@@ -311,3 +312,59 @@ module Pricer =
             "vol1", v1.Mean()
         |]
 
+    let AsianOptionPricerSmile inst lags avg k callput expDate  
+        refMonth (pricingDate:DateTime) pricecurve (smile:VolDeltaSmile) =
+        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags avg inst 1.0M pricecurve
+        let m = x1.Length / 2 //choose middle fixing
+        let t',c' = x1.[m]
+        let f = f1 * fw1 
+        let k' = k - a1 
+        let volcurve = getRefDelta f k' t' c' smile pricingDate
+        let getVol c = 
+            if volcurve.Pillars.Contains c then
+                volcurve.Item c
+            else
+                failwithf "try to get vol:%s from %A" c volcurve
+        let v1 = x1 |> Array.map (snd >> getVol ) |> toVector
+        let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
+        let opt, delta =  asianOptionAndDelta f1 fw1 t1 v1 k callput a1 
+        let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
+        let pintr = 
+            match callput with 
+            | Call -> (max (p1 - k) 0.)
+            | Put -> (max (k - p1) 0.)
+        [|  "Option", opt;
+            "Delta1", delta;
+            "P1", p1;
+            "Intrinsic", pintr;
+            "vol1", v1.Mean()
+        |]
+
+    ///asian and swaption pricer using Gabillon model
+    let AsianOptionPricerSmileGabillon inst lags avg k callput expDate  
+        refMonth (pricingDate:DateTime)
+        gParam pricecurve smile =
+        let com = getCommod inst
+        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags avg inst 1.0M pricecurve 
+        let m = x1.Length / 2 //choose middle fixing
+        let t',c' = x1.[m]
+        let fe = com.Contracts.Fut.[c'] |> getTTM pricingDate
+        let oe = com.Contracts.Opt.[c'] |> getTTM pricingDate
+        let f = f1 * fw1 
+        let k' =  k - a1 // adapte K for past fixings
+        let volcurve = getRefDeltaGabillon f k' t' c' smile oe fe gParam pricingDate
+        let sigma = getGabillonCov inst volcurve gParam x1 pricingDate
+        let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
+        let opt, delta =  asianoptionChoi f1 fw1 k' sigma callput
+        let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
+        let pintr = 
+            match callput with 
+            | Call -> (max (p1 - k) 0.)
+            | Put -> (max (k - p1) 0.)
+        let v1 = ( sigma.Diagonal()./ t1 ).PointwiseSqrt().Mean()
+        [|  "Option", opt;
+            "Delta1", delta;
+            "P1", p1;
+            "Intrinsic", pintr;
+            "vol1", v1
+        |]

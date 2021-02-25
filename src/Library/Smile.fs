@@ -29,37 +29,44 @@ module Smile =
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
     let getVolStrikefromDeltaSmile f t delta (deltas:double[]) (vols:double[]) =        
-        let cs = CubicSpline.InterpolateNatural(deltas, vols)
         let d =  if delta < 0.0 then 1.0 + delta else delta //call delta
-        let v = cs.Interpolate(d)
+        let v = interpolateVolfromDeltaSmile d deltas vols
         let k = bsstrike f v t d
         [|v;k|]
+
+    //compute delta for strike from delta smile of
+    //deltas should be in range (0, 1) 
+    //vols are abs values, e.g 0.2 for 20% vol.
+    let getDeltafromDeltaSmile f k t (deltas:double[]) (vols:double[]) =        
+        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        RootFinding.Brent.FindRoot(
+            (fun d -> 
+                let v = cs.Interpolate(d)
+                let d' = bsdelta f k v t Call
+                d - d'),
+            0.0, 1.0 )
 
     //interpolate vol from delta smile
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
     let getVolfromDeltaSmile f k t (deltas:double[]) (vols:double[]) =        
-        let cs = CubicSpline.InterpolateNatural(deltas, vols)
-        RootFinding.Brent.FindRoot(
-            (fun x ->  
-                let d = bsdelta f k x t Call
-                x - cs.Interpolate(d)),
-            0.001, 1E3 )
+        let d = getDeltafromDeltaSmile f k t deltas vols 
+        interpolateVolfromDeltaSmile d deltas vols
 
-    //interpolate vol from delta smile of
+    //compute delta for strike from delta smile of
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
     //using Gabillon model: option exp/fut exp/long vol/ k / correlation
-    let getVolfromDeltaSmileGabillon f x t (deltas:double[]) (vols:double[]) (optT, futT, sl,k,rho)=        
+    let getDeltafromDeltaSmileGabillon f x t (deltas:double[]) (vols:double[]) (optT, futT, sl,k,rho)=        
         let cs = CubicSpline.InterpolateNatural(deltas, vols)
-        RootFinding.Brent.FindRoot(
-            (fun v ->
-                let ss = implySigmaS v v 0. optT futT sl k rho  
-                let v2t = fwdVariance 0.0 t futT ss sl k rho 
-                let v0 = v2t / t |> sqrt 
-                let d = bsdelta f x v0 t Call
-                v - cs.Interpolate(d)),
-            0.001, 1E3 )
+        RootFinding.Brent.FindRoot( (fun d ->
+            let v = cs.Interpolate(d)
+            let ss = implySigmaS v v 0. optT futT sl k rho  
+            let v2t = fwdVariance 0.0 t futT ss sl k rho 
+            let v0 = v2t / t |> sqrt 
+            let d' = bsdelta f x v0 t Call
+            d - d'),
+            0.0, 1.00 )
 
     let bsDeltaSmile f k t o (deltas:double[]) (vols:double[]) =        
         let v = getVolfromDeltaSmile f k t deltas vols 
@@ -84,3 +91,21 @@ module Smile =
             -h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365. //1d theta
         |]
 
+    ///use reference ETO's delta to get VolCurve from smile, flat vol
+    let getRefDelta f k expDate refMonth (smile:VolDeltaSmile) pd = 
+        let t = getTTM pd expDate
+        let deltas = smile.Deltas
+        let n = smile.Pillars |> Array.findIndex ((=) refMonth)
+        let vols = smile.Vols.[n]
+        let v' = getVolfromDeltaSmile f k t deltas vols
+        let d' = bsdelta f k v' t Call 
+        getVolCurveFromSmile d' smile
+
+    ///use reference ETO's delta to get VolCurve from smile using Gabilion model
+    let getRefDeltaGabillon f k expDate refMonth (smile:VolDeltaSmile) ot ft (lv,b,r) pd = 
+        let t = getTTM pd expDate
+        let deltas = smile.Deltas
+        let n = smile.Pillars |> Array.findIndex ((=) refMonth)
+        let vols = smile.Vols.[n]
+        let d = getDeltafromDeltaSmileGabillon f k t deltas vols (ot,ft,lv,b,r)
+        getVolCurveFromSmile d smile

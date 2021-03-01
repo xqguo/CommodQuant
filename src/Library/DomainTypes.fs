@@ -223,6 +223,9 @@ module DomainTypes  =
         member val Pillars = pillars
         member val Deltas = deltas
         member val Vols = vols
+        member this.Shift (x:float) = 
+            let vols' = vols |> Array.map( fun v -> v |> Array.map (fun s -> s + x ))
+            new VolDeltaSmile( this.Pillars, this.Deltas, vols')
 
     type Payoff = 
         | Call 

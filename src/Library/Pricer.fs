@@ -5,6 +5,7 @@ module Pricer =
     open MathNet.Numerics
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Statistics
+    open MathNet.Numerics.Differentiation
 
     let SwapPricer inst d1 d2 (f:PriceCurve) = //std swap pricer 
         let c = getCommod inst
@@ -282,6 +283,19 @@ module Pricer =
         let sigma = getGabillonCov inst volcurve gParam x1 pricingDate
         let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
         let opt, delta =  asianoptionChoi f1 fw1 k' sigma callput
+        let h = NumericalDerivative()
+        let g = 
+            ( fun ( d:float[]) -> 
+                let f1'' = f1 + d.[0]
+                let pd = pricingDate.AddDays d.[2]
+                let v' = volcurve.shift (decimal d.[1])
+                let s = getGabillonCov inst v' gParam x1 pd
+                let opt, _ =  asianoptionChoi f1'' fw1 k' s callput
+                opt)
+        let d = [|0.0;0.0;0.0|]
+        let gamma = h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
+        let vega = h.EvaluatePartialDerivative( g, d, 1, 1 ) / 100. //vega 1 vol
+        let theta = h.EvaluatePartialDerivative( g, d, 2, 1 )//1d theta
         let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
         let pintr = 
             match callput with 
@@ -290,6 +304,9 @@ module Pricer =
         let v1 = ( sigma.Diagonal()./ t1 ).PointwiseSqrt().Mean()
         [|  "Option", opt;
             "Delta1", delta;
+            "Gamma1", gamma;
+            "Vega1", vega;
+            "Theta1", theta;
             "P1", p1;
             "Intrinsic", pintr;
             "vol1", v1
@@ -326,8 +343,23 @@ module Pricer =
             else
                 failwithf "try to get vol:%s from %A" c volcurve
         let v1 = x1 |> Array.map (snd >> getVol ) |> toVector
-        let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
-        let opt, delta =  asianOptionAndDelta f1 fw1 t1 v1 k callput a1 
+        let h = NumericalDerivative()
+        let g = 
+            ( fun ( d:float[]) -> 
+                let f1'' = f1 + d.[0]
+                let smile' = smile.Shift d.[1]
+                let pd = pricingDate.AddDays d.[2]
+                let v' = getRefDelta f k' t' c' smile' pd
+                let getVol' c = v'.Item c
+                let v'' = x1 |> Array.map (snd >> getVol' ) |> toVector
+                let t'' = x1 |> Array.map (fst >> getTTM pd ) |> toVector
+                asianoption f1'' fw1 t'' v'' k callput a1 )
+        let d = [|0.0;0.0;0.0|]
+        let opt = h.EvaluatePartialDerivative( g, d, 0, 0 ) //opt
+        let delta = h.EvaluatePartialDerivative( g, d, 0, 1 ) //delta
+        let gamma = h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
+        let vega = h.EvaluatePartialDerivative( g, d, 1, 1 ) / 100. //vega 1 vol
+        let theta = -h.EvaluatePartialDerivative( g, d, 2, 1 ) / 365.//1d theta
         let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
         let pintr = 
             match callput with 
@@ -335,6 +367,9 @@ module Pricer =
             | Put -> (max (k - p1) 0.)
         [|  "Option", opt;
             "Delta1", delta;
+            "Gamma1", gamma;
+            "Vega1", vega;
+            "Theta1", theta;
             "P1", p1;
             "Intrinsic", pintr;
             "vol1", v1.Mean()
@@ -348,23 +383,43 @@ module Pricer =
         let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags avg inst 1.0M pricecurve 
         let m = x1.Length / 2 //choose middle fixing
         let t',c' = x1.[m]
-        let fe = com.Contracts.Fut.[c'] |> getTTM pricingDate
-        let oe = com.Contracts.Opt.[c'] |> getTTM pricingDate
+        let fe = com.Contracts.Fut.[c'] 
+        let oe = com.Contracts.Opt.[c'] 
         let f = f1 * fw1 
         let k' =  k - a1 // adapte K for past fixings
         let volcurve = getRefDeltaGabillon f k' t' c' smile oe fe gParam pricingDate
-        let sigma = getGabillonCov inst volcurve gParam x1 pricingDate
         let t1 = x1 |> Array.map (fst >> getTTM pricingDate ) |> toVector
-        let opt, delta =  asianoptionChoi f1 fw1 k' sigma callput
-        let p1 = (f1 .* fw1 ).Sum() + a1  //inst1 forwd
+        let sigma = getGabillonCov inst volcurve gParam x1 pricingDate
+        let v1 = ( sigma.Diagonal()./ t1 ).PointwiseSqrt().Mean()
+        let h = NumericalDerivative()
+        let g = 
+            ( fun ( d:float[]) -> 
+                let f1'' = f1 + d.[0]
+                let f'' = f1 * fw1 
+                let s'' = smile.Shift d.[1] 
+                let pd = pricingDate.AddDays d.[2]
+                let volcurve = getRefDeltaGabillon f'' k' t' c' s'' oe fe gParam pd
+                let sigma' = getGabillonCov inst volcurve gParam x1 pd
+                let opt, _ =  asianoptionChoi f1'' fw1 k' sigma' callput
+                opt)
+        let d = [|0.0;0.0;0.0|]
+        let opt = h.EvaluatePartialDerivative( g, d, 0, 0 ) //opt
+        let delta = h.EvaluatePartialDerivative( g, d, 0, 1 ) //delta
+        let gamma = h.EvaluatePartialDerivative( g, d, 0, 2 ) //gamma
+        let vega = h.EvaluatePartialDerivative( g, d, 1, 1 ) / 100. //vega 1 vol
+        let theta = h.EvaluatePartialDerivative( g, d, 2, 1 ) //1d theta
+        let p1 = f + a1  //inst1 forwd
         let pintr = 
             match callput with 
             | Call -> (max (p1 - k) 0.)
             | Put -> (max (k - p1) 0.)
-        let v1 = ( sigma.Diagonal()./ t1 ).PointwiseSqrt().Mean()
         [|  "Option", opt;
             "Delta1", delta;
+            "Gamma1", gamma;
+            "Vega1", vega;
+            "Theta1", theta;
             "P1", p1;
             "Intrinsic", pintr;
             "vol1", v1
         |]
+

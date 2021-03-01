@@ -104,8 +104,10 @@ module Smile =
     ///use reference ETO's delta to get VolCurve from smile using Gabilion model
     let getRefDeltaGabillon f k expDate refMonth (smile:VolDeltaSmile) ot ft (lv,b,r) pd = 
         let t = getTTM pd expDate
+        let eo = getTTM pd ot
+        let ef = getTTM pd ft
         let deltas = smile.Deltas
         let n = smile.Pillars |> Array.findIndex ((=) refMonth)
         let vols = smile.Vols.[n]
-        let d = getDeltafromDeltaSmileGabillon f k t deltas vols (ot,ft,lv,b,r)
+        let d = getDeltafromDeltaSmileGabillon f k t deltas vols (eo,ef,lv,b,r)
         getVolCurveFromSmile d smile

@@ -9,7 +9,7 @@ module Smile =
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
     let interpolateVolfromDeltaSmile delta (deltas:double[]) (vols:double[]) = 
-        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        let cs = CubicSpline.InterpolatePchipSorted(deltas, vols)
         let d =  if delta < 0.0 then 1.0 + delta else delta //call delta
         cs.Interpolate(d)
 
@@ -38,10 +38,10 @@ module Smile =
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
     let getDeltafromDeltaSmile f k t (deltas:double[]) (vols:double[]) =        
-        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        let g d = interpolateVolfromDeltaSmile d deltas vols
         RootFinding.Brent.FindRoot(
             (fun d -> 
-                let v = cs.Interpolate(d)
+                let v = g d
                 let d' = bsdelta f k v t Call
                 d - d'),
             0.0, 1.0 )
@@ -58,9 +58,9 @@ module Smile =
     //vols are abs values, e.g 0.2 for 20% vol.
     //using Gabillon model: option exp/fut exp/long vol/ k / correlation
     let getDeltafromDeltaSmileGabillon f x t (deltas:double[]) (vols:double[]) (optT, futT, sl,k,rho)=        
-        let cs = CubicSpline.InterpolateNatural(deltas, vols)
+        let g d = interpolateVolfromDeltaSmile d deltas vols
         RootFinding.Brent.FindRoot( (fun d ->
-            let v = cs.Interpolate(d)
+            let v = g d 
             let ss = implySigmaS v v 0. optT futT sl k rho  
             let v2t = fwdVariance 0.0 t futT ss sl k rho 
             let v0 = v2t / t |> sqrt 

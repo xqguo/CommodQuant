@@ -329,6 +329,66 @@ module Pricer =
             "vol1", v1.Mean()
         |]
 
+    ///asian and swaption pricer using moment matching model
+    ///with no past fixings, seems to be what ICE settlement is for.
+    ///This is used for implied asian vol from listed apo settlements. 
+    let AsianOptionPricer' inst lags avg k callput expDate  
+        refMonth (pricingDate:DateTime) pricecurve volcurve =
+        let getFixings refMonth (com:Commod) lags slope avg expDate =     
+            let refDate = refMonth |> pillarToDate 
+            //get reference contract, swap for oil, bullet for gas
+            let avgfwd = getAvgFwd com.Instrument
+            let contracts' = getNrbyContracts avgfwd
+            lags 
+            |> Array.map( fun i -> 
+                let refMonth = refDate.AddMonths i 
+                let contract = refMonth |> formatPillar
+                let d1,d2 = 
+                    match com.Instrument with 
+                    | JKM | TTF | NG -> //for gas, use the contract month
+                        getContractMonth contracts' contract
+                    | _ ->   refMonth, dateAdjust' "e" refMonth
+                //let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 
+                let dates = getFixingDates avg com.Calendar (max d1 pricingDate ) d2 
+                //let contracts = List.replicate dates.Length contract
+                let contracts = getFixingContracts contracts' dates
+                let weights = (getEqualWeights dates) |> Array.map( fun x -> x /(float lags.Length) * (float slope))
+                let fixingDates = dates |> Array.map( fun d -> min d expDate)
+                fixingDates, weights, contracts
+                )
+            |> Array.reduce( fun ( d1,w1,c1) (d2,w2,c2) -> 
+                (Array.append d1 d2), 
+                (Array.append w1 w2),
+                (Array.append c1 c2))
+            //consolidate future details to group weightes for same fixing dates and same contracts
+            |||> Array.zip3
+            |> Array.groupBy(fun (x,_,z) -> x,z) |> Array.map( fun ((k1,k2),v) -> k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
+        let getInputs pricingDate expDate refMonth lags avg inst slope (pricecurve:PriceCurve) (volcurve:VolCurve) = 
+            let com = getCommod inst
+            let getPrices1 c = 
+                    if pricecurve.Pillars.Contains c then
+                        (pricecurve.Item c).Value
+                    else
+                        failwithf "try to getPrice:%s from %A" c pricecurve
+            let getVol c = 
+                    if volcurve.Pillars.Contains c then
+                        volcurve.Item c
+                    else
+                        failwithf "try to get vol:%s from %A" c volcurve
+
+            let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com lags slope avg expDate )
+            let (f1, fw1, d1, v1 ) = getFutureInputs futureDetails1 getPrices1 getVol 
+            let p1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c ) 
+            let t1 = d1 |> Array.map (getTTM pricingDate)
+            ( toVector f1,
+              toVector fw1,
+              toVector t1,
+              toVector v1,
+              p1)
+        let (f1,fw1,t1,v1,a1) = getInputs pricingDate expDate refMonth lags avg inst 1.0M pricecurve volcurve 
+        let opt =  asianoption f1 fw1 t1 v1 k callput 0.
+        [|  "Option", opt |]
+
     let AsianOptionPricerSmile inst lags avg k callput expDate  
         refMonth (pricingDate:DateTime) pricecurve (smile:VolDeltaSmile) =
         let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags avg inst 1.0M pricecurve

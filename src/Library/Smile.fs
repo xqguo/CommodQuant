@@ -115,32 +115,6 @@ module Smile =
         cs.Interpolate( log k) 
         |> sqrt
 
-    let interpolateVolbyDeltaCSlogk d t (deltas:double[]) (vols:double[]) = 
-        let getv k = interpolateVolCSlogkfromDeltaSmile k t deltas vols 
-        let n = deltas.Length    
-        let strikes = (deltas,vols) ||> Array.map2( fun d v -> bsstrike 1.0 v t d)
-        let (l,h) = 
-            if d <= deltas.[0] then 
-                ( strikes.[0] - 1E-4, strikes.[0] + 1. )
-            elif d >= deltas.[n-1] then
-                ( strikes.[n-1] / 2.0 , strikes.[n-1] + 1E-4)
-            else  
-                let i = deltas |> Array.findIndex( fun x -> x > d )
-                (strikes.[i] - 1E-4, strikes.[i-1] + 1E-4)
-        let k = 
-            try 
-                RootFinding.Brent.FindRoot(
-                    (fun k -> 
-                        // let k = bsstrike 1.0 v t d
-                        let v = getv k
-                        let d' = bsdelta 1.0 k v t Call
-                        // printfn "v=%f;k=%f;d=%f;d'=%f" v k d d'
-                        d' - d ),
-                    l, h )
-            with
-            | e -> failwithf "d:%f, t:%f,\ndeltas:%A,\nvols:%A,\nerror:%A" d t deltas vols e
-        getv k 
-
     //interpolate vol from delta smile using delta
     //deltas should be in range (0, 1) 
     //vols are abs values, e.g 0.2 for 20% vol.
@@ -148,7 +122,40 @@ module Smile =
         let cs = CubicSpline.InterpolatePchipSorted(deltas, vols)
         let d =  if delta < 0.0 then 1.0 + delta else delta //call delta
         cs.Interpolate(d)
+    
+    ///interpolate vol from delta smile using delta
+    ///cubic spline using logk vs variance
+    ///extrapolate using cs on delta, as logk can lead to infinity and target delta maynot be feasible 
+    let interpolateVolbyDeltaCSlogk d t (deltas:double[]) (vols:double[]) = 
+        let getv k = interpolateVolCSlogkfromDeltaSmile k t deltas vols 
+        let n = deltas.Length    
+        let strikes = (deltas,vols) ||> Array.map2( fun d v -> bsstrike 1.0 v t d)
+        if d <= deltas.[0] || d >= deltas.[n-1] then 
+            interpolateVolfromDeltaSmile d deltas vols 
+        else 
+            let k = 
+                let (l,h) = 
+                    //if d < deltas.[0] then 
+                    //    ( strikes.[0] - 1E-4, strikes.[0] + 1. )
+                    //elif d > deltas.[n-1] then
+                    //    ( strikes.[n-1] / 2.0 , strikes.[n-1] + 1E-4)
+                    //else  
+                        let i = deltas |> Array.findIndex( fun x -> x > d )
+                        (strikes.[i] - 1E-4, strikes.[i-1] + 1E-4)
+                try 
+                    RootFinding.Brent.FindRoot(
+                        (fun k -> 
+                            // let k = bsstrike 1.0 v t d
+                            let v = getv k
+                            let d' = bsdelta 1.0 k v t Call
+                            // printfn "v=%f;k=%f;d=%f;d'=%f" v k d d'
+                            d' - d ),
+                        l, h )
+                with
+                | e -> failwithf "d:%f, t:%f,\ndeltas:%A,\nvols:%A,\nerror:%A" d t deltas vols e
+            getv k 
 
+    
     let getVolCurveFromSmile d (smile:VolDeltaSmile) =
         let p = smile.Pillars
         let deltas = smile.Deltas

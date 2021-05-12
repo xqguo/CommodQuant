@@ -349,7 +349,7 @@ module Pricer =
                         getContractMonth contracts' contract
                     | _ ->   refMonth, dateAdjust' "e" refMonth
                 //let dates = getFixingDates avgfwd.Frequency com.Calendar d1 d2 
-                let dates = getFixingDates avg com.Calendar (max d1 pricingDate ) d2 
+                let dates = getFixingDates avg com.Calendar (max d1 (pricingDate.AddDays(1.0)) ) d2 
                 //let contracts = List.replicate dates.Length contract
                 let contracts = getFixingContracts contracts' dates
                 let weights = (getEqualWeights dates) |> Array.map( fun x -> x /(float lags.Length) * (float slope))

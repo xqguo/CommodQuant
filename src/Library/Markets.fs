@@ -119,28 +119,28 @@ module Markets =
 
     // commod curve pillars are in MMM-yy
     // vols data in market quote ( percent ), e.g. 20.1
-    let getSmile ins = 
-        let i = getCommod ins
-        let (ContractDates c) = i.Contracts
-        let f = trySmileFile ins
+    let getSmileFromCSV v = 
         let getnum x =  x |> Array.skip 1 |> Array.map( fun s -> ( Double.Parse s ) / 100. ) 
+        let data = CsvFile.AsyncLoad v |> Async.RunSynchronously
+        let deltas = 
+            match data.Headers with 
+            | Some h -> h |> getnum
+            | None -> failwith "wrong smile file format"
+        let (pillars,vols) = 
+            data.Rows
+            |> Array.ofSeq
+            |> Array.map( fun r ->  
+                let p = r.Columns |> Array.head
+                let v = r.Columns |> getnum
+                p,v)
+            |> Array.unzip
+        let fp = pillars |> Array.map (pillarToDate >> formatPillar)
+        new VolDeltaSmile(fp,deltas,vols)
+
+    let getSmile ins = 
+        let f = trySmileFile ins
         match f with 
-        | Some v -> 
-            let data = CsvFile.AsyncLoad v |> Async.RunSynchronously
-            let deltas = 
-                match data.Headers with 
-                | Some h -> h |> getnum
-                | None -> failwith "wrong smile file format"
-            let (pillars,vols) = 
-                data.Rows
-                |> Array.ofSeq
-                |> Array.map( fun r ->  
-                    let p = r.Columns |> Array.head
-                    let v = r.Columns |> getnum
-                    p,v)
-                |> Array.unzip
-            let fp = pillars |> Array.map (pillarToDate >> formatPillar)
-            new VolDeltaSmile(fp,deltas,vols)
+        | Some v -> getSmileFromCSV v
         | None -> invalidOp <| sprintf "Cannot load smile for %A" ins
 
     type CurveOveride =

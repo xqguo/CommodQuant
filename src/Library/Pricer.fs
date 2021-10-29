@@ -173,6 +173,7 @@ module Pricer =
                 "P1", p1;
                 "P2", p2;
                 "Intrinsic", pintr;
+                "Extrinsic", opt - pintr;
                 "vol1", ( Statistics.Mean v1); //vol1 
                 "vol2", ( Statistics.Mean v2); //vol1 
             |]
@@ -226,6 +227,7 @@ module Pricer =
             "P1", p1;
             "P2", p2;
             "Intrinsic", pintr;
+            "Extrinsic", opt - pintr;
             "vol1", ( Statistics.Mean (v1.Diagonal() ./ t1 |> Vector.Sqrt ) ); //vol1 
             "vol2", ( Statistics.Mean (v2.Diagonal() ./ t2 |> Vector.Sqrt ) ); //vol1 
         |]
@@ -270,6 +272,7 @@ module Pricer =
             "P1", p1;
             "P2", p2;
             "Intrinsic", pintr;
+            "Extrinsic", opt - pintr;
             "vol1", ( Statistics.Mean v1 ); //vol1 
             "vol2", ( Statistics.Mean v2 ); //vol1 
         |]
@@ -309,6 +312,7 @@ module Pricer =
             "Theta1", theta;
             "P1", p1;
             "Intrinsic", pintr;
+            "Extrinsic", opt - pintr;
             "vol1", v1
         |]
 
@@ -326,6 +330,7 @@ module Pricer =
             "Delta1", delta;
             "P1", p1;
             "Intrinsic", pintr;
+            "Extrinsic", opt - pintr;
             "vol1", v1.Mean()
         |]
 
@@ -432,6 +437,7 @@ module Pricer =
             "Theta1", theta;
             "P1", p1;
             "Intrinsic", pintr;
+            "Extrinsic", opt - pintr;
             "vol1", v1.Mean()
         |]
 
@@ -480,6 +486,7 @@ module Pricer =
             "Theta1", theta;
             "P1", p1;
             "Intrinsic", pintr;
+            "Extrinsic", opt - pintr;
             "vol1", v1
         |]
 

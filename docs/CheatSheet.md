@@ -82,6 +82,10 @@ git rebase -i --root
 git push --force
 ```
 
+- gitignore is used to avoid some file to be uploaded to repo
+
+[Learn Git](https://www.atlassian.com/git/tutorials/saving-changes/gitignore)
+
 - diff local master with remote
 
 ```console

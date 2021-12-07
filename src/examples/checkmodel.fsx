@@ -61,3 +61,11 @@ let sigma1 = getGabillonCov inst1 volcurve1 (getGabillonParam inst1) fixings1 pr
 
 let sigma2 = getGabillonCov' inst1 volcurve1 (getGabillonParam inst1) fixings1 pricingDate 
 (sigma2.Diagonal()/t).PointwiseSqrt() |> Vector.toArray //seasonal effect not obvious
+
+let v = sigma1.Diagonal().PointwiseSqrt()
+let v2 = v.ToColumnMatrix() * v.ToRowMatrix() 
+let corr = sigma1./v2
+
+let v' = sigma2.Diagonal().PointwiseSqrt()
+let v2' = v'.ToColumnMatrix() * v'.ToRowMatrix() 
+let corr' = sigma2./v2'

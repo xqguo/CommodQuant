@@ -59,3 +59,5 @@ The primary objective of this project is to provide an open-source reference for
    * [Asian option](https://xqguo.github.io/CommodQuant/Asian.html)
 
 * [Risk](https://xqguo.github.io/CommodQuant/Risk.html)
+
+* [Gabillon Model](https://xqguo.github.io/CommodQuant/Gabillon.md)

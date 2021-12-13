@@ -60,4 +60,4 @@ The primary objective of this project is to provide an open-source reference for
 
 * [Risk](https://xqguo.github.io/CommodQuant/Risk.html)
 
-* [Gabillon Model](https://xqguo.github.io/CommodQuant/Gabillon.md)
+* [Gabillon Model](https://xqguo.github.io/CommodQuant/Gabillon.html)

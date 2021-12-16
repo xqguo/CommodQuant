@@ -17,4 +17,6 @@ A few extensions was made to take care of the perfect correlation case with caus
 When the expiration date is before all the underlying fixings, this option is called swaption. 
 
 In LNG market, there could be cases where that some of the fixings are before and others are after the option expiration. These cases become something
-like a generic Asian-Swaption-Spread-basket option. :) 
+like a generic Asian-Swaption-Spread-basket option.
+
+I use the [Gabillon Model](Gabillon.html) to model the underlying asset price curves. The 2 factor model allows for features like earlier vol discounts and decaying correlation and provide a reasonable dynamics needed for most commodity options.   

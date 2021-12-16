@@ -21,6 +21,6 @@ Futures are well documented on the futures exchanges. Futures nearby is a freque
 
 
 ## Discounting
-It is market convention not to discount either cleared swap or futures. The reason is that these instrument has a daily settlement process, and has 0 mtm after the daily variation margin is settled. The actual process of settling the futures margin is however more complex ( total call in combination of initiaal and variation margin), and it is questionable whether there is a financing cost of these positions. For example, on LME, the forwards( futures) are actually discounted. 
+It is market convention not to discount either cleared swap or futures. The reason is that these instrument has a daily settlement process, and has 0 mtm after the daily variation margin is settled. The actual process of settling the futures margin is however more complex ( total call in combination of initial and variation margin), and it is questionable whether there is a financing cost of these positions. For example, on LME, the forwards( futures) are actually discounted. 
 
 For OTC market, market convention is often discount at more or less risk free rate. LIBOR curves were once popular, and later OIS and SOFA curves becomes more widely adopted. However, for a market maker to decide on the client unwind value, they need to consider their own financing cost, customer financing cost, changes of CVA etc. It is not purely a discounting issue. 

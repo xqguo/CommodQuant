@@ -1,21 +1,7 @@
-<!---
-<script>
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']],
-    displayMath: [ ['$$', '$$'], ['\\[', '\\]']
-    ],
-  },
-  svg: {
-    fontCache: 'global' 
-  },
-  jax: ["input/TeX","output/CommonHTML"]
-};
-</script>
-<script type="text/javascript" id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
-</script>
--->
+---
+katex: True
+---
+
 # Gabillon Model
 
 ## SDE

@@ -33,3 +33,4 @@ paket-files
 #graph
 *.dg
 /src/PFEApp/Properties/launchSettings.json
+.paket/Paket.Restore.targets

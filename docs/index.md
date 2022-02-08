@@ -1,3 +1,7 @@
+---
+katex: True
+---
+
 # Project outline
 
 The primary objective of this project is to provide an open-source reference for quantitative functions related to commodities. It includes a commodity pricing library [CommodQuant](https://github.com/xqguo/CommodQuant) written in F# ( which can be used in any dotnet developments ), as well as some guides to some related learning materials around technology and quantitative finance. Also with its azure DevOps pipeline [project](https://dev.azure.com/guoxiaoq/CommodQuant)
@@ -71,7 +75,8 @@ There is a CME conversion calculator [here](https://www.cmegroup.com/tools-infor
 For gas and LNG, million british thermal unit (mmbtu) is the most common unit. Billion cubic meter (bcm) or billion cubic feet (bcf) is often used to measure global supply demand. Annual contract amount is often measured in million tons per annum (mtpa). Shipping of cargo is measured in cubic meters. 
 
 1 mt = 48.7 bcf = 1.379 bcm = 55.57 mmbtu  
-1 bcf (Gas) = 45000 m^3 (LNG)  
+1 bcf (Gas) = 45000 $m^3$ (LNG)  
+600 $m^3$ (Gas ) = 1 $m^3$ (LNG )
 1 mmbtu = 10 therms   
-1 m3 = 35.315 cf  
+1 $m^3$ = 35.315 cf  
 1 mmbtu = 0.293071 mwh  

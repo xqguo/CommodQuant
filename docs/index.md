@@ -74,7 +74,7 @@ There is a CME conversion calculator [here](https://www.cmegroup.com/tools-infor
 
 For gas and LNG, million british thermal unit (mmbtu) is the most common unit. Billion cubic meter (bcm) or billion cubic feet (bcf) is often used to measure global supply demand. Annual contract amount is often measured in million tons per annum (mtpa). Shipping of cargo is measured in cubic meters. 
 
-1 mt = 48.7 bcf = 1.379 bcm = 55.57 mmbtu  
+1 mt = 48.7 bcf = 1.379 bcm = 55.57 tbtu  
 1 bcf (Gas) = 45000 $m^3$ (LNG)  
 600 $m^3$ (Gas ) = 1 $m^3$ (LNG)    
 1 mmbtu = 10 therms   

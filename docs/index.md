@@ -76,7 +76,7 @@ For gas and LNG, million british thermal unit (mmbtu) is the most common unit. B
 
 1 mt = 48.7 bcf = 1.379 bcm = 55.57 mmbtu  
 1 bcf (Gas) = 45000 $m^3$ (LNG)  
-600 $m^3$ (Gas ) = 1 $m^3$ (LNG )
+600 $m^3$ (Gas ) = 1 $m^3$ (LNG)    
 1 mmbtu = 10 therms   
 1 $m^3$ = 35.315 cf  
 1 mmbtu = 0.293071 mwh  

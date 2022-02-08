@@ -61,3 +61,17 @@ The primary objective of this project is to provide an open-source reference for
 * [Risk](https://xqguo.github.io/CommodQuant/Risk.html)
 
 * [Gabillon Model](https://xqguo.github.io/CommodQuant/Gabillon.html)
+
+* Conversion Factors
+
+Commodity prices are quoted in currency per unit. There are often a few different commonly used units and there is a need to convert between them. The convertion factors are typical based on the physical nature, but the for pricing and quoting purpose, actual market convention is used instead of actual physical conversion. For example, when converting crude oil from barrel to metric ton, 7.33 bbl/mt is used regardless of the actual grade density.
+
+There is a CME conversion calculator [here](https://www.cmegroup.com/tools-information/calc_crude.html).
+
+For gas and LNG, million british thermal unit (mmbtu) is the most common unit. Billion cubic meter (bcm) or billion cubic feet (bcf) is often used to measure global supply demand. Annual contract amount is often measured in million tons per annum (mtpa). Shipping of cargo is measured in cubic meters. 
+
+1 mt = 48.7 bcf = 1.379 bcm = 55.57 mmbtu
+1 bcf (Gas) = 45000 m^3 (LNG)
+1 mmbtu = 10 therms 
+1 m3 = 35.315 cf
+1 mmbtu = 0.293071 mwh

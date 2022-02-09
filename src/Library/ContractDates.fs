@@ -112,24 +112,45 @@ module Contracts =
             //| JCC -> getJccExp d
             | _ -> getExp d ins 
             
-    let getFutContracts ins= 
-        let f = tryFutExpFile ins
-        let actuals = 
-            match f with 
-            | Some v -> Conventions.readContracts v
-            | None -> Map.empty
-        let rulebased =
-            //generate last bd of prior month
-            let td = DateTime.Today |> dateAdjust' "-1ya" 
-            generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.takeWhile( fun d -> d.Year < 2041 )
-            |> Seq.map ( fun x -> (formatPillar x , Conventions.getExp x ins))
-            |> Map.ofSeq
-        //use actuals to override rulebased
-        Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
+    //let getFutContracts' ins= 
+    //    let f = tryFutExpFile ins
+    //    let actuals = 
+    //        match f with 
+    //        | Some v -> Conventions.readContracts v
+    //        | None -> Map.empty
+    //    let rulebased =
+    //        //generate last bd of prior month
+    //        let td = DateTime.Today |> dateAdjust' "-1ya" 
+    //        generateMonth (td |> dateAdjust' "a" ) true 
+    //        |> Seq.takeWhile( fun d -> d.Year < 2041 )
+    //        |> Seq.map ( fun x -> (formatPillar x , Conventions.getExp x ins))
+    //        |> Map.ofSeq
+    //    //use actuals to override rulebased
+    //    Map.fold (fun (acc:Map<string,DateTime>) key value -> 
+    //        if (acc.ContainsKey key) then 
+    //            Map.add key value acc 
+    //        else acc ) rulebased actuals
 
-    let getOptContracts ins= 
-        let f = tryOptExpFile ins
+    //let getOptContracts' ins= 
+    //    let f = tryOptExpFile ins
+    //    let actuals = 
+    //        match f with 
+    //        | Some v -> Conventions.readContracts v
+    //        | None -> Map.empty
+    //    let rulebased =
+    //        let td = DateTime.Today |> dateAdjust' "-1ya" 
+    //        generateMonth (td |> dateAdjust' "a" ) true 
+    //        |> Seq.takeWhile( fun d -> d.Year < 2041 )
+    //        |> Seq.map ( fun x -> (formatPillar x , Conventions.getOptExp x ins))
+    //        |> Map.ofSeq
+    //    //use actuals to override rulebased
+    //    Map.fold (fun (acc:Map<string,DateTime>) key value -> 
+    //        if (acc.ContainsKey key) then 
+    //            Map.add key value acc 
+    //        else acc ) rulebased actuals
+
+    let getGenericContracts getfile getrule ins= 
+        let f = getfile ins
         let actuals = 
             match f with 
             | Some v -> Conventions.readContracts v
@@ -138,10 +159,16 @@ module Contracts =
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             generateMonth (td |> dateAdjust' "a" ) true 
             |> Seq.takeWhile( fun d -> d.Year < 2041 )
-            |> Seq.map ( fun x -> (formatPillar x , Conventions.getOptExp x ins))
+            |> Seq.map ( fun x -> (formatPillar x , getrule x ins))
             |> Map.ofSeq
         //use actuals to override rulebased
-        Map.fold (fun acc key value -> Map.add key value acc) rulebased actuals
+        Map.fold (fun (acc:Map<string,DateTime>) key value -> 
+            if (acc.ContainsKey key) then 
+                Map.add key value acc 
+            else acc ) rulebased actuals
+    
+    let getFutContracts ins= getGenericContracts tryFutExpFile Conventions.getExp ins
+    let getOptContracts ins= getGenericContracts tryOptExpFile Conventions.getOptExp ins
 
     let getContracts ins = 
         let opt = getOptContracts ins

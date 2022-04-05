@@ -240,3 +240,12 @@ gopass clone git_repo
 ```console
 wget -r -A .jpy url
 ```
+
+## [imagemagick](https://imagemagick.org/index.php) 
+
+- Command line tool to manipulate images, for example check image info, resize, crop and compress image.
+
+```console
+magick convert test.jpg info:
+magick convert test.jpg -thumbnail 300 -crop 300x100+0+150 -quality 82 test1.jpg
+```

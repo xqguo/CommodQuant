@@ -177,7 +177,7 @@ module Gabillon =
         let r = targetfunc sigmas sigmal k rho 
         let df x = ( x - r ) / eps
         let d' = [ r0; r1 ; r2; r3 ] |> List.map df |> vector        
-        r,d'
+        struct (r,d')
 
     let bestfit ins pd = 
         let solver = Optimization.BfgsBMinimizer( 1e-5, 1e-5, 1e-5, 1000)

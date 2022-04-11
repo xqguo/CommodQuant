@@ -37,7 +37,7 @@ module Smile =
             let r = targetfunc a b s rho m
             let df x = ( x - r ) / eps
             let d' = [ r0; r1 ; r2; r3 ;r4 ] |> List.map df |> vector        
-            r,d'     
+            struct (r,d')
         let v' = vols |> Array.map( fun x -> (pown x 2) * t )
         let solver = BfgsBMinimizer( 1e-12, 1e-12, 1e-12, 1000000)
         let ig = DenseVector.ofList [ 0.1; 0.1; 0.1; 0. ; 0. ]

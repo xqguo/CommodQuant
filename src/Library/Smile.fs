@@ -89,7 +89,7 @@ module Smile =
             (fun v -> 
                 let p' = bs f k v t o
                 p - p'),
-            0.01, 2.0 )
+            0.01, 5.0 ) 
 
     let interpolateSVIVolfromDelta (psvi:SVIPara) d = 
         let t = psvi.t    

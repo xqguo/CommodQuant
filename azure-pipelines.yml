@@ -11,7 +11,7 @@ variables:
   appname: 'CommodQuant'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
-  vmImageName: 'windows-2019'
+  vmImageName: 'windows-2022'
   framework: 'netstandard2.1'
   testframework: 'net6.0'
 stages:

@@ -1,13 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <IsPublishable>True</IsPublishable>
-    <FSharpPreferNetFrameworkTools>False</FSharpPreferNetFrameworkTools>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="C:\Users\xguo\.nuget\packages\fsharp.core\6.0.3\contentFiles\any\netstandard2.1\FSharp.Core.xml" />
-  </ItemGroup>
+  <PropertyGroup>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library\CommodLib.fsproj" />
   </ItemGroup>

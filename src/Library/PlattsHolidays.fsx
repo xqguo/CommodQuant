@@ -1,5 +1,5 @@
 #r "nuget:FSharp.Data"
-#r "nuget:Nager.Date"
+#r "nuget:Nager.Date, 1.33.1"
 #r "bin/Debug/netstandard2.0/CommodLib.dll"
 open System
 open System.IO
@@ -28,7 +28,7 @@ let isPLTSG (e:HtmlNode) = isPLT "Singapore" e
 let isPLTLDN (e:HtmlNode) = isPLT "London" e
 
 //exchange holiday from platts, not complete
-let isExchange s (e:HtmlNode) = 
+let isExchange (s:string) (e:HtmlNode) = 
     let d = ( e.Descendants ["div"] |> Seq.head ).InnerText() |> parseDateExact "ddMMMyyyy" 
     // let desc = ( e.Descendants ["div"] |> Seq.skip 1 |> Seq.head ).InnerText()
     // let offices = ( e.Descendants ["div"] |> Seq.skip 2 |> Seq.head ).Descendants ["li"] |> Seq.map ( fun x -> x.InnerText() |> String.trim) |> set
@@ -40,14 +40,15 @@ let getHol f =
     |> set
 
 //compute other dates using e from Nager.Date
-let yearRange = [2018..2050]
+let td = DateTime.Today
+let yearRange = [td.Year..2050]
 let formatHoliday (h : Model.PublicHoliday) =
     let y, m, d = h.Date.Year, h.Date.Month, h.Date.Day
     sprintf "(%i, %2i, %2i), // %s/%s" y m d h.Name h.LocalName
 
 let ukFull = 
     yearRange
-    |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.GB) )
+    |> Seq.collect (fun y -> DateSystem.GetPublicHolidays (y , CountryCode.GB) )
     |> Seq.filter( fun y -> ( isNull y.Counties ) || (y.Counties |> Array.contains "GB-ENG" ))
 
 let ukHol = 
@@ -57,10 +58,10 @@ let ukHol =
 
 let ukBank = 
     ukFull
-    |> Seq.filter( fun y -> y.LocalName.ToLower().Contains("bank") )
+    |> Seq.filter( fun y -> 
+        y.LocalName.ToLower().Contains("bank") )
     |> Seq.map( fun y -> y.Date)
     |> set
-    |> Set.add (DateTime(2022,5,30)) //Memorial day added due to difference of rule vs actual
 
 let iceHol = 
     //ice holiday is a subset of uk holidays
@@ -69,7 +70,7 @@ let iceHol =
     //|> Seq.toArray
     let iceEvents = [ "new year's day"; "good friday"; "christmas day"] |> set
     yearRange
-    |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.GB) )
+    |> Seq.collect (fun y -> DateSystem.GetPublicHolidays (y , CountryCode.GB) )
     |> Seq.filter( fun y -> isNull y.Counties || y.Counties |> Array.contains "GB-ENG" )
     |> Seq.filter( fun y -> Set.contains (y.LocalName.ToLower()) iceEvents )
     |> Seq.map( fun y -> y.Date)
@@ -82,7 +83,7 @@ let iceHol =
 let nymHol = 
     //nymex holiday is US holidays plus good friday, which I get from ice 
     yearRange
-    |> Seq.collect (fun y -> DateSystem.GetPublicHoliday (y , CountryCode.US) )
+    |> Seq.collect (fun y -> DateSystem.GetPublicHolidays (y , CountryCode.US) )
     // |> Seq.filter( fun y -> Set.contains y.LocalName iceEvents )
     |> Seq.map( fun y -> y.Date)
     |> set
@@ -110,14 +111,19 @@ let pltldnHol =
     Set.union (getHol isPLTLDN) ukHol
 
 //save the data into Library/holidays
-//TODO: merge instead overwrite data and validation 
+//keep data for past years only
 let root = __SOURCE_DIRECTORY__ + @"/../Library/holidays/"
 let saveHoliday f (hol:Set<DateTime>) =
-    hol
-    |> Set.toList
-    |> List.sort
-    |> List.map( fun d -> d.ToString("yyyy-MMM-dd") )
-    |> (fun x -> File.WriteAllLines ( root + f, x ) ) 
+    let fn = root + f 
+    let h = if File.Exists fn then File.ReadAllLines fn else Array.empty
+    h 
+    |> Array.map DateTime.Parse
+    |> Array.filter( fun d -> d.Year < td.Year ) //keep last yr and before intact
+    |> Array.append( hol |> Set.toArray )
+    |> Array.distinct
+    |> Array.sort
+    |> Array.map( fun d -> d.ToString("yyyy-MMM-dd") )
+    |> (fun x -> File.WriteAllLines ( fn, x ) ) 
 
 saveHoliday "PLTSGP.txt" pltsgpHol
 saveHoliday "PLTLDN.txt" pltldnHol
@@ -125,21 +131,3 @@ saveHoliday "ICE.txt" iceHol
 saveHoliday "CME.txt" nymHol
 saveHoliday "UK.txt" ukHol
 saveHoliday "UKB.txt" ukBank
-
-//open Commod
-//open System
-//open Commod.Contracts.Conventions
-//Commod.IOcsv.ROOT <- @"C:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\"
-//getExp (DateTime(2022,2,1)) BRT
-//getOptExp (DateTime(2022,2,1)) BRT
-//getCalendar BRT
-//let month = pillarToDate "Jul22"
-//let hol = Set.union (getCalendar BRT) (getCalendarbyCode UKB)
-//getExp month BRT |> dateAdjust hol "-3b" 
-//getExp month BRT |> dateAdjust hol "-3b" |> prevChrismasNY hol
-//dateAdjust hol "-1d" (DateTime(2021,12,25))
-//let test = getCommod JKM
-//let (ContractDates ctt) = test.Contracts
-//ctt.IsEmpty 
-//test.Lot > 0M
-//test.Instrument = JKM

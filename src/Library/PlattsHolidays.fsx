@@ -1,6 +1,7 @@
 #r "nuget:FSharp.Data"
 #r "nuget:Nager.Date, 1.33.1"
 #r "bin/Debug/netstandard2.0/CommodLib.dll"
+#r "c:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\\bin\\CommodLib.dll"
 open System
 open System.IO
 open Nager.Date
@@ -131,3 +132,12 @@ saveHoliday "ICE.txt" iceHol
 saveHoliday "CME.txt" nymHol
 saveHoliday "UK.txt" ukHol
 saveHoliday "UKB.txt" ukBank
+
+// open Commod.Contracts.Conventions
+// let c = getCommod TTF 
+// let cnt = c.Contracts.Opt
+// let r = 
+//     Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfOptExp) ) cnt
+//     |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfOptExp) ) 
+// //r |> Map.count < 2 //1 known diffs
+// Map.isEmpty r

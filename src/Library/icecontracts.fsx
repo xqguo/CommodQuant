@@ -15,6 +15,8 @@ let sources =
        "TTF", @"https://www.theice.com/api/productguide/spec/27996665/expiry/csv", @"https://www.theice.com/api/productguide/spec/71085679/expiry/csv"
        "NG", @"https://www.theice.com/api/productguide/spec/6590258/expiry/csv", @"https://www.theice.com/api/productguide/spec/79347917/expiry/csv"
        "NBP", @"https://www.theice.com/api/productguide/spec/910/expiry/csv", @"https://www.theice.com/api/productguide/spec/71085728/expiry/csv"
+       "JKM", @"https://www.theice.com/api/productguide/spec/6753280/expiry/csv", @"https://www.theice.com/api/productguide/spec/71090519/expiry/csv"
+       "DBRT", @"https://www.theice.com/api/productguide/spec/6753541/expiry/csv", @"https://www.theice.com/api/productguide/spec/26535747/expiry/csv"
     ]
 let saveIceFutDates f (futurl:string) (opturl:string)= 
     let fut = iceFut.Load futurl
@@ -53,7 +55,3 @@ let saveIceFutDates f (futurl:string) (opturl:string)=
     saveExpiration optfn optDates
 // process each site in the list
 sources |> List.unzip3 |||> List.map3 saveIceFutDates |> ignore
-
-//cme contracts
-
-//NG https://www.cmegroup.com/CmeWS/mvc/ProductCalendar/Download.xls?productId=444

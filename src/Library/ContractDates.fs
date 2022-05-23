@@ -38,16 +38,16 @@ module Contracts =
         //Trading shall cease at the end of the designated settlement period on the last Business Day of the second month preceding the relevant contract month (e.g. the March contract month will expire on the last Business Day of January).
         //if the day on which trading is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the next preceding Business Day
         let getBrtExp month =  
+            let hol = Set.union (getCalendar BRT) (getCalendarbyCode UK)
             //let hol = getCalendar BRT
-            let hol = Set.union (getCalendar BRT) (getCalendarbyCode UKB)
             dateAdjust hol "a-1m-1b" month |> prevChrismasNY hol 
-
        
         //https://www.theice.com/products/27996665/Dutch-TTF-Gas-Futures/
         //Expiration Date
         //Trading will cease at the close of business two UK Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
         let getTtfExp month =  
-            let hol = Set.union (getCalendar TTF) (getCalendarbyCode UKB) //include ICE
+            let hol = Set.union (getCalendar TTF) (getCalendarbyCode UK) //include ICE
+            //let hol = getCalendar TTF
             dateAdjust hol "a-2b" month
 
         //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
@@ -56,6 +56,12 @@ module Contracts =
         let getNgExp month =  
             let hol = getCalendar NG
             dateAdjust hol "a-3b" month
+
+        //https://www.theice.com/products/910/UK-Natural-Gas-Futures
+        //Trading will cease at the close of business two Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
+        let getNbpExp month =  
+            let hol = getCalendar NBP
+            dateAdjust hol "a-2b" month
         
         //GO contracts: https://www.theice.com/products/34361119/Low-Sulphur-Gasoil-Future
         //compute Last Trading Day: Trading shall cease at 12:00 hours, 2 business days prior to the 14th calendar day of the delivery.
@@ -77,6 +83,8 @@ module Contracts =
             match ins with 
             | BRT -> getBrtExp d 
             | TTF -> getTtfExp d 
+            | NG -> getNgExp d 
+            | NBP -> getNbpExp d 
             | GO -> getGoExp d
             | JKM -> getJkmExp d
             | JCC -> getJccExp d
@@ -103,10 +111,29 @@ module Contracts =
                 dateAdjust hol "-1b" opt
             else opt
 
+        //https://www.theice.com/products/71085728/UK-Natural-Gas-Options-Futures-Style-Margin
+        //Expiration Date
+        //Trading will cease when the intraday reference price is set, 12:50 - 13:00 LLT, of the underlying futures contract five calendar days before the start of the contract month. If that day is a non-business day, expiry will occur on the nearest prior business day, except where that day is also the expiry date of the underlying futures contract, in which case expiry will be occur on the preceding business day.
+        let getNbpOptExp month = 
+            //let hol = getCalendar TTF
+            let hol = Set.union (getCalendar NBP ) (getCalendarbyCode UK)
+            let fut = getExp month NBP
+            let opt = dateAdjust hol "a-5dp" month 
+            if fut = opt then 
+                dateAdjust hol "-1b" opt
+            else opt
+
+        let getNgOptExp month = 
+            let hol = getCalendar NG
+            let fut = getExp month NG
+            dateAdjust hol "-1b" fut
+
         let getOptExp d ins =
             match ins with 
             | BRT -> getBrtOptExp d 
             | TTF -> getTtfOptExp d 
+            | NBP -> getNbpOptExp d 
+            | NG -> getNgOptExp d 
             //| GO -> getGoExp d
             //| JKM -> getJkmExp d
             //| JCC -> getJccExp d

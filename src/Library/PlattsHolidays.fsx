@@ -1,7 +1,6 @@
 #r "nuget:FSharp.Data"
 #r "nuget:Nager.Date, 1.33.1"
 #r "bin/Debug/netstandard2.0/CommodLib.dll"
-#r "c:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\\bin\\CommodLib.dll"
 open System
 open System.IO
 open Nager.Date
@@ -57,10 +56,21 @@ let ukHol =
     |> Seq.map( fun y -> y.Date)
     |> set
 
-let ukBank = 
+//let ukBank = 
+//    ukFull
+//    |> Seq.filter( fun y -> 
+//        y.LocalName.ToLower().Contains("bank") )
+//    |> Seq.map( fun y -> y.Date)
+//    |> set
+
+let goodfridays = 
+    //ice holiday is a subset of uk holidays
+    //DateSystem.GetPublicHoliday (2021 , CountryCode.GB) 
+    //|> Seq.filter( fun y -> isNull y.Counties || y.Counties |> Array.contains "GB-ENG" )
+    //|> Seq.toArray
+    let iceEvents = [ "good friday" ] |> set
     ukFull
-    |> Seq.filter( fun y -> 
-        y.LocalName.ToLower().Contains("bank") )
+    |> Seq.filter( fun y -> Set.contains (y.LocalName.ToLower()) iceEvents )
     |> Seq.map( fun y -> y.Date)
     |> set
 
@@ -70,12 +80,11 @@ let iceHol =
     //|> Seq.filter( fun y -> isNull y.Counties || y.Counties |> Array.contains "GB-ENG" )
     //|> Seq.toArray
     let iceEvents = [ "new year's day"; "good friday"; "christmas day"] |> set
-    yearRange
-    |> Seq.collect (fun y -> DateSystem.GetPublicHolidays (y , CountryCode.GB) )
-    |> Seq.filter( fun y -> isNull y.Counties || y.Counties |> Array.contains "GB-ENG" )
+    ukFull
     |> Seq.filter( fun y -> Set.contains (y.LocalName.ToLower()) iceEvents )
     |> Seq.map( fun y -> y.Date)
     |> set
+    |> Set.union goodfridays
     |> Set.remove( DateTime(2022,12,27)) //chrismas vs boxing day label error in nager
     |> Set.add( DateTime(2022,12,26))
 
@@ -88,8 +97,8 @@ let nymHol =
     // |> Seq.filter( fun y -> Set.contains y.LocalName iceEvents )
     |> Seq.map( fun y -> y.Date)
     |> set
-    |> Set.union iceHol
-    |> Set.union (isExchange "NYMEX" |> getHol)
+    |> Set.union goodfridays
+    //|> Set.union (isExchange "NYMEX" |> getHol)
  
 //for Singapore ones use timeanddate.com
 let pltsgpHol = 
@@ -131,7 +140,7 @@ saveHoliday "PLTLDN.txt" pltldnHol
 saveHoliday "ICE.txt" iceHol
 saveHoliday "CME.txt" nymHol
 saveHoliday "UK.txt" ukHol
-saveHoliday "UKB.txt" ukBank
+//saveHoliday "UKB.txt" ukBank
 
 // open Commod.Contracts.Conventions
 // let c = getCommod TTF 

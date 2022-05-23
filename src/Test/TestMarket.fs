@@ -49,6 +49,27 @@ let ``test ttfOptContractRule`` () =
     Map.isEmpty r
 
 [<Property( MaxTest = 1)>]
+let ``test ngOptContractRule`` () =
+    let c = getCommod NG
+    let cnt = c.Contracts.Opt
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  getNgOptExp) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getNgOptExp) ) 
+    //r |> Map.count < 2 //1 known diffs
+    printf "%A" r
+    Map.isEmpty r
+
+[<Property( MaxTest = 1)>]
+let ``test nbpOptContractRule`` () =
+    let c = getCommod NBP
+    let cnt = c.Contracts.Opt
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  getNbpOptExp) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getNbpOptExp) ) 
+    //r |> Map.count < 2 //1 known diffs
+    Map.isEmpty r
+
+[<Property( MaxTest = 1)>]
 let ``test brtOptContractRule`` () =
     let c = getCommod BRT 
     let cnt = c.Contracts.Opt

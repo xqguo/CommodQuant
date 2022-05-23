@@ -14,6 +14,7 @@ let sources =
        "BRT", @"https://www.theice.com/api/productguide/spec/219/expiry/csv", @"https://www.theice.com/api/productguide/spec/218/expiry/csv"
        "TTF", @"https://www.theice.com/api/productguide/spec/27996665/expiry/csv", @"https://www.theice.com/api/productguide/spec/71085679/expiry/csv"
        "NG", @"https://www.theice.com/api/productguide/spec/6590258/expiry/csv", @"https://www.theice.com/api/productguide/spec/79347917/expiry/csv"
+       "NBP", @"https://www.theice.com/api/productguide/spec/910/expiry/csv", @"https://www.theice.com/api/productguide/spec/71085728/expiry/csv"
     ]
 let saveIceFutDates f (futurl:string) (opturl:string)= 
     let fut = iceFut.Load futurl

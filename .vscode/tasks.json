@@ -1,0 +1,68 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "msbuild",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build",
+			"label": "Build: Test.fsproj",
+			"detail": "Build the Test.fsproj project using dotnet build"
+		},
+		{
+		"label": "build tests",
+		"command": "dotnet",
+		"type": "shell",
+		"args": [
+			"build",
+			"/property:GenerateFullPaths=true",
+			"/consoleloggerparameters:NoSummary"
+		],
+		"group": {
+			"kind": "build",
+			"isDefault": true
+		},
+		"presentation": {
+			"reveal": "silent"
+		},
+		"options": {
+			"cwd": "${workspaceFolder}/src/Test"
+		},
+		"problemMatcher": "$msCompile"
+		},
+		
+		{
+		"label": "run tests",
+		"command": "dotnet",
+		"type": "shell",
+		"args": [
+			"test",
+			"/property:GenerateFullPaths=true",
+			"/consoleloggerparameters:NoSummary"
+		],
+		"options": {
+			"cwd": "${workspaceFolder}/src/Test",
+		},
+		"problemMatcher": "$msCompile"
+		},
+		{
+		"label": "debug tests",
+		"command": "dotnet",
+		"type": "shell",
+		"args": [
+			"test",
+			"/property:GenerateFullPaths=true",
+			"/consoleloggerparameters:NoSummary"
+		],
+		"options": {
+			"cwd": "${workspaceFolder}/src/Test",
+			"env": {
+			"VSTEST_HOST_DEBUG": "1"
+			}
+		},
+		"problemMatcher": "$msCompile"
+		}    
+
+	]
+}

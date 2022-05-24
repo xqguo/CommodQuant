@@ -18,67 +18,6 @@ let ``test getCalendar`` (d: Instrument) =
     | JCC -> cal = Set.empty
     | _ -> true
 
-[<Property( MaxTest = 1)>]
-let ``test brtContractRule`` () =
-    let c = getCommod BRT 
-    let cnt = c.Contracts.Fut
-    let r = 
-        Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtExp) ) cnt
-        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtExp) ) 
-    //r |> Map.count < 4 //3 known diffs
-    Map.isEmpty r
-
-[<Property( MaxTest = 1)>]
-let ``test ttfContractRule`` () =
-    let c = getCommod TTF 
-    let cnt = c.Contracts.Fut
-    let r = 
-        Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfExp) ) cnt
-        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfExp) ) 
-    //r |> Map.count < 2 //1 known diffs
-    Map.isEmpty r
-
-[<Property( MaxTest = 1)>]
-let ``test ttfOptContractRule`` () =
-    let c = getCommod TTF 
-    let cnt = c.Contracts.Opt
-    let r = 
-        Map.filter( fun k v -> v <> (pillarToDate k  |>  getTtfOptExp) ) cnt
-        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getTtfOptExp) ) 
-    //r |> Map.count < 2 //1 known diffs
-    Map.isEmpty r
-
-[<Property( MaxTest = 1)>]
-let ``test ngOptContractRule`` () =
-    let c = getCommod NG
-    let cnt = c.Contracts.Opt
-    let r = 
-        Map.filter( fun k v -> v <> (pillarToDate k  |>  getNgOptExp) ) cnt
-        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getNgOptExp) ) 
-    //r |> Map.count < 2 //1 known diffs
-    printf "%A" r
-    Map.isEmpty r
-
-[<Property( MaxTest = 1)>]
-let ``test nbpOptContractRule`` () =
-    let c = getCommod NBP
-    let cnt = c.Contracts.Opt
-    let r = 
-        Map.filter( fun k v -> v <> (pillarToDate k  |>  getNbpOptExp) ) cnt
-        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getNbpOptExp) ) 
-    //r |> Map.count < 2 //1 known diffs
-    Map.isEmpty r
-
-[<Property( MaxTest = 1)>]
-let ``test brtOptContractRule`` () =
-    let c = getCommod BRT 
-    let cnt = c.Contracts.Opt
-    let r = 
-        Map.filter( fun k v -> v <> (pillarToDate k  |>  getBrtOptExp) ) cnt
-        |> Map.map(  fun k v -> v , (pillarToDate k  |>  getBrtOptExp) ) 
-    //r |> Map.count < 2 //1 known diffs
-    Map.isEmpty r
-
 [<Property>]
 //test option contract rules vs actual exchange dates
 let ``test opt ContractRule`` ins =
@@ -124,12 +63,6 @@ let ``test getCommod `` (ins:Instrument) =
     Assert.False ctt.IsEmpty |@ sprintf "Contracts are not empty" .&.
     Assert.True (test.Lot > 0M) |@ sprintf "Lot size is greater than 0" .&.
     Assert.True (test.Instrument = ins) |@ sprintf "Instrument is the same."
-
-// [<Property( MaxTest = 1)>]
-// let ``test getPrices for BRT `` () =
-//     let (PriceCurve p) = getPrices BRT
-//     let s = p.Values |> Seq.filter( fun v -> v.Value < 0M)
-//     Assert.Empty s  |@ "All prices are greater than 0"
 
 [<Property( MaxTest = 5)>]
 let ``test getPrices`` (ins:Instrument) =

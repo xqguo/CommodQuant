@@ -43,7 +43,8 @@ module IOcsv =
         match ins with
         | DBRT | FO35 -> [PLTLDN] 
         | JKM | SGO | SJET | FO380 | FO180 |MFO | DUB -> [PLTSGP] 
-        | BRT | GO | NBP | TTF -> [ICE] 
+        | BRT | GO | TTF -> [ICE] 
+        | NBP -> [ICE;UK] 
         | NG -> [CME] 
         | JCC  -> [ ALLDAYS ] 
         |> List.fold ( fun acc s -> Set.union acc ( getCalendarbyCode s ) ) Set.empty

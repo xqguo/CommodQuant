@@ -3,6 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="iceexpiry.fsx" />
     <None Include="../../LICENSE.txt" />
     <None Include="paket.references" />
     <Compile Include="DomainTypes.fs" />

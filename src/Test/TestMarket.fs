@@ -79,6 +79,30 @@ let ``test brtOptContractRule`` () =
     //r |> Map.count < 2 //1 known diffs
     Map.isEmpty r
 
+[<Property>]
+//test option contract rules vs actual exchange dates
+let ``test opt ContractRule`` ins =
+    let c = getCommod ins 
+    let cnt = c.Contracts.Opt
+    let f d = getOptExp d ins
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  f) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  f) ) 
+    //r |> Map.count < 2 //1 known diffs
+    Map.isEmpty r
+
+[<Property>]
+//test contract rules vs actual exchange dates
+let ``test fut ContractRule`` () =
+    let ins = NG
+    let c = getCommod ins
+    let cnt = c.Contracts.Fut
+    let f d = getExp d ins
+    let r = 
+        Map.filter( fun k v -> v <> (pillarToDate k  |>  f) ) cnt
+        |> Map.map(  fun k v -> v , (pillarToDate k  |>  f) ) 
+    //r |> Map.count < 2 //1 known diffs
+    Map.isEmpty r
 
 //[<Property>]
 //let ``test getJkmPeriod`` () =

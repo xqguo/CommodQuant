@@ -49,9 +49,19 @@ let saveIceFutDates f (futurl:string) (opturl:string)=
         let m = d.[0].Substring(0,7)
         let h = if File.Exists fn then File.ReadAllLines fn else Array.empty
         let x = Array.append  ( h |> Array.takeWhile( fun l -> l.Substring(0,7) <> m )) d //keep past intact
-        File.WriteAllLines( fn, x ) 
+
+        //fix an error in NG expiration from ICE page.
+        let y = 
+            if fn.EndsWith "NGfut.csv" then 
+                x |> Array.map( fun r -> if r = """"Jan28",2027-12-28""" then """"Jan28",2027-12-29""" else r )
+            elif fn.EndsWith "NGopt.csv" then 
+                x |> Array.map( fun r -> if r = """"Jan28",2027-12-27""" then """"Jan28",2027-12-28""" else r )
+            else x
+        File.WriteAllLines( fn, y ) 
 
     saveExpiration futfn futDates
     saveExpiration optfn optDates
 // process each site in the list
 sources |> List.unzip3 |||> List.map3 saveIceFutDates |> ignore
+
+

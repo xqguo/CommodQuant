@@ -91,13 +91,16 @@ let iceHol =
     //|> Set.union (isExchange "ICE" |> getHol) //platts ICE info not applicable to trading days
 
 let nymHol = 
-    //nymex holiday is US holidays plus good friday, which I get from ice 
+    //nymex holiday is US holidays 
+    //plus good friday ( which is already included in nager.date for US)
+    //excluding New year's Day 
     yearRange
     |> Seq.collect (fun y -> DateSystem.GetPublicHolidays (y , CountryCode.US) )
-    // |> Seq.filter( fun y -> Set.contains y.LocalName iceEvents )
+    |> Seq.filter( fun y -> not (y.LocalName = "New Year's Day" && y.Date.Month = 12))
+    |> Seq.filter( fun y -> y.Global = true || y.LocalName = "Good Friday")
     |> Seq.map( fun y -> y.Date)
     |> set
-    |> Set.union goodfridays
+    //|> Set.union goodfridays
     //|> Set.union (isExchange "NYMEX" |> getHol)
  
 //for Singapore ones use timeanddate.com
@@ -140,7 +143,6 @@ saveHoliday "PLTLDN.txt" pltldnHol
 saveHoliday "ICE.txt" iceHol
 saveHoliday "CME.txt" nymHol
 saveHoliday "UK.txt" ukHol
-//saveHoliday "UKB.txt" ukBank
 
 // open Commod.Contracts.Conventions
 // let c = getCommod TTF 

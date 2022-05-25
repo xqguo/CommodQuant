@@ -343,7 +343,8 @@ module Gabillon =
     //hardcoded defaults, could read from files.
     let getGabillonParam ins = 
         match ins with
-        | TTF | JKM -> (0.2, 2.5, 0.3)
+        | TTF | NBP | JKM -> (0.2, 2.5, 0.3)
+        | NG -> (0.2, 2., 0.2)
         | BRT | DBRT -> ( 0.2, 0.8, 0.5)
         | _ -> ( 0.001, 0.001, 0.0 ) //bs equivalent
 

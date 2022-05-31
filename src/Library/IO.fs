@@ -69,8 +69,19 @@ module IOcsv =
     let USDOISSOURCE = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )
 
     let fixings = Frame.ReadCsv( ROOT +/ "csv" +/ "fixings.csv" ) |> Frame.indexRowsDate "Date"
+
     let getfixing (ins:Instrument) (d:DateTime) = 
         fixings.GetColumn (ins.ToString()) |> Series.tryGet d |> Option.map decimal
-        
+
+    let getfixings (ins:Instrument) (d:DateTime[]) = 
+        let s = (fixings.GetColumn (ins.ToString())).[d].DropMissing()        
+        if s.KeyCount = d.Length then
+            s.Values |> Seq.toArray |> Array.map decimal
+        else
+            let d1 = d |> set
+            let d2 = s.Keys |> set
+            let m = d1 - d2 
+            failwith $"missing historical fixing for {ins} on %A{m}" 
+
 
         

@@ -81,14 +81,22 @@ module Swaps =
         let s = c |> Map.toArray |> Array.map ( fun (k,(v,_)) -> (v, k)) |> Array.sortBy fst
         dates |> Array.map( fun d -> s |> Array.find( fun x -> fst x >= d ) |> snd )
 
-    let getFixingPrices c dates (PriceCurve p) =  //cnts should be after roll/nrby adj
-        getFixingContracts c dates
-        |> Array.map( fun k -> 
-            let v = Map.tryFind k p
-            match v with
-            | Some x -> x
-            | _ -> (sprintf "Please check market data input, missing pillar %s from curve %A" k p) |> invalidOp
-            )
+    let getFixingPrices c dates (PriceCurve p) ins pd =  //cnts should be after roll/nrby adj
+        let unit,_ = getCaseDecimal (p.Values |> Seq.head)
+        let past,future = 
+            match getfixing ins pd with
+            | Some _ -> (dates |> Array.filter( fun x -> x <= pd )),(dates |> Array.filter( fun x -> x > pd ))
+            | None -> (dates |> Array.filter( fun x -> x < pd )),(dates |> Array.filter( fun x -> x >= pd ))
+        let p1 = past |> getfixings ins |> Array.map (applyCaseDecimal unit)
+        let p2 = 
+            getFixingContracts c future
+            |> Array.map( fun k -> 
+                let v = Map.tryFind k p
+                match v with
+                | Some x -> x
+                | _ -> (sprintf "Please check market data input, missing pillar %s from curve %A" k p) |> invalidOp
+                )
+        Array.append p1 p2
 
     let getAvgFwd ins = 
         let avg = 
@@ -151,14 +159,15 @@ module Swaps =
     //let depCurv pillars (PriceCurve p) = 
     //    p |> Map.filter( fun k _ -> Set.contains k pillars) |> PriceCurve
 
-    let priceSwap (s:AverageSwap) p = 
+    let priceSwap (s:AverageSwap) p pd = 
         let contractDates = getNrbyContracts s.AverageSpecs
+        let ins = s.AverageSpecs.Commod.Instrument
         s.PeriodSpecs 
         |> Array.map( fun period -> 
             //let activePillars = depPillar s.AverageSpecs period.startDate period.endDate        
             //let p' = depCurv activePillars p
             let fixingDates = getFixingDatesFromAvg s.AverageSpecs period.startDate period.endDate 
-            let avg = getFixingPrices contractDates fixingDates p |> avgPrice
+            let avg = getFixingPrices contractDates fixingDates p ins pd |> avgPrice
             let v = (avg - period.strike ) 
             v * period.nominal
             )

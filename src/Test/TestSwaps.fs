@@ -45,13 +45,14 @@ let ``test nrby`` () =
         }
     let cnt1 = getNrbyContracts avg1
     //limit d to be between today and curve end 
-    let dmin = DateTime.Today
+    let pd = DateTime.Today
+    let dmin = pd
     let alldates = cnt.Fut
     let opendates = alldates |> Map.toArray |> Array.choose( fun (c,x) -> if x >= dmin && allPillars.Contains c then Some x else None ) |> Array.sort
     let dates0 = opendates.[0 .. (opendates.Length - 2)] 
     let dates1 =  opendates.[1 .. (opendates.Length - 1)] 
-    let p = getFixingPrices cnt dates1 crv //nrby 0 on next month
-    let p' = getFixingPrices cnt1 dates0 crv //nrby 1 on current month
+    let p = getFixingPrices cnt dates1 crv ins pd //nrby 0 on next month
+    let p' = getFixingPrices cnt1 dates0 crv ins pd //nrby 1 on current month
     Assert.Equal<seq<UnitPrice>>( p, p')  |@ "nrby 1 will shift price pillar out by 1 month"
 
 [<Property(MaxTest=1)>]
@@ -75,11 +76,12 @@ let ``test rolladjust`` () =
         }
     let cnt1 = getNrbyContracts avg1
     //limit d to be between today and curve end 
-    let dmin = DateTime.Today
+    let pd = DateTime.Today
+    let dmin = pd
     let alldates = cnt.Fut
     let opendates = alldates |> Map.toArray |> Array.choose( fun (c,x) -> if x >= dmin && allPillars.Contains c then Some x else None ) |> Array.sort
     let dates0 = opendates.[0 .. (opendates.Length - 2)] 
     let dates1 =  opendates.[1 .. (opendates.Length - 1)] 
-    let p = getFixingPrices cnt dates1 crv //nrby 0 on next month
-    let p' = getFixingPrices cnt1 dates0 crv //nrby 1 on current month
+    let p = getFixingPrices cnt dates1 crv ins pd//nrby 0 on next month
+    let p' = getFixingPrices cnt1 dates0 crv ins pd //nrby 1 on current month
     Assert.Equal<seq<UnitPrice>>( p, p')  |@ "rolladj 1 will shift price pillar out by 1 month"

@@ -7,10 +7,10 @@ module Pricer =
     open MathNet.Numerics.Statistics
     open MathNet.Numerics.Differentiation
 
-    let SwapPricer inst d1 d2 (f:PriceCurve) = //std swap pricer 
+    let SwapPricer inst d1 d2 (f:PriceCurve) pd = //std swap pricer 
         let c = getCommod inst
         let s = getSwap inst d1 d2 ( c.LotSize ) ( c.Quotation * 0.M) 
-        let a = priceSwap s f
+        let a = priceSwap s f pd 
         a.Value / s.Quantity.Value  |> float
 
     // get equal weights based on the number of fixings

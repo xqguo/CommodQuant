@@ -133,7 +133,10 @@ module Pricer =
 
         let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com lags slope avg expDate )
         let (f1, fw1, d1, v1 ) = getFutureInputs futureDetails1 getPrices1 getVol 
-        let p1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c ) 
+        let p1 = getPastInputs pastDetails1 (fun d c -> 
+            match (getfixing inst d ) with
+            | Some v -> v 
+            | None -> getPrices1 c )
         let t1 = d1 |> Array.map (getTTM pricingDate)
         ( toVector f1,
           toVector fw1,
@@ -203,7 +206,11 @@ module Pricer =
             let sigma1 = getGabillonCov inst1 volcurve1 (getGabillonParam inst1) fixings1 pricingDate 
             let t1 = fixings1 |> Array.unzip |> fst |> Array.map (getTTM pricingDate) |> toVector
             let f1 = fixings1 |> Array.map( fun (_,c) -> getPrices1 c) |> toVector
-            let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
+            //let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
+            let a1 = getPastInputs pastDetails1 (fun d c -> 
+                match (getfixing inst1 d ) with
+                | Some v -> v 
+                | None -> getPrices1 c )
             (f1,fw1,t1,sigma1,a1)
 
         let (f1,fw1,t1,v1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 volcurve1
@@ -239,7 +246,11 @@ module Pricer =
             let fixings1 = futureDetails1 |> Array.map( fun (x,_,y) -> (min x expDate),y)
             let fw1 = futureDetails1 |> Array.map( fun (_,w,_) -> w) |> toVector
             let f1 = fixings1 |> Array.map( fun (_,c) -> getPrices1 c) |> toVector
-            let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
+            //let a1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c )
+            let a1 = getPastInputs pastDetails1 (fun d c -> 
+                match (getfixing inst1 d ) with
+                | Some v -> v 
+                | None -> getPrices1 c )
             (f1,fw1,fixings1,a1)
 
     ///spread option using cross Gabillon model
@@ -383,7 +394,11 @@ module Pricer =
 
             let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com lags slope avg expDate )
             let (f1, fw1, d1, v1 ) = getFutureInputs futureDetails1 getPrices1 getVol 
-            let p1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c ) 
+            //let p1 = getPastInputs pastDetails1 (fun _ c -> getPrices1 c ) 
+            let p1 = getPastInputs pastDetails1 (fun d c -> 
+                match (getfixing inst d ) with
+                | Some v -> v 
+                | None -> getPrices1 c )
             let t1 = d1 |> Array.map (getTTM pricingDate)
             ( toVector f1,
               toVector fw1,

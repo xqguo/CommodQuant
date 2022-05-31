@@ -3,6 +3,7 @@
 module IOcsv =
     open System
     open System.IO
+    open Deedle
     //open Serilog
 
     let mutable ROOT = 
@@ -66,3 +67,10 @@ module IOcsv =
         ROOT +/ "holidays" +/ (i.ToString() + "opt.csv") |> tryFile
 
     let USDOISSOURCE = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )
+
+    let fixings = Frame.ReadCsv( ROOT +/ "csv" +/ "fixings.csv" ) |> Frame.indexRowsDate "Date"
+    let getfixing (ins:Instrument) (d:DateTime) = 
+        fixings.GetColumn (ins.ToString()) |> Series.tryGet d |> Option.map decimal
+        
+
+        

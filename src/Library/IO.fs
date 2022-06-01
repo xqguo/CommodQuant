@@ -74,9 +74,9 @@ module IOcsv =
         fixings.GetColumn (ins.ToString()) |> Series.tryGet d |> Option.map decimal
 
     let getfixings (ins:Instrument) (d:DateTime[]) = 
-        let s = (fixings.GetColumn (ins.ToString())).[d].DropMissing()        
+        let s = (fixings.GetColumn<decimal> (ins.ToString())).[d].DropMissing()        
         if s.KeyCount = d.Length then
-            s.Values |> Seq.toArray |> Array.map decimal
+            s.Values |> Seq.toArray //|> Array.map decimal
         else
             let d1 = d |> set
             let d2 = s.Keys |> set

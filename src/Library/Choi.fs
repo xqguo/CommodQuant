@@ -3,6 +3,7 @@
 module Choi =
     open MathNet.Numerics
     open MathNet.Numerics.LinearAlgebra
+
     ///get V with Choi's method with forward weights and cov, general case
     let getVChoi (f:Vector<float>) (w:Vector<float>) (sigma:Matrix<float>) = 
             let v = sigma.Diagonal().PointwiseSqrt()
@@ -76,7 +77,7 @@ module Choi =
                 let delta = ( bsdelta (f.[0]*w.[0]) strike (sqrt sigma.[0,0]) 1.0 callput ) * w.[0]
                 o, [|delta|]
             else 
-            let V = getVChoi f w (fixCov sigma)
+            let V = getVChoi f w sigma //sigma is fixed already, when using mkl, another fixcov seems to point to wrong matrix.
             //for each z_dot, find z1 and then C_bs, and then sum them using GH
             let n = f.Count 
             let fk k (z:Vector<float>) = //formula 7 

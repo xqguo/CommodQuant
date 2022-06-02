@@ -97,7 +97,7 @@ let testAsianChoivsMCFun nf  k fstart tstart sstart npath maxfixing tol =
     let v1,std =  asianMC fpp tt vol k Call num
     // In some cases, std could be zero
     let v2 = asianoption fpp fww tt vol k Call 0.
-    nearstr v1 v0 (std * 3.0 + 1E-4) "Choi vs mc" .&. //choi and mc close
+    nearstr v0 v1 (std * 3.0 + 1E-4) "Choi vs mc" .&. //choi and mc close
     nearstr v1 v2 (std * 3.0 + tol) "MM vs mc" .&. // mm is less accurate
     nearstr v0 v2 tol "Choi vs MM"
 

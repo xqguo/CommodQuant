@@ -12,7 +12,7 @@ module Gabillon =
         let l = evd.EigenValues |> Vector.map ( fun x -> x.Real)
         let o = evd.EigenVectors
         let l' = l |> Vector.map( fun x -> max x 1E-10 )
-        o * (DenseMatrix.ofDiag l') * (o.Transpose())
+        o * (DenseMatrix.ofDiag l') * (o.Inverse())
 
     //fix corr matrix
     let fixCorr (corr:Matrix<float>) = 

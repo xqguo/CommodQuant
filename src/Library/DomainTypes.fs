@@ -9,6 +9,10 @@ module DomainTypes  =
     [<Measure>] type bbl
     [<Measure>] type mt 
     [<Measure>] type mmbtu 
+    [<Measure>] type mw
+    [<Measure>] type h
+    [<Measure>] type mwh = mw * h
+
     [<Measure>] type USD 
     [<Measure>] type GBP
     [<Measure>] type EUR

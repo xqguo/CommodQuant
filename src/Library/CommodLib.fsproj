@@ -8,6 +8,7 @@
     <None Include="paket.references" />
     <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="Units.fs" />
     <Compile Include="Math.fs" />
     <Compile Include="Charts.fs" />
     <Compile Include="IO.fs" />

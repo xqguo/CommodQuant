@@ -404,4 +404,3 @@ module DateUtils =
         | _ -> failwithf "Invalid period %s" str
 
     let formatPillar (x:DateTime) = x.ToString("MMM-yy").ToUpper() //e.g. DEC-20
-

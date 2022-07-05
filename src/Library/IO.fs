@@ -7,8 +7,9 @@ module IOcsv =
     //open Serilog
 
     let mutable ROOT = 
-        let dllDir = 
-            Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location) 
+        let dllDir = AppDomain.CurrentDomain.BaseDirectory
+
+ //           Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location) 
         let parDir = dllDir +/ ".."
         if Directory.Exists (parDir +/ "csv") then parDir else dllDir
 

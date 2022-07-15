@@ -4,32 +4,11 @@ module IOcsv =
     open System
     open System.IO
     open Deedle
-    open QLNet
-    //open Serilog
 
     let mutable ROOT = 
         let dllDir = AppDomain.CurrentDomain.BaseDirectory
-
- //           Path.GetDirectoryName( Reflection.Assembly.GetAssembly(typeof<QuantityAmount>).Location) 
         let parDir = dllDir +/ ".."
         if Directory.Exists (parDir +/ "csv") then parDir else dllDir
-
-    //test logging
-    //let logfile = ROOT +/ "logs" +/ "commod.log" 
-    //let logLevel = Events.LogEventLevel.Information
-    //let mutable logger = 
-    //    LoggerConfiguration()
-    //        .MinimumLevel.Verbose()
-    //        .MinimumLevel.Information() //log info as default, change to verbose for more logging.
-    //        //.WriteTo.File(logfile,logLevel)
-    //        .WriteTo.File(logfile,logLevel)
-    //        .CreateLogger()
-    
-    //logger.Information <| sprintf "Loading CommodLib" 
-    //logger.Debug <| sprintf "Debug CommodLib" 
-
-    ///root dir to read cvs files. 
-    ///default to parent of dll bin dir
 
     let getCalendarbyCode (code:HolidayCode) = 
         let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile
@@ -51,7 +30,6 @@ module IOcsv =
         | NG -> [CME] 
         | JCC  -> [ ALLDAYS ] 
         |> List.fold ( fun acc s -> Set.union acc ( getCalendarbyCode s ) ) Set.empty
-
 
     let tryPriceFile i = 
         ROOT +/ "csv" +/ (i.ToString() + "_Price.csv") |> tryFile
@@ -95,6 +73,3 @@ module IOcsv =
                 failwith $"missing {ins} in fixing file"
         | None -> 
                 failwith $"missing historical fixing file"
-
-
-        

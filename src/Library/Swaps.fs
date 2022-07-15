@@ -81,7 +81,7 @@ module Swaps =
         let s = c |> Map.toArray |> Array.map ( fun (k,(v,_)) -> (v, k)) |> Array.sortBy fst
         dates |> Array.map( fun d -> s |> Array.find( fun x -> fst x >= d ) |> snd )
 
-    let getFixingPrices c dates (PriceCurve p) ins pd =  //cnts should be after roll/nrby adj
+    let getFixingPrices c dates (PriceCurve p) (ins: Instrument) pd =  //cnts should be after roll/nrby adj
         let unit,_ = getCaseDecimal (p.Values |> Seq.head)
         let past,future = 
             match getfixing ins pd with

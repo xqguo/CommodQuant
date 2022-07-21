@@ -1,13 +1,9 @@
 ﻿namespace Commod
 [<AutoOpen>]
 module Vols =
-    open MathNet.Numerics
     open MathNet.Numerics.LinearAlgebra
-    open MathNet.Numerics.Integration
-    open MathNet.Numerics.Differentiation
-    open MathNet.Numerics.Interpolation
     // a time matrix for VCV using min ( T1 T2 )
-    let private getTmatrix (T1:Vector<float>) (T2:Vector<float>) =
+    let getTmatrix (T1:Vector<float>) (T2:Vector<float>) =
         let onesT1 = Vector.Build.Dense (T1.Count, 1.)
         let onesT2 = Vector.Build.Dense( T2.Count , 1. )
         let tmatrix2 = onesT1.OuterProduct T2
@@ -47,9 +43,8 @@ module Vols =
                 for k in 0 .. n do 
                     let f3 = f.[i] * f.[j] * f.[k]
                     let v3 = v.[i,j] * v.[j,k] * v.[k,i]
-                    yield v3 / f3
-            |]
-            |> Array.sum
+                    yield (v3 / f3)
+            |] |> Array.sum
         let u1 = m1
         let u2 = m2 - u1 * u1
         let u3 = m3 - 3.0*u1*u2 - u1*u1*u1

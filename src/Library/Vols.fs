@@ -10,15 +10,12 @@ module Vols =
         let tmatrix1 = T1.OuterProduct onesT2
         tmatrix1.PointwiseMinimum tmatrix2
 
-    let private sum (m:Matrix<float>) = 
-        m.RowSums().Sum()
-
     ///2 moment matching
     let moments (f:Vector<float>) (V1:Vector<float>) (T1:Vector<float>) = 
         let x1 = f.Sum()
         let tmatrix = getTmatrix T1 T1
         let vv = ((V1.OuterProduct  V1) .* tmatrix ).PointwiseExp() //assuming constant vol per forward, used for com, more generally could sum piece-wise 
-        let x11 = ((f.OuterProduct f) .* vv ) |> sum
+        let x11 = ((f.OuterProduct f) .* vv ) |> Matrix.sum
         (x1, x11, 0.)
 
     ///cross moments matrix
@@ -29,13 +26,13 @@ module Vols =
         else
             let tmatrix = getTmatrix t1 t2
             (ff .* ((v1.OuterProduct v2).*tmatrix*rho).PointwiseExp()) 
-        |> sum
+        |> Matrix.sum
 
     ///3rd cross moment from fwd and 2nd moment matrix ( which is f1f2exp(var))
     let momentsx3 (f:Vector<float>) (v:Matrix<float>) = 
         let n = f.Count - 1 
         let m1 = f.Sum()
-        let m2 = v |> sum
+        let m2 = v |> Matrix.sum
         let m3 = 
             [|
                 for i in 0 .. n do

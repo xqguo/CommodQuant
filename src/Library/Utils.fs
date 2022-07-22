@@ -125,6 +125,7 @@ module Utils =
               File.Move( destname, backup ) 
               file.CopyTo( destFile.FullName) |> ignore
               printfn "%s updated" destFile.FullName
+              try File.Delete (backup) with _ -> () 
           else
             file.CopyTo( destFile.FullName) |> ignore
             printfn "%s updated" destFile.FullName

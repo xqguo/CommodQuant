@@ -39,12 +39,26 @@ module Vols =
         let m3 = 
             [|
                 for i in 0 .. n do
-                for j in 0 .. n do
-                for k in 0 .. n do 
+                for j in 0 .. i do
+                for k in 0 .. j do 
                     let f3 = f.[i] * f.[j] * f.[k]
                     let v3 = v.[i,j] * v.[j,k] * v.[k,i]
-                    yield (v3 / f3)
+                    if i = j && j = k then 
+                        yield (v3 / f3)
+                    elif i = j || j = k then 
+                        yield (v3 / f3) * 3.0
+                    else
+                        yield (v3 / f3) * 6.0
             |] |> Array.sum
+        //let m3 = 
+        //    [|
+        //        for i in 0 .. n do
+        //        for j in 0 .. n do
+        //        for k in 0 .. n do 
+        //            let f3 = f.[i] * f.[j] * f.[k]
+        //            let v3 = v.[i,j] * v.[j,k] * v.[k,i]
+        //            yield (v3 / f3)
+        //    |] |> Array.sum
         let u1 = m1
         let u2 = m2 - u1 * u1
         let u3 = m3 - 3.0*u1*u2 - u1*u1*u1

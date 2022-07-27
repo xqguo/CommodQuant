@@ -8,17 +8,22 @@ module Gabillon =
 
     //check for eigenvalue and fix the cov matrix to be posive definite
     let fixCov (cov:Matrix<float>) = 
-        let evd = cov.Evd(Symmetricity.Symmetric)
-        let l = evd.EigenValues |> Vector.map ( fun x -> x.Real)
-        let o = evd.EigenVectors
-        let l' = l |> Vector.map( fun x -> max x 1E-10 )
-        // o * (DenseMatrix.ofDiag l') * (o.Inverse())
-        o * (DenseMatrix.ofDiag l') * (o.Transpose())
+        try
+            let _ = cov.Cholesky() 
+            cov 
+        with 
+        | _ ->
+            let evd = cov.Evd(Symmetricity.Symmetric)
+            let l = evd.EigenValues |> Vector.map ( fun x -> x.Real)
+            let o = evd.EigenVectors
+            let l' = l |> Vector.map( fun x -> max x 1E-10 )
+            // o * (DenseMatrix.ofDiag l') * (o.Inverse())
+            o * (DenseMatrix.ofDiag l') * (o.Transpose())
 
     //fix corr matrix
     let fixCorr (corr:Matrix<float>) = 
         let cov = fixCov corr
-        let vol = cov.Diagonal().PointwiseSqrt()
+        let vol = cov.Diagonal().PointwiseAbs().PointwiseSqrt()
         cov ./ (vol.OuterProduct vol)
 
     //compute forward variance between tm to tn for a future with maturity Ti 

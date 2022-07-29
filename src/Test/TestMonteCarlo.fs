@@ -2,21 +2,19 @@
 open MathNet.Numerics.LinearAlgebra 
 open MathNet.Numerics.Distributions
 open MathNet.Numerics.Statistics
-open Xunit
 open FsCheck
 open FsCheck.Xunit
 open Commod
 open FsCheckTypes
 
 let generateCorrsMatrix s seed =
-    let n' = Normal( 0.0, 1.0)
-    n'.RandomSource <- System.Random(seed)
-    let w =  DenseMatrix.random<float> s s n'
-    let x = w * w.Transpose()
-    let diag = 1. / sqrt(x.Diagonal())
-    let d_half = DiagonalMatrix.ofDiag diag
-    let corrs = d_half * x * d_half
-    corrs |> Matrix.mapi( fun i j x -> if i < j then corrs.[j,i] elif i=j then 1. else x)
+    let n = ContinuousUniform(-0.99,0.99)
+    n.RandomSource <- System.Random(seed)
+    let m = DenseMatrix.random<float> s s n
+    (m + m.Transpose()) / 2.0 
+    |> Matrix.mapi( fun i j v -> if i = j then 1.0 else v ) 
+    |> fixCorr
+
 //type internal PropertyConfig =
 //    { MaxTest        : Option<int>
 //      MaxFail        : Option<int>

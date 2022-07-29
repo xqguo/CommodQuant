@@ -25,6 +25,7 @@ module Gabillon =
         let cov = fixCov corr
         let vol = cov.Diagonal().PointwiseAbs().PointwiseSqrt()
         cov ./ (vol.OuterProduct vol)
+        |> Matrix.mapi( fun i j v -> if i = j then 1.0 else v ) 
 
     //compute forward variance between tm to tn for a future with maturity Ti 
     //using constant Gabillon model inputs for this interval

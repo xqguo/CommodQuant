@@ -11,14 +11,14 @@ module MC =
 
     let validCorrMatrix (corrs:Matrix<float>) =
         //corr should be square
-        if corrs.ColumnCount <> corrs.RowCount then 
-            invalidOp "Correlation dimension mismatch!"
+        //if corrs.ColumnCount <> corrs.RowCount then 
+        //    invalidOp "Correlation dimension mismatch!"
         if not (corrs.Diagonal().ForAll( fun x -> x = 1.0 )) then 
             invalidOp "Correlation diagonal should be ones"
         //TODO check symmetric 
-        if not <| corrs.IsSymmetric() then 
-            invalidOp "Correlation matrix should be symmetric."
-        //corr'.Diagonal() |> Seq.filter( fun x -> x <> 1.0)
+        //if not <| corrs.IsSymmetric() then 
+        //    invalidOp "Correlation matrix should be symmetric."
+        ////corr'.Diagonal() |> Seq.filter( fun x -> x <> 1.0)
         try 
             let _ = corrs.Cholesky().Factor
             //check chol

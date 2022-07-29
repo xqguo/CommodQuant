@@ -168,10 +168,12 @@ module DateUtils =
     open System.Text.RegularExpressions
 
     let generateDay (d:DateTime) (dir:bool) =
-        let nums =  Seq.initInfinite float // 0.0 , 1.0, ...
-        match dir with
-        | true -> Seq.map d.AddDays nums 
-        | false -> Seq.map ( (~-) >> d.AddDays ) nums 
+        let addday i = 
+           match dir with
+           | true -> d.AddDays i
+           | false -> d.AddDays (-i)
+        Seq.initInfinite float // 0.0 , 1.0, ...
+        |> Seq.map addday 
 
     let generateMonth (d:DateTime) (dir:bool) = //not recurves and therefore it keeps roll date
         let nums =  Seq.initInfinite int // 0.0 , 1.0, ...
@@ -179,11 +181,12 @@ module DateUtils =
         | true -> Seq.map d.AddMonths nums 
         | false -> Seq.map ( (-) 0 >> d.AddMonths ) nums // equiv to: Seq.map( fun i -> d.AddMonths -i ) nums  
     
-    let dateRange startDate endDate =
-         let fwd = startDate <= endDate   
-         generateDay startDate fwd 
-         |> Seq.takeWhile (fun dt -> fwd && dt <= endDate  || ((not fwd) && dt >= endDate ))
-         |> Array.ofSeq
+    let dateRange (startDate:DateTime) endDate =
+         let n = abs((endDate - startDate).Days) + 1
+         if startDate <= endDate then 
+            Array.init n startDate.AddDays
+         else
+            Array.init n ( fun i -> startDate.AddDays(-i))
 
     let isHoliday (hol:Set<DateTime>) d = 
         hol.Contains d
@@ -195,13 +198,8 @@ module DateUtils =
         not ( isHoliday hol d  || isWeekend d ) 
 
     let generateBusinessDay hol (d:DateTime) (dir:bool) =
-         Seq.initInfinite float // 0.0 , 1.0, ...
-         |> Seq.map (fun i -> 
-                match dir with
-                | true -> d.AddDays i
-                | false -> d.AddDays (-i)
-            )
-         |> Seq.filter (fun dt -> isBusinessDay hol dt )
+        generateDay d dir
+        |> Seq.filter (isBusinessDay hol)
 
     let prevBusinessDay hol dt = generateBusinessDay hol dt false |> Seq.head
     let nextBusinessDay hol dt = generateBusinessDay hol dt true |> Seq.head
@@ -212,7 +210,6 @@ module DateUtils =
         | x when x > 0 -> generateBusinessDay hol (dt.AddDays 1.) true  |> Seq.skip (abs x - 1 ) |> Seq.head 
         | x when x < 0 -> generateBusinessDay hol (dt.AddDays -1.) false |> Seq.skip (abs x - 1) |> Seq.head
         | _ -> nextBusinessDay hol dt //1 case
-
 
     let modifiedFollowing hol dt = 
         let d0 = nextBusinessDay hol dt
@@ -266,7 +263,6 @@ module DateUtils =
             let adj = (d0.Month - 1 ) % n  
             DateTime(d0.Year,d0.Month-adj,1)
         | _ -> invalidArg "n" "number of month should be in (1,3,6,12)"
-
 
     ///Take a holidays and initial date and adjust it using a date string.
     ///a date string is a string of actions case sensitive

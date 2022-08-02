@@ -46,9 +46,9 @@ module IOcsv =
     let tryOptExpFile i = 
         ROOT +/ "holidays" +/ (i.ToString() + "opt.csv") |> tryFile
 
-    let USDOISSOURCE = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )
+    let mutable USDOISSOURCE = ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )
 
-    let fixings = 
+    let mutable fixings = 
         tryFile ( ROOT +/ "csv" +/ "fixings.csv" )
         |> Option.map( fun f -> Frame.ReadCsv( f ) |> Frame.indexRowsDate "Date" )
 
@@ -73,3 +73,9 @@ module IOcsv =
                 failwith $"missing {ins} in fixing file"
         | None -> 
                 failwith $"missing historical fixing file"
+
+    let reload () = 
+        USDOISSOURCE <- ( ROOT +/ "csv" +/ "USD OIS_Rate.csv" )
+        fixings <- 
+            tryFile ( ROOT +/ "csv" +/ "fixings.csv" )
+            |> Option.map( fun f -> Frame.ReadCsv( f ) |> Frame.indexRowsDate "Date" )

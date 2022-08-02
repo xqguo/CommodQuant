@@ -11,6 +11,7 @@ module Choi =
             let g' = f.*w
             let g = (g'/ (g'.L2Norm()))
             let c = sigma.Cholesky().Factor //cholesky
+            let ci = c.Inverse()
             let den = sqrt(( g.ToRowMatrix() * sigma * g.ToColumnMatrix()).Item(0,0)) 
             let Q1 = (c.Transpose() * g.ToColumnMatrix() ) /den
             let V1 = (c * Q1)// need to adjust so that w_k V_k1 > 0
@@ -23,13 +24,13 @@ module Choi =
                    let s = if w.[n] > 0. then 1.0 else -1.0
                    eps * s )       
                    //eps * s * v.[n] )       
-            let mu = (c.Inverse() * V1').L2Norm()
+            let mu = (ci * V1').L2Norm()
             let V1'' = V1' / mu
-            let Q1' = c.Inverse() * V1''
+            let Q1' = ci * V1''
             let R = householderR Q1'
-            let CR = c * R 
-            let CR' = CR.SubMatrix(0, n, 1, n-1) //drop 1st column.
-            let svd = CR'.Svd()      
+            //let CR = c * R 
+            let svd = (c * R ).SubMatrix(0, n, 1, n-1).Svd() //drop 1st column.
+            //let svd = CR'.Svd()      
             let V = V1''.ToColumnMatrix().Append(svd.U * svd.W)
             V
 

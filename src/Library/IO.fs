@@ -10,15 +10,17 @@ module IOcsv =
         let parDir = dllDir +/ ".."
         if Directory.Exists (parDir +/ "csv") then parDir else dllDir
 
+    let hols = new System.Collections.Concurrent.ConcurrentDictionary<HolidayCode, Set<DateTime>>()
     let getCalendarbyCode (code:HolidayCode) = 
-        let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile
-        match f with 
-        | Some path -> 
-            path
-            |> readLines
-            |> Seq.choose( parseDateExact "yyyyMMMdd" )
-            |> set
-        | None -> Set.empty
+        hols.GetOrAdd(code,  
+           (let f = ROOT +/ "holidays" +/ code.ToString() + ".txt"  |> tryFile
+            match f with 
+            | Some path -> 
+                path
+                |> readLines
+                |> Seq.choose( parseDateExact "yyyyMMMdd" )
+                |> set
+            | None -> Set.empty))
 
     //trading calendar to get fixing dates
     let getCalendar ins = 

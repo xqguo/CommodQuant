@@ -116,35 +116,41 @@ module Utils =
       with 
       | e -> failwithf "cannot move %s, %O" file e 
 
-    let updatefile (file:FileInfo) (destFile:FileInfo)  = 
+    let updatefileAsync (file:FileInfo) (destFile:FileInfo)  = 
+        async{
           let destname =  destFile.FullName
           let backup = destname+"~"
-          if destFile.Exists then
-            if file.LastWriteTime > destFile.LastWriteTime then 
-              if File.Exists( backup ) then File.Delete(backup)
-              File.Move( destname, backup ) 
-              file.CopyTo( destFile.FullName) |> ignore
-              printfn "%s updated" destFile.FullName
-              try File.Delete (backup) with _ -> () 
-          else
-            file.CopyTo( destFile.FullName) |> ignore
-            printfn "%s updated" destFile.FullName
+          let rb () = 
+              try 
+                File.Delete (backup) 
+              with
+              |_ -> printfn "Cannot remove backup %s " backup
+          do rb ()
+          if destFile.Exists && file.LastWriteTime > destFile.LastWriteTime then 
+              try 
+                File.Move( destname, backup ) 
+              with 
+              |_ -> printfn "Cannot backup %s " destname
+          do rb () 
+          if not destFile.Exists then 
+              printfn "updating %s" destFile.FullName
+              do! copyToAsync file.FullName destFile.FullName
+        }
 
-    let updatedir sourcePath destinationPath  = 
-      try 
-      //Create all of the directories
+    let updatedirAsync sourcePath destinationPath  = 
+        //Create all of the directories
         for dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories) do
             Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath)) |> ignore
 
         //Copy all the files & Replaces any files with the same name, except some files
         Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories)
         |> Seq.filter( fun x -> not <| x.Contains(@"\csv\")  && not <| x.Contains("currentuser.txt"))
-        |> Seq.iter( fun newPath ->
+        |> Seq.map( fun newPath ->
             let file = FileInfo(newPath)
             let destFile = FileInfo( newPath.Replace(sourcePath, destinationPath) )
-            updatefile file destFile )
-      with 
-      | e -> printf "Failed to update directory from %s to %s %O" sourcePath destinationPath e
+            updatefileAsync file destFile )
+        |> Async.Parallel
+        |> Async.Ignore
       
     ///read price from csv file into seq of string,float tuples
     let getPrice (f:string) = 

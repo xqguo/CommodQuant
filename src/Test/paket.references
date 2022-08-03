@@ -1,8 +1,7 @@
-﻿FsCheck
+﻿XUnit
+FsCheck
 FsCheck.XUnit
-MathNet.Numerics.FSharp
-Microsoft.NET.Test.Sdk
-Deedle
-xunit
-Xunit.core
 xunit.runner.visualstudio
+MathNet.Numerics.FSharp
+Deedle
+Microsoft.NET.Test.Sdk

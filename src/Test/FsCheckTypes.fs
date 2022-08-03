@@ -7,7 +7,7 @@ type PositiveSmallFloat =
         |> Arb.filter (fun t -> (t>0.0) && (t<100.))
 
 type ValidDate = 
-    static member Date() =
+    static member DateTime() =
         Arb.Default.DateTime()
         |> Arb.filter (fun t -> (t.Year >= 1980) && (t.Year <=2080))
 
@@ -48,8 +48,8 @@ type IntLessThan100 =
         |> Arb.filter (fun t -> (t>=0) && (t<80))
 
 let inline near a b eps = 
-    (a - eps < b && a + eps > b) |@ sprintf "%A vs %A with %A" a b eps
+    (a - eps <= b && a + eps >= b) |@ sprintf "%A vs %A with %A" a b eps
 
 let inline nearstr a b eps str = 
-    (a - eps < b && a + eps > b) |@ sprintf "%s: %A vs %A with %A" str a b eps
+    (a - eps <= b && a + eps >= b) |@ sprintf "%s: %A vs %A with %A" str a b eps
 

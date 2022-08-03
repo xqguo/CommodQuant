@@ -5,9 +5,7 @@ MathNet.Numerics
 MathNet.Numerics.MKL.Win-x64
 MathNet.Numerics.FSharp
 Deedle
-XPlot.GoogleCharts 
 QLNet
 Serilog
 Serilog.Sinks.File
-Serilog.Sinks.Console
 

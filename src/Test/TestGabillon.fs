@@ -13,7 +13,7 @@ let ``forward cross covariance equivalence to forward covariance``
     let tn = [tn;Ti;Tj] |> List.min
     let xv = fwdXCovariance tm tn Ti Tj sigmas1 sigmas2 sigmal sigmal k k 1.0 rho rho 1.0
     let v = fwdCovariance tm tn Ti Tj sigmas1 sigmas2 sigmal k rho
-    Assert.Equal( xv, v, 6) |@ sprintf "variance identical"
+    near xv v 1E-6 |@ sprintf "variance identical"
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``forward cross covariance equivalence to forward variance`` 
@@ -22,4 +22,4 @@ let ``forward cross covariance equivalence to forward variance``
     let tn = [tn;Ti] |> List.min
     let xv = fwdXCovariance tm tn Ti Ti sigmas1 sigmas1 sigmal sigmal k k 1.0 rho rho 1.0
     let v = fwdVariance tm tn Ti sigmas1 sigmal k rho
-    Assert.Equal( xv, v, 6) |@ sprintf "variance identical"
+    near xv v 1E-6 |@ sprintf "variance identical"

@@ -4,8 +4,6 @@ Test markets using fscheck
 *)
 module TestMarket
 
-open System
-open Xunit
 open FsCheck
 open FsCheck.Xunit
 open Commod
@@ -60,15 +58,15 @@ let ``test fut ContractRule`` () =
 let ``test getCommod `` (ins:Instrument) =
     let test = getCommod ins
     let (ContractDates ctt) = test.Contracts
-    Assert.False ctt.IsEmpty |@ sprintf "Contracts are not empty" .&.
-    Assert.True (test.Lot > 0M) |@ sprintf "Lot size is greater than 0" .&.
-    Assert.True (test.Instrument = ins) |@ sprintf "Instrument is the same."
+    (not ctt.IsEmpty) |@ sprintf "Contracts are not empty" .&.
+    (test.Lot > 0M) |@ sprintf "Lot size is greater than 0" .&.
+    (test.Instrument = ins) |@ sprintf "Instrument is the same."
 
 [<Property( MaxTest = 5)>]
 let ``test getPrices`` (ins:Instrument) =
     let (PriceCurve p) = getPrices ins
     let s = p |> Map.filter( fun _ v -> v.Value < 0M)
-    Assert.Empty s |@ "All prices are greater than 0" 
+    Map.isEmpty s |@ "All prices are greater than 0" 
 
 [<Property( MaxTest = 1)>]
 let ``test getVols`` () =
@@ -78,4 +76,4 @@ let ``test getVols`` () =
         |> Set.toSeq
         |> Seq.map v.Item
         |> Seq.filter ( fun v -> v < 0M)
-    Assert.Empty s |@ "All vols are greater than 0"
+    Seq.isEmpty s |@ "All vols are greater than 0"

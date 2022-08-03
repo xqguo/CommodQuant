@@ -5,30 +5,17 @@ source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core
 nuget FSharp.Data 
-nuget FSharpx.Async
 nuget FSharpx.Extras
-nuget FSharp.Control.AsyncSeq 2.0.23
 nuget Deedle 
 nuget MathNet.Numerics 
 nuget MathNet.Numerics.MKL.Win-x64 
 nuget MathNet.Numerics.FSharp
-
-nuget XPlot.Plotly 
-nuget XPlot.GoogleCharts 
-nuget XPlot.GoogleCharts.Deedle 
-
 nuget Argu
 nuget Serilog
 nuget Serilog.Sinks.File
-nuget Serilog.Sinks.Console
-
+nuget XUnit
 nuget FsCheck
 nuget FsCheck.Xunit
-nuget DiffSharp
-nuget Nager.Date
-
-nuget Microsoft.NET.Test.Sdk
-nuget xunit
-nuget Xunit.core
-nuget xunit.runner.visualstudio
 nuget QLNet 1.11.4
+nuget xunit.runner.visualstudio
+nuget Microsoft.NET.Test.Sdk

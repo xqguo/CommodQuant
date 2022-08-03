@@ -19,9 +19,8 @@ let ``test futPricing`` (ins:Instrument) =
                 { Fut = cmd; ContractMonth = m; Quantity = 1M<lot>; FixedPrice = k }
             let v = genericFuturePricer fut p
             v.Value )
-    let exp = List.replicate c.Count 0M
-    Assert.False( c.IsEmpty )  |@ "Curve is no empty" .&.
-    Assert.Equal<decimal list>( mv, exp)  |@ "All Fut at matrket price have mtk value"
+    not c.IsEmpty |@ "Curve is no empty" .&.
+    (mv |> List.forall ( fun v -> v = 0M )) |@ "All Fut at matrket price have mtk value"
 
 //TODO add nrby and swap tests
 [<Property(MaxTest=1)>]
@@ -53,7 +52,8 @@ let ``test nrby`` () =
     let dates1 =  opendates.[1 .. (opendates.Length - 1)] 
     let p = getFixingPrices cnt dates1 crv ins pd //nrby 0 on next month
     let p' = getFixingPrices cnt1 dates0 crv ins pd //nrby 1 on current month
-    Assert.Equal<seq<UnitPrice>>( p, p')  |@ "nrby 1 will shift price pillar out by 1 month"
+    //Assert.Equal<seq<UnitPrice>>( p, p')  |@ "nrby 1 will shift price pillar out by 1 month"
+    Array.forall2 (=) p p' |@ "nrby 1 will shift price pillar out by 1 month"
 
 [<Property(MaxTest=1)>]
 let ``test rolladjust`` () =
@@ -84,4 +84,4 @@ let ``test rolladjust`` () =
     let dates1 =  opendates.[1 .. (opendates.Length - 1)] 
     let p = getFixingPrices cnt dates1 crv ins pd//nrby 0 on next month
     let p' = getFixingPrices cnt1 dates0 crv ins pd //nrby 1 on current month
-    Assert.Equal<seq<UnitPrice>>( p, p')  |@ "rolladj 1 will shift price pillar out by 1 month"
+    Array.forall2 (=) p p' |@ "rolladj 1 will shift price pillar out by 1 month"

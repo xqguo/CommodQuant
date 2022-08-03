@@ -10,7 +10,6 @@
     <Compile Include="Utils.fs" />
     <Compile Include="Units.fs" />
     <Compile Include="Math.fs" />
-    <Compile Include="Charts.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="ContractDates.fs" />
     <Compile Include="Markets.fs" />

@@ -58,14 +58,14 @@ let ``test choi vs V norm is input vol for long only basket`` f1 f2 v1 v2=
     let fw2 = fw1 * (-1.) //weights longside
     let rho = 0.8 //correlation between long/short fixing
     let V = getVChoi2Asset f1 fw1 t1 V1 f2 fw2 t2 V2 rho 
-    Assert.Equal(V.Row(0).L2Norm(), v1 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
-    Assert.Equal(V.Row(1).L2Norm(), v1 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(2).L2Norm(), v1 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(3).L2Norm(), v1 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(8).L2Norm(), v2 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(9).L2Norm(), v2 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(10).L2Norm(), v2 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
+    near (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(1).L2Norm()) (v1 * sqrt t1.[1]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(2).L2Norm()) (v1 * sqrt t1.[2]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(3).L2Norm()) (v1 * sqrt t1.[3]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(8).L2Norm()) (v2 * sqrt t1.[0]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(9).L2Norm()) (v2 * sqrt t1.[1]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(10).L2Norm()) (v2 * sqrt t1.[2]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(11).L2Norm()) (v2 * sqrt t1.[3]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
 
 [<Property( Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2= 
@@ -81,14 +81,14 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2=
 
     let rho = 0.8 //correlation between long/short fixing
     let V = getVChoi2Asset f1 fw1 t1 V1 f2 fw2 t2 V2 rho 
-    Assert.Equal(V.Row(0).L2Norm(), v1 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
-    Assert.Equal(V.Row(1).L2Norm(), v1 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(2).L2Norm(), v1 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(3).L2Norm(), v1 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(8).L2Norm(), v2 * sqrt t1.[0] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(9).L2Norm(), v2 * sqrt t1.[1] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(10).L2Norm(), v2 * sqrt t1.[2] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
-    Assert.Equal(V.Row(11).L2Norm(), v2 * sqrt t1.[3] ,6) |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
+    near (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(1).L2Norm()) (v1 * sqrt t1.[1]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(2).L2Norm()) (v1 * sqrt t1.[2]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(3).L2Norm()) (v1 * sqrt t1.[3]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(8).L2Norm()) (v2 * sqrt t1.[0]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(9).L2Norm()) (v2 * sqrt t1.[1]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(10).L2Norm()) (v2 * sqrt t1.[2]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  .&.
+    near (V.Row(11).L2Norm()) (v2 * sqrt t1.[3]) 1E-6 |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))  
 
 [<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let ``test choi vs moment matching`` f1 f2 t v1 v2 (NormalFloat k) (Corr rho) callput ( PositiveInt n) = 
@@ -130,7 +130,7 @@ let ``test choi put call parity`` f1 f2 k =
     let callput = Put
     let choi',_ = optionChoi2Asset f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput
     
-    Assert.Equal ( choi - choi' , f1 * fw1 - f2 * fw2 - k, 3 )
+    near ( choi - choi')  (f1 * fw1 - f2 * fw2 - k) 1E-3
 
 [<Property( MaxTest = 10, Arbitrary = [| typeof<PositiveFloat>|] )>]
 let ``test choi spread put call equivalence `` f1 f2 v1 v2 k = 
@@ -198,7 +198,7 @@ let ``test guass hemite weights sum to 1`` () =
     let dim = 3
     let ws = ghw5 dim |> vector
     let r = ws.Sum()
-    Assert.Equal( 1., r, 6 )
+    near 1. r 1E-6
 
 type GHTest =
     static member GHList() =
@@ -208,11 +208,11 @@ type GHTest =
 
 [<Property(MaxTest=20, Verbose=true, EndSize = 4, Arbitrary=[|typeof<GHTest>|])>]
 let ``test guass hemite expect normal mean is 0 `` (o:int list) = 
-        //let o = Array.toList o
-        let ws = ghwn o |> vector
-        let hs = ghzn o |> Array.map( Array.reduce (+)) |> vector
-        let r = ws* hs
-        Assert.Equal( 0., r, 6 )
+    //let o = Array.toList o
+    let ws = ghwn o |> vector
+    let hs = ghzn o |> Array.map( Array.reduce (+)) |> vector
+    let r = ws* hs
+    near 0. r 1E-6
 
 [<Property(MaxTest = 100, Verbose = true, StartSize=8, EndSize = 100, Arbitrary = [|typeof<PositiveFloat>; typeof<MyGenerator> |] )>]
 let testSpreadChoivsKirkZeroStrikeNSmallVol fb (Corr rho) callput = 

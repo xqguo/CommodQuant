@@ -266,15 +266,14 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     let err = List.max [ 1.; fa; fb; k] * 1E-4
     nearstr v o err $"Choi{m} vs Kirk vs {v'}" 
 
-[<Property(MaxTest = 100, Verbose = false, EndSize = 1000, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
-let testSpreadChoiNConv fa fb (NormalFloat k) nf1 nf2 t v1 v2 (Corr rho) callput = 
-    let nf1 = min (abs nf1 + 1) 60
-    let nf2 = min (abs nf2 + 1) 60
-    //let nf1 = 3
-    //let nf2 = 2
-    let v1 = min v1 0.5
-    let v2 = min v2 0.5
-    let t = min t 4.0
+[<Property(MaxTest = 1000, Verbose = false, EndSize = 500, Arbitrary = [|typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+let testSpreadChoiNConv (fa:float) (fb:float) (NormalFloat k) (nf1:int) (nf2:int)
+    (t:float) (v1:float) (v2:float) (Corr rho) (callput:Payoff) = 
+    let nf1 = abs nf1 + 1 //range 1 to 51 effectively due to endsize
+    let nf2 = abs nf2 + 1
+    let v1 = v1 / 50. // capped at 100% effectively
+    let v2 = v2 / 50.
+    let t = t / 10.0 // capped at 5yr
     let v1' = DenseVector.create nf1 v1
     let v2' = DenseVector.create nf2 v2
     let f1 = DenseVector.create nf1 fa
@@ -289,6 +288,7 @@ let testSpreadChoiNConv fa fb (NormalFloat k) nf1 nf2 t v1 v2 (Corr rho) callput
     let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m'
     let err = (List.max [ 1.; fa; fb; abs k]) * 0.006
     nearstr v o err $"Choi {m} vs {m'}" 
+    |> Prop.collect ( nf1 + nf2 > 5 ) //check how many has more than 5 fixings in total
 
 
 [<Property(MaxTest = 1, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]

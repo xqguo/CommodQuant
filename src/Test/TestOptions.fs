@@ -266,7 +266,7 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     let err = List.max [ 1.; fa; fb; k] * 1E-4
     nearstr v o err $"Choi{m} vs Kirk vs {v'}" 
 
-[<Property(MaxTest = 1000, Verbose = false, EndSize = 500, Arbitrary = [|typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
+[<Property(MaxTest = 100, Verbose = false, EndSize = 500, Arbitrary = [|typeof<PositiveFloat>;typeof<MyGenerator>|] )>]
 let testSpreadChoiNConv (fa:float) (fb:float) (NormalFloat k) (nf1:int) (nf2:int)
     (t:float) (v1:float) (v2:float) (Corr rho) (callput:Payoff) = 
     let nf1 = abs nf1 + 1 //range 1 to 51 effectively due to endsize
@@ -286,9 +286,9 @@ let testSpreadChoiNConv (fa:float) (fb:float) (NormalFloat k) (nf1:int) (nf2:int
     let m'= [17;7;5;3]
     let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m
     let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m'
-    let err = (List.max [ 1.; fa; fb; abs k]) * 0.006
+    let err = (List.max [ 1.; fa; fb; abs k]) * 0.004
     nearstr v o err $"Choi {m} vs {m'}" 
-    |> Prop.collect ( nf1 + nf2 > 5 ) //check how many has more than 5 fixings in total
+    |> Prop.collect ( roundp 1 (abs( v - o ) / err) ) //check how many diff is less than half of tol
 
 
 [<Property(MaxTest = 1, Verbose = false, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>;typeof<MyGenerator>|] )>]

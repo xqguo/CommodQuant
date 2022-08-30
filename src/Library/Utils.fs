@@ -154,7 +154,9 @@ module Utils =
       
     ///read price from csv file into seq of string,float tuples
     let getPrice (f:string) = 
-      use fs = new StreamReader( f )
+      use s = new FileStream(f, FileMode.Open, FileAccess.Read,
+                        FileShare.ReadWrite);
+      use fs = new StreamReader(s) 
       let tsk = fs.ReadToEndAsync()
       let price = CsvFile.Parse(tsk.Result)
       match price.NumberOfColumns with

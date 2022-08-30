@@ -79,15 +79,14 @@ module Markets =
         let f = tryPriceFile ins
         match f with 
         | Some v -> 
-            let data = PriceCsv.AsyncLoad v |> Async.RunSynchronously
-            data.Rows
-            |> Seq.map( fun r ->  
+            getPrice v 
+            |> Seq.map( fun (p,x) ->  
                 let pillar = 
-                    match r.PILLAR with
+                    match p with
                     | "TODAY" -> "TODAY"
                     | s when s.StartsWith "BOM" -> "BOM"
                     | x -> pillarToDate x |> formatPillar
-                pillar, r.PRICE)
+                pillar, decimal x)
             |> Seq.filter( fun (p,_) -> c.ContainsKey p || p = "TODAY" || p = "BOM" )
             |> Map.ofSeq
             |> applyMapUnit i.Quotation.Case
@@ -103,15 +102,16 @@ module Markets =
         let f = tryVolsFile ins
         match f with 
         | Some v -> 
-            let data = PriceCsv.AsyncLoad v |> Async.RunSynchronously
-            data.Rows
-            |> Seq.map( fun r ->  
+            //let data = PriceCsv.AsyncLoad v |> Async.RunSynchronously
+            //data.Rows
+            getPrice v 
+            |> Seq.map( fun (p,v) ->  
                 let pillar = 
-                    match r.PILLAR with
+                    match p with
                     | "TODAY" -> "TODAY"
                     | s when s.StartsWith "BOM" -> "BOM"
                     | x -> pillarToDate x |> formatPillar
-                pillar, ( PercentVol r.PRICE))
+                pillar, ( PercentVol (decimal v)))
             |> Seq.filter( fun (p,_) -> c.ContainsKey p || p = "TODAY" || p = "BOM" )
             |> Map.ofSeq
             |> VolCurve

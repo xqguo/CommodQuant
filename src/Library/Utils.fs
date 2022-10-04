@@ -231,7 +231,7 @@ module DateUtils =
         if d1 > d2 then invalidArg "d1 d2" "d1 should not be greater than d2"
         if d1.Date <> d1 then invalidArg "d1" "d1 should not have time fractions"
         if d2.Date <> d2 then invalidArg "d1" "d2 should not have time fractions"
-        bdRange hol (d1.AddDays 1.0 ) d2 |> Array.length
+        if d1 = d2 then 0 else bdRange hol (d1.AddDays 1.0 ) d2 |> Array.length
 
     let getBizYears hol d1 d2 = 
         float ( numBizdays hol d1 d2 ) / 252.

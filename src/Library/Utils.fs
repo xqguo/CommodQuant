@@ -144,7 +144,8 @@ module Utils =
 
         //Copy all the files & Replaces any files with the same name, except some files
         Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories)
-        |> Seq.filter( fun x -> not <| x.Contains(@"\csv\")  && not <| x.Contains("currentuser.txt"))
+        //|> Seq.filter( fun x -> not <| x.Contains(@"\csv\")  && not <| x.Contains("currentuser.txt"))
+        |> Seq.filter( fun x -> not <| x.Contains("currentuser.txt"))
         |> Seq.map( fun newPath ->
             let file = FileInfo(newPath)
             let destFile = FileInfo( newPath.Replace(sourcePath, destinationPath) )

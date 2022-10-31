@@ -135,6 +135,7 @@ module Utils =
           if not destFile.Exists then 
               printfn "updating %s" destFile.FullName
               do! copyToAsync file.FullName destFile.FullName
+              destFile.LastWriteTimeUtc <- file.LastWriteTimeUtc
         }
 
     let updatedirAsync sourcePath destinationPath  = 

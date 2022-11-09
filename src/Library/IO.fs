@@ -27,10 +27,11 @@ module IOcsv =
         match ins with
         | DBRT | FO35 -> [PLTLDN] 
         | JKM | SGO | SJET | FO380 | FO180 |MFO | DUB -> [PLTSGP] 
-        | BRT | GO | TTF -> [ICE] 
+        | BRT | GO | TTF | SPP -> [ICE] 
         | NBP -> [ICE;UK] 
         | NG -> [CME] 
-        | JCC  -> [ ALLDAYS ] 
+        | JCC  
+        | _ -> [ ALLDAYS ] 
         |> List.fold ( fun acc s -> Set.union acc ( getCalendarbyCode s ) ) Set.empty
 
     let tryPriceFile i = 

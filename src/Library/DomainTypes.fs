@@ -136,6 +136,7 @@ module DomainTypes  =
         | DBRT //dated brent
         | BRT
         | GO
+        | FO
         | FO380
         | FO180
         | FO35 //Fuel oil 3.5 Barges 
@@ -146,8 +147,10 @@ module DomainTypes  =
         | SGO //Singapore Gas oil ref...
         | NG // Herry Hub natural gas
         | NBP // NBP natural gas
+        | SPP // Spain Power
         | DUB // dubai crude
         | SJET // Sing Jet
+        | API2
 
     type ContractDates = 
         ContractDates of Map<string, DateTime*DateTime> with //how to interprete tenor code to date

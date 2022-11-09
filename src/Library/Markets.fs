@@ -63,7 +63,7 @@ module Markets =
                 match ins with
                 | BRT |DBRT | JCC | DUB | SJET | SGO  -> USDBBL 1M<USD/bbl>, BBL 1000M<bbl>
                 | FO180 | FO380 | MFO | FO35 | GO ->  USDMT 1M<USD/mt>, MT 1000M<mt>
-                | NG | JKM | NBP | TTF -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
+                | NG | JKM | NBP | TTF | SPP | _ -> USDMMBTU 1M<USD/mmbtu>, MMBTU 10000M<mmbtu>            
             let cals = getCalendar ins 
             let contracts = getContracts ins    
             { Instrument = ins; Calendar = cals; Contracts = contracts; Quotation = q; LotSize = s}  

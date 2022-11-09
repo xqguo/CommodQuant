@@ -82,7 +82,7 @@ module Utils =
     let copyToAsync source dest =
       async {
           use sourceFile = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, DEFAULT_BUFFER_SIZE, true);
-          use destFile = new FileStream(dest, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, DEFAULT_BUFFER_SIZE, true);
+          use destFile = new FileStream(dest, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite, DEFAULT_BUFFER_SIZE, true);
           do! sourceFile.CopyToAsync(destFile) |> Async.AwaitPlainTask
       }        
 

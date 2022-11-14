@@ -8,19 +8,20 @@ open Commod
 [<Property(MaxTest=3)>]
 let ``test futPricing`` (ins:Instrument) =
     //let ins = BRT
-    let cmd = getCommod ins
-    let p = getPrices ins
-    let ( PriceCurve c ) = p
-    let mv = 
-        c 
-        |> Map.toList
-        |> List.map(  fun (m, k) -> 
-            let fut = 
-                { Fut = cmd; ContractMonth = m; Quantity = 1M<lot>; FixedPrice = k }
-            let v = genericFuturePricer fut p
-            v.Value )
-    not c.IsEmpty |@ "Curve is no empty" .&.
-    (mv |> List.forall ( fun v -> v = 0M )) |@ "All Fut at matrket price have mtk value"
+    (tryPriceFile ins).IsSome ==> lazy(
+        let cmd = getCommod ins
+        let p = getPrices ins
+        let ( PriceCurve c ) = p
+        let mv = 
+            c 
+            |> Map.toList
+            |> List.map(  fun (m, k) -> 
+                let fut = 
+                    { Fut = cmd; ContractMonth = m; Quantity = 1M<lot>; FixedPrice = k }
+                let v = genericFuturePricer fut p
+                v.Value )
+        not c.IsEmpty |@ "Curve is no empty" .&.
+        (mv |> List.forall ( fun v -> v = 0M )) |@ "All Fut at matrket price have mtk value")
 
 //TODO add nrby and swap tests
 [<Property(MaxTest=1)>]

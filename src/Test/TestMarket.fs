@@ -62,13 +62,6 @@ let ``test getCommod `` (ins:Instrument) =
     (test.Lot > 0M) |@ sprintf "Lot size is greater than 0" .&.
     (test.Instrument = ins) |@ sprintf "Instrument is the same."
 
-[<Property( MaxTest = 5)>]
-let ``test getPrices`` (ins:Instrument) =
-    (tryPriceFile ins).IsSome ==> lazy(
-        let (PriceCurve p) = getPrices ins
-        let s = p |> Map.filter( fun _ v -> v.Value < 0M)
-        Map.isEmpty s |@ "All prices are greater than 0" )
-
 [<Property( MaxTest = 1)>]
 let ``test getVols`` ins =
     (tryVolsFile ins).IsSome ==> lazy(
@@ -79,3 +72,13 @@ let ``test getVols`` ins =
             |> Seq.map v.Item
             |> Seq.filter ( fun v -> v < 0M)
         Seq.isEmpty s |@ "All vols are greater than 0")
+
+[<Property( MaxTest = 5)>]
+let ``test getPrices`` (ins:Instrument) =
+    match (tryPriceFile ins) with
+    | None -> lazy( getPrices ins ) |> Prop.throws<System.InvalidOperationException,_>
+    | Some _ -> lazy(
+        let (PriceCurve p) = getPrices ins
+        let s = p |> Map.filter( fun _ v -> v.Value < 0M)
+        Map.isEmpty s |@ "All prices are greater than 0" ) |> Prop.ofTestable
+        

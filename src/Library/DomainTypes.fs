@@ -7,10 +7,14 @@ module DomainTypes  =
     open FSharp.Reflection
 
     [<Measure>] type bbl
-    [<Measure>] type mt 
+    [<Measure>] type mt //metric ton
+    [<Measure>] type mmt //million tons
     [<Measure>] type mmbtu 
     [<Measure>] type mw
     [<Measure>] type h
+    [<Measure>] type d
+    [<Measure>] type m 
+    [<Measure>] type ft
     [<Measure>] type mwh = mw * h
 
     [<Measure>] type USD 

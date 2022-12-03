@@ -207,17 +207,16 @@ Selected common comands:
 
 ```console
 gpg --list-secret-keys 
-#export private and public key
+gpg --export -a $ID > my-pub-key.asc
 gpg --export-secret-keys -a $ID > my-private-key.asc
-gpg --armor --output public-key.gpg --export user@example.com
+gpg --export-secret-subkeys -a $ID > my-private-subkey.asc
 gpg --import private_or_pub_key.asc
 gpg --delete-key 
 gpg --delete-secret-key
 #extend expiry requires secret key
 gpg --edit-key $id
-gpg> expire
+gpg> expire #key n
 gpg> save
-#trust imported secret key
 gpg> trust 
 #encrypt file
 gpg -ers $id file

@@ -82,8 +82,8 @@ module Utils =
     let copyToAsync source dest =
       async {
           use sourceFile = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, DEFAULT_BUFFER_SIZE, true)
-          do! using (new FileStream(dest, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, DEFAULT_BUFFER_SIZE, true))
-                    ( fun destFile -> sourceFile.CopyToAsync(destFile) |> Async.AwaitPlainTask)
+          use destFile = new FileStream(dest, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None, DEFAULT_BUFFER_SIZE, true)
+          do! sourceFile.CopyToAsync(destFile) |> Async.AwaitPlainTask
       }        
 
     let writeTextAsync f str = 

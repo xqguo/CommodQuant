@@ -34,7 +34,7 @@ module Vols =
         let m1 = f.Sum()
         let m2 = v |> Matrix.sum
         let m3 = 
-            [|
+            seq{
                 for i in 0 .. n do
                 for j in 0 .. i do
                 for k in 0 .. j do 
@@ -46,7 +46,7 @@ module Vols =
                         yield (v3 / f3) * 3.0
                     else
                         yield (v3 / f3) * 6.0
-            |] |> Array.sum
+            } |> Seq.sum
         //let m3 = 
         //    [|
         //        for i in 0 .. n do

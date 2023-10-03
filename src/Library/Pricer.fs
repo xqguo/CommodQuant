@@ -56,14 +56,14 @@ module Pricer =
             let contracts = getFixingContracts contracts' dates
             let weights = (getEqualWeights dates) |> Array.map( fun x -> x /(float lags.Length) * (float slope))
             let fixingDates = dates |> Array.map( fun d -> min d expDate)
-            fixingDates, weights, contracts
+            (fixingDates, weights, contracts) |||> Array.zip3
             )
-        |> Array.reduce( fun ( d1,w1,c1) (d2,w2,c2) -> 
-            (Array.append d1 d2), 
-            (Array.append w1 w2),
-            (Array.append c1 c2))
-        //consolidate future details to group weightes for same fixing dates and same contracts
-        |||> Array.zip3
+        |> Array.concat
+        // |> Array.reduce( fun ( d1,w1,c1) (d2,w2,c2) -> 
+        //     (Array.append d1 d2), 
+        //     (Array.append w1 w2),
+        //     (Array.append c1 c2))
+        // //consolidate future details to group weightes for same fixing dates and same contracts
         |> Array.groupBy(fun (x,_,z) -> x,z) 
         |> Array.map( fun ((k1,k2),v) -> 
             k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
@@ -82,6 +82,7 @@ module Pricer =
         |> Array.groupBy(fun (x,_,z) -> x,z) 
         |> Array.map( fun ((k1,k2),v) -> 
             k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
+        |> Array.filter( fun (_,w,_) -> abs w > 1E-12 ) //ignore 0 weights
 
     //https://www.argusmedia.com/-/media/Files/methodology/argus-lng-daily.ashx
     //The construction of the oil-price average is expressed as three figures,

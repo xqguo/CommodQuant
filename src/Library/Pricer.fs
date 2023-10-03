@@ -75,7 +75,7 @@ module Pricer =
         weights
         |> Array.map( fun (w,l) ->
             let m = shiftMonth refMonth l
-            let s = slope * w
+            let s = slope * decimal w
             getFixings m com lags s avg expDate
         )
         |> Array.collect id
@@ -279,11 +279,11 @@ module Pricer =
             getInputsGWeighted pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 weights 
  
     ///spread option using cross Gabillon model
-    let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
+    let SpreadOptionPricerXGabillonWeighted inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)
-        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 o =
-        let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 
-        let (f2,fw2,x2,a2) = getInputsG pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 
+        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 o weights=
+        let (f1,fw1,x1,a1) = getInputsGWeighted pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 weights
+        let (f2,fw2,x2,a2) = getInputsGWeighted pricingDate expDate refMonth lags2 avg2 inst2 1.0M pricecurve2 weights
         let k = -freight - a1 + a2 /// adapte K for past fixings
         //let opt, deltas =  optionChoi2AssetCov f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput //cov breakdown too often
         //let xParam = getXGabillonParam inst1 inst2 rho 
@@ -312,8 +312,14 @@ module Pricer =
             "vol1", ( Statistics.Mean v1 ); //vol1 
             "vol2", ( Statistics.Mean v2 ); //vol1 
         |]
-
-    ///asian and swaption pricer using Gabillon model
+    let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
+        refMonth (pricingDate:DateTime)
+        xParam pricecurve1 volcurve1 pricecurve2 volcurve2 o =
+        SpreadOptionPricerXGabillonWeighted inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
+            refMonth (pricingDate:DateTime)
+            xParam pricecurve1 volcurve1 pricecurve2 volcurve2 o [|(1.0,0)|]
+ 
+  ///asian and swaption pricer using Gabillon model
     let AsianOptionPricerGabillon inst lags avg k callput expDate  
         refMonth (pricingDate:DateTime)
         gParam pricecurve volcurve =

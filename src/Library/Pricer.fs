@@ -29,6 +29,10 @@ module Pricer =
         | Some i -> Array.splitAt i details
         | None -> (details, Array.empty)
 
+    let shiftMonth refMonth l =
+        let refDate = refMonth |> pillarToDate 
+        refDate.AddMonths l |> formatPillar
+        
     ///take refmonth and return array of tuple: 
     ///fixingdate, weight, contract, 
     ///slope is applied here into the weights.
@@ -60,7 +64,24 @@ module Pricer =
             (Array.append c1 c2))
         //consolidate future details to group weightes for same fixing dates and same contracts
         |||> Array.zip3
-        |> Array.groupBy(fun (x,_,z) -> x,z) |> Array.map( fun ((k1,k2),v) -> k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
+        |> Array.groupBy(fun (x,_,z) -> x,z) 
+        |> Array.map( fun ((k1,k2),v) -> 
+            k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
+
+    ///take array of weights and lags as well as the necessary arguments to 
+    ///call getFixings with each refMonth with lag applied
+    ///Finally group the results 
+    let getFixingsWeighted refMonth (com:Commod) lags slope avg expDate weights=     
+        weights
+        |> Array.map( fun (w,l) ->
+            let m = shiftMonth refMonth l
+            let s = slope * w
+            getFixings m com lags s avg expDate
+        )
+        |> Array.collect id
+        |> Array.groupBy(fun (x,_,z) -> x,z) 
+        |> Array.map( fun ((k1,k2),v) -> 
+            k1,(v |> Array.sumBy( fun (_,x,_)->x)),k2)
 
     //https://www.argusmedia.com/-/media/Files/methodology/argus-lng-daily.ashx
     //The construction of the oil-price average is expressed as three figures,

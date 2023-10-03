@@ -260,10 +260,10 @@ module Pricer =
             "vol2", ( Statistics.Mean (v2.Diagonal() ./ t2 |> Vector.Sqrt ) ); //vol1 
         |]
 
-    let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) = 
+    let getInputsGWeighted pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) weights = 
             let com1 = getCommod inst1
             let getPrices1 = getPricesWithOverride pricecurve1 None 
-            let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixings refMonth com1 lags1 slope avg1 expDate )           
+            let (pastDetails1, futureDetails1 ) = splitDetails pricingDate ( getFixingsWeighted refMonth com1 lags1 slope avg1 expDate weights )           
             let fixings1 = futureDetails1 |> Array.map( fun (x,_,y) -> (min x expDate),y)
             let fw1 = futureDetails1 |> Array.map( fun (_,w,_) -> w) |> toVector
             let f1 = fixings1 |> Array.map( fun (_,c) -> getPrices1 c) |> toVector
@@ -274,6 +274,10 @@ module Pricer =
                 | None -> getPrices1 c )
             (f1,fw1,fixings1,a1)
 
+    let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1:PriceCurve) = 
+            let weights = [|(1.0,0)|] // default weight 
+            getInputsGWeighted pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 weights 
+ 
     ///spread option using cross Gabillon model
     let SpreadOptionPricerXGabillon inst1 lags1 avg1 inst2 lags2 avg2 slope freight callput expDate  
         refMonth (pricingDate:DateTime)

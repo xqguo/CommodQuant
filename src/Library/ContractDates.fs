@@ -185,7 +185,7 @@ module Contracts =
         let rulebased =
             let td = DateTime.Today |> dateAdjust' "-1ya" 
             generateMonth (td |> dateAdjust' "a" ) true 
-            |> Seq.takeWhile( fun d -> d.Year < 2041 )
+            |> Seq.takeWhile( fun d -> d.Year < 2051 )
             |> Seq.map ( fun x -> (formatPillar x , getrule x ins))
             |> Map.ofSeq
         //use actuals to override rulebased

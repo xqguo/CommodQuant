@@ -13,7 +13,7 @@ variables:
   buildConfiguration: 'Release'
   vmImageName: 'windows-2022'
   framework: 'net8.0'
-  testframework: 'net8.0'
+  testframework: 'net8.0-windows'
 stages:
   - stage: Build
 

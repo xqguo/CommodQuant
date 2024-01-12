@@ -1,0 +1,22 @@
+name: Node CI
+
+on: [push]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: dotnet build, and test
+        run: |
+          dotnet build
+          dotnet test
+          dotnet publish -c Release --runtime linux-x64 --sc true --output linux
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux
+          path: |
+            linux
+

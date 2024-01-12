@@ -4,7 +4,7 @@ katex: True
 
 # Project outline
 
-The primary objective of this project is to provide an open-source reference for quantitative functions related to commodities. It includes a commodity pricing library [CommodQuant](https://github.com/xqguo/CommodQuant) written in F# ( which can be used in any dotnet developments ), as well as some guides to some related learning materials around technology and quantitative finance. Also with its azure DevOps pipeline [project](https://dev.azure.com/guoxiaoq/CommodQuant)
+The primary objective of this project is to provide an open-source reference for quantitative functions related to commodities. It includes a commodity pricing library [CommodQuant](https://github.com/xqguo/CommodQuant) written in F# ( which can be used in any dotnet developments ), as well as some guides to some related learning materials around technology and quantitative finance. Also with its Azure DevOps pipeline [project](https://dev.azure.com/guoxiaoq/CommodQuant)
 
 ## Programming setup
 
@@ -16,11 +16,12 @@ The primary objective of this project is to provide an open-source reference for
 
   * [My Azure notebook guide](https://xqguo.github.io/CommodQuant/aznotebook.html)
 
-* Get your own dev environment
+* Get your dev environment
 
-  * Install .net core SDK and a IDE or editor
+  * Install .net core SDK and an IDE or editor
+    * Use [codespace](https://github.com/features/codespaces) from GitHub is probably the easiest
 
-    * VS Community for ease of use and windows environment
+    * VS Community for ease of use and Windows environment
 
     * or Install VSCode for cross-platform
 
@@ -50,7 +51,7 @@ The primary objective of this project is to provide an open-source reference for
 
   * The Fed publishes selected rates, including the fed funds rate [here](https://www.federalreserve.gov/releases/h15/)
 
-## Understand the Quantitative finance
+## Understand the Quantitative Finance
 
 * Notes for [Intro to Derivative Pricing](https://xqguo.github.io/CommodQuant/intro.pdf) and [source](https://github.com/xqguo/CommodQuant/tree/master/docs/intro.tex)
 

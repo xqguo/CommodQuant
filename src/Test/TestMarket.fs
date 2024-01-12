@@ -26,7 +26,7 @@ let ``test opt ContractRule`` ins =
         Map.filter( fun k v -> v <> (pillarToDate k  |>  f) ) cnt
         |> Map.map(  fun k v -> v , (pillarToDate k  |>  f) ) 
     //r |> Map.count < 2 //1 known diffs
-    Map.isEmpty r
+    Map.isEmpty r |@ sprintf "%A" r
 
 [<Property>]
 //test contract rules vs actual exchange dates

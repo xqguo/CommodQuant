@@ -19,7 +19,8 @@ module Utils =
         |[|case|] -> Some(FSharpValue.MakeUnion(case,[||]) :?> 'a)
         |_ -> None
 
-    let culture = CultureInfo("en-GB")
+    // let culture = CultureInfo("en-GB")
+    let culture = System.Globalization.CultureInfo.InvariantCulture.Clone() :?> CultureInfo
     culture.Calendar.TwoDigitYearMax <- 2080
     let Error = Result.Error //avoid name clash with FSharpx
     let (+/) path1 path2 = Path.Combine(path1, path2)

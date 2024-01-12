@@ -1,4 +1,4 @@
-name: Node CI
+name: build test publish actifacts
 
 on: [push]
 
@@ -10,6 +10,7 @@ jobs:
         uses: actions/checkout@v4
       - name: dotnet build, and test
         run: |
+          dotnet tool install --global Paket
           dotnet build
           dotnet test
           dotnet publish -c Release --runtime linux-x64 --sc true --output linux

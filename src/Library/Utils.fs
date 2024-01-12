@@ -38,7 +38,7 @@ module Utils =
     let parseSingle = tryParseWith System.Single.TryParse
     let parseDouble = tryParseWith System.Double.TryParse
     let parseDouble10 = tryParseWith System.Double.TryParse >> Option.map (sprintf "%.10g") 
-    let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", CultureInfo.InvariantCulture)
+    let parseMMddyy s = DateTime.ParseExact(s,"MM/dd/yy", culture)
     //DateTime.Parse("12/1/2021", CultureInfo.InvariantCulture, DateTimeStyles.None)
     //DateTime.Parse("13/1/2021", culture)
     //DateTime.Parse("Sep21", culture)

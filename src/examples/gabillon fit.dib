@@ -236,4 +236,8 @@ let v5 =
 #!fsharp
 
 //compute implied Correlation
-fwdCorr 0 0.1 0.1 5 sigmas sigmas sigmal k rho
+[0.1 .. 0.1 .. 20]
+|> List.map( fun t -> t, fwdCorr 0 0.1 0.1 t sigmas sigmas sigmal k rho)
+|> Chart.Line
+|> Chart.withTitle("Correlation of front month vs each tenor")
+|> Chart.withYAxisStyle(MinMax=(0,1))

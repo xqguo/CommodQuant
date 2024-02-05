@@ -77,7 +77,7 @@ let lv =
         ("DEC-24",PercentVol 45)
         ("DEC-25",PercentVol 35)
         ("DEC-26",PercentVol 25)
-        ("DEC-27",PercentVol 18)
+        ("DEC-27",PercentVol 19)
     ] |> Map.ofList |> VolCurve
 
 #!fsharp
@@ -89,8 +89,12 @@ let tv =
         ("DEC-25",PercentVol 57)
         ("DEC-26",PercentVol 53)
         ("DEC-27",PercentVol 52)
-        ("DEC-40",PercentVol 27)
+        ("DEC-40",PercentVol 30)
     ] |> Map.ofList |> VolCurve
+
+#!fsharp
+
+let corr1m5y = 0.3
 
 #!fsharp
 
@@ -113,7 +117,8 @@ let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
                     let v = tv.[p] |> float
                     let v' = fwdVol 0.0 t t sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
-            e + e'*2.0
+            let c = ((fwdCorr 0 0.1 0.1 5 sigmas sigmas sigmal k rho) - corr1m5y) ** 2
+            e + e'*2.0 + c 
         let eps = 1e-6
         let r0 = targetfunc (sigmas+eps) sigmal k rho 
         let r1 = targetfunc sigmas (sigmal+eps) k rho
@@ -130,8 +135,8 @@ let bestfit ins pd =
     let solver = Optimization.BfgsBMinimizer( 1e-5, 1e-5, 1e-5, 1000)
     //let solver = Optimization.ConjugateGradientMinimizer(1e-5, 1000)
     let ig = DenseVector.ofList [ 0.5; 0.25; 1.0 ; 0.3 ] //sigmas sigmal k rho
-    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.31 ] //sigmas sigmal k rho
-    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0.0 ] //sigmas sigmal k rho
+    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.99 ] //sigmas sigmal k rho
+    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0. ] //sigmas sigmal k rho
     let o = ObjectiveFunction.Gradient( fun (iv:Vector<float>) -> gradientfuncjoint iv.[0] iv.[1] iv.[2] iv.[3] ins pd )        
     solver.FindMinimum( o, l, u, ig)
 
@@ -231,3 +236,4 @@ let v5 =
 #!fsharp
 
 //compute implied Correlation
+fwdCorr 0 0.1 0.1 5 sigmas sigmas sigmal k rho

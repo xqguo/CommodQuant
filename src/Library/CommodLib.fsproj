@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <PackageId>CommodLib</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Xiaoqiang Guo</Authors>
+    <Company></Company>
   </PropertyGroup>
   <ItemGroup>
     <None Include="iceexpiry.fsx" />

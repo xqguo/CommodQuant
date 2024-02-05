@@ -73,31 +73,31 @@ let gradientfunc sigmas sigmal k rho (ins:Instrument) pd =
 
 let lv = 
     [
-        ("MAR-24",PercentVol 80)
-        ("DEC-24",PercentVol 45)
-        ("DEC-25",PercentVol 35)
-        ("DEC-26",PercentVol 25)
-        ("DEC-27",PercentVol 18)
-        ("DEC-40",PercentVol 18)
+        ("MAR-24",PercentVol 30)
+        ("DEC-24",PercentVol 26)
+        ("DEC-25",PercentVol 22)
+        ("DEC-26",PercentVol 18)
+        ("DEC-27",PercentVol 16)
+        ("DEC-40",PercentVol 16)
     ] |> Map.ofList |> VolCurve
 
 #!fsharp
 
 let tv = 
     [
-        ("MAR-24",PercentVol 80)
-        ("DEC-24",PercentVol 63)
-        ("DEC-25",PercentVol 57)
-        ("DEC-26",PercentVol 53)
-        ("DEC-27",PercentVol 52)
-        ("DEC-40",PercentVol 30)
+        ("MAR-24",PercentVol 32)
+        ("DEC-24",PercentVol 30)
+        ("DEC-25",PercentVol 28)
+        ("DEC-26",PercentVol (Decimal 26.5))
+        ("DEC-27",PercentVol 26)
+        ("DEC-40",PercentVol 18)
     ] |> Map.ofList |> VolCurve
 
 #!fsharp
 
-let corr3m5y = 0.3
-let corr3m1y = 0.65
-let corr1y5y = 0.55
+let corr1m1y = 0.92
+let corr1y5y = 0.7
+let corr1m5y = 0.55
 
 #!fsharp
 
@@ -120,10 +120,10 @@ let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
                     let v = tv.[p] |> float
                     let v' = fwdVol 0.0 t t sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
-            let c = ((fwdCorr 0 0.1 0.25 5 sigmas sigmas sigmal k rho) - corr3m5y) ** 2
-            let c' = ((fwdCorr 0 0.1 0.25 1 sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
-            let c'' = ((fwdCorr 0 0.1 1 5 sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
-            e*3.0 + e' + c + c' + c''
+            let c = ((fwdCorr 0 0.1 0.1 5 sigmas sigmas sigmal k rho) - corr1m5y) ** 2
+            let c' = ((fwdCorr 0 0.1 1 5 sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
+            let c'' = ((fwdCorr 0 0.1 0.1 1 sigmas sigmas sigmal k rho) - corr1m1y) ** 2 
+            e*3.0 + e' + ( c + c' + c'')*3.0
         let eps = 1e-6
         let r0 = targetfunc (sigmas+eps) sigmal k rho 
         let r1 = targetfunc sigmas (sigmal+eps) k rho
@@ -152,7 +152,7 @@ let pd = DateTime(2023,2,1)
 
 #!fsharp
 
-let res = (bestfit Instrument.TTF pd).MinimizingPoint
+let res = (bestfit Instrument.BRT pd).MinimizingPoint
 
 // res.MinimizingPoint
 
@@ -242,11 +242,11 @@ let v5 =
 
 [ 
     [0.1 .. 0.1 .. 20]
-    |> List.map( fun t -> t, fwdCorr 0 0.1 0.25 t sigmas sigmas sigmal k rho)
+    |> List.map( fun t -> t, fwdCorr 0 0.1 0.1 t sigmas sigmas sigmal k rho)
     |> Chart.Line
-    |> Chart.withTraceInfo(Name="corr 3m vs others ")
+    |> Chart.withTraceInfo(Name="corr 1m vs others ")
 
-    Chart.Point([ 1, 0.6; 5, 0.3], Name="inputs")
+    Chart.Point([ 1, corr1m1y; 5, corr1m5y], Name="inputs")
 
     [0.1 .. 0.1 .. 20]
     |> List.map( fun t -> t, fwdCorr 0 0.1 t 20 sigmas sigmas sigmal k rho)

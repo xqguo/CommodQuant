@@ -14,7 +14,7 @@
 #r "nuget:Plotly.NET.ImageExport"
 #r "nuget:MathNet.Numerics"
 #r "nuget:MathNet.Numerics.fsharp"
-#r "nuget:MathNet.Numerics.MKL.Win-x64"
+// #r "nuget:MathNet.Numerics.MKL.Win-x64"
 open FSharp.Data
 open FSharp.Control
 open FSharpx.Control
@@ -39,7 +39,7 @@ open MathNet.Numerics.Optimization
 #!fsharp
 
 open Commod
-Commod.IOcsv.ROOT<-__SOURCE_DIRECTORY__
+Commod.IOcsv.ROOT<-Path.Combine(__SOURCE_DIRECTORY__, @"..\Library")
 reload()
 
 #!fsharp
@@ -202,10 +202,6 @@ let lvc' =
 let tvc' = 
     let vols = ts |> List.map( fun t -> fwdVol 0 t t sigmas sigmal k rho)
     List.zip ts vols
-
-#!fsharp
-
-[0.1 .. 5]
 
 #!fsharp
 

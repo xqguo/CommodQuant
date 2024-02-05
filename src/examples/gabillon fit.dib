@@ -34,7 +34,10 @@ open MathNet.Numerics.Optimization
 
 #!fsharp
 
-#r @"C:\Users\xguo\OneDrive - Pavilion Energy Pte Ltd\Commodities\bin\CommodLib.dll" 
+#r "nuget: CommodLib"
+
+#!fsharp
+
 open Commod
 Commod.IOcsv.ROOT<-__SOURCE_DIRECTORY__
 reload()
@@ -134,7 +137,12 @@ let bestfit ins pd =
 
 #!fsharp
 
-let res = (bestfit Instrument.TTF DateTime.Today).MinimizingPoint
+// let pd = DateTime.Today
+let pd = DateTime(2023,2,1)
+
+#!fsharp
+
+let res = (bestfit Instrument.TTF pd).MinimizingPoint
 
 // res.MinimizingPoint
 
@@ -145,7 +153,6 @@ res
 #!fsharp
 
 let c = getCommod TTF 
-let pd = DateTime.Today
 let sigmas = res.[0]
 let sigmal = res.[1]
 let k = res.[2]

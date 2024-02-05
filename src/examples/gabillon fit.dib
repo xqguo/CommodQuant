@@ -1,0 +1,230 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"}]}}
+
+#!fsharp
+
+#r "nuget: FsCheck"
+#r "nuget: FSharp.Data"
+#r "nuget: FSharpx.Extras"
+#r "nuget: Deedle"
+#r "nuget: Deedle.Interactive"
+#r "nuget: Plotly.NET"
+#r "nuget: Plotly.NET.Interactive"
+#r "nuget:Plotly.NET.ImageExport"
+#r "nuget:MathNet.Numerics"
+#r "nuget:MathNet.Numerics.fsharp"
+#r "nuget:MathNet.Numerics.MKL.Win-x64"
+open FSharp.Data
+open FSharp.Control
+open FSharpx.Control
+open FSharpx.TimeMeasurement
+open FsCheck
+open System
+open System.IO
+open Deedle
+open Plotly.NET
+open Plotly.NET.LayoutObjects
+open Plotly.NET.ImageExport
+Defaults.DefaultTemplate <- ChartTemplates.light
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
+open MathNet.Numerics.Statistics
+open MathNet.Numerics.Optimization
+
+#!fsharp
+
+#r @"C:\Users\xguo\OneDrive - Pavilion Energy Pte Ltd\Commodities\bin\CommodLib.dll" 
+open Commod
+Commod.IOcsv.ROOT<-__SOURCE_DIRECTORY__
+reload()
+
+#!fsharp
+
+open System
+
+#!fsharp
+
+let gradientfunc sigmas sigmal k rho (ins:Instrument) pd =
+        let c = getCommod ins 
+        let vols = getVols ins 
+        let targetfunc sigmas sigmal k rho =
+            vols.Pillars
+            |> Set.filter( fun p -> c.Contracts.[p] > pd )
+            |> Set.fold( fun acc p ->
+                let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+                let v = vols.[p] |> float
+                let v' = fwdVol 0.0 t t sigmas sigmal k rho 
+                (pown ( v' - v ) 2 ) + acc ) 0.
+        let eps = 1e-6
+        let r0 = targetfunc (sigmas+eps) sigmal k rho 
+        let r1 = targetfunc sigmas (sigmal+eps) k rho
+        let r2 = targetfunc sigmas sigmal (k+eps) rho
+        let r3 = targetfunc sigmas sigmal k (rho+eps) 
+        let r = targetfunc sigmas sigmal k rho 
+        let df x = ( x - r ) / eps
+        let d' = [ r0; r1 ; r2; r3 ] |> List.map df |> vector        
+        struct (r,d')
+
+#!fsharp
+
+let lv = 
+    [
+        ("MAR-24",PercentVol 80)
+        ("DEC-24",PercentVol 45)
+        ("DEC-25",PercentVol 35)
+        ("DEC-26",PercentVol 25)
+        ("DEC-27",PercentVol 18)
+    ] |> Map.ofList |> VolCurve
+
+#!fsharp
+
+let tv = 
+    [
+        ("MAR-24",PercentVol 80)
+        ("DEC-24",PercentVol 63)
+        ("DEC-25",PercentVol 57)
+        ("DEC-26",PercentVol 53)
+        ("DEC-27",PercentVol 52)
+        ("DEC-40",PercentVol 27)
+    ] |> Map.ofList |> VolCurve
+
+#!fsharp
+
+let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
+        let c = getCommod ins 
+        let targetfunc sigmas sigmal k rho =
+            let e = 
+                lv.Pillars
+                |> Set.filter( fun p -> c.Contracts.[p] > pd )
+                |> Set.fold( fun acc p ->
+                    let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+                    let v = lv.[p] |> float
+                    let v' = fwdVol 0.0 0.01 t sigmas sigmal k rho 
+                    (pown ( v' - v ) 2 ) + acc ) 0.
+            let e' = 
+                tv.Pillars
+                |> Set.filter( fun p -> c.Contracts.[p] > pd )
+                |> Set.fold( fun acc p ->
+                    let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+                    let v = tv.[p] |> float
+                    let v' = fwdVol 0.0 t t sigmas sigmal k rho 
+                    (pown ( v' - v ) 2 ) + acc ) 0.
+            e + e'*2.0
+        let eps = 1e-6
+        let r0 = targetfunc (sigmas+eps) sigmal k rho 
+        let r1 = targetfunc sigmas (sigmal+eps) k rho
+        let r2 = targetfunc sigmas sigmal (k+eps) rho
+        let r3 = targetfunc sigmas sigmal k (rho+eps) 
+        let r = targetfunc sigmas sigmal k rho 
+        let df x = ( x - r ) / eps
+        let d' = [ r0; r1 ; r2; r3 ] |> List.map df |> vector        
+        struct (r,d')
+
+#!fsharp
+
+let bestfit ins pd = 
+    let solver = Optimization.BfgsBMinimizer( 1e-5, 1e-5, 1e-5, 1000)
+    //let solver = Optimization.ConjugateGradientMinimizer(1e-5, 1000)
+    let ig = DenseVector.ofList [ 0.5; 0.25; 1.0 ; 0.3 ] //sigmas sigmal k rho
+    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.31 ] //sigmas sigmal k rho
+    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0.0 ] //sigmas sigmal k rho
+    let o = ObjectiveFunction.Gradient( fun (iv:Vector<float>) -> gradientfuncjoint iv.[0] iv.[1] iv.[2] iv.[3] ins pd )        
+    solver.FindMinimum( o, l, u, ig)
+
+#!fsharp
+
+let res = (bestfit Instrument.TTF DateTime.Today).MinimizingPoint
+
+// res.MinimizingPoint
+
+#!fsharp
+
+res
+
+#!fsharp
+
+let c = getCommod TTF 
+let pd = DateTime.Today
+let sigmas = res.[0]
+let sigmal = res.[1]
+let k = res.[2]
+let rho = res.[3]
+
+#!fsharp
+
+let lvc = 
+    lv.Pillars
+    |> Set.filter( fun p -> c.Contracts.[p] > pd )
+    |> Set.map( fun p ->
+        let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+        let v = lv.[p] |> float
+        t, v)
+    |> Set.toArray
+    |> Array.sortBy fst
+let (lvt,lvv) = Array.unzip lvc
+
+#!fsharp
+
+lvv
+
+#!fsharp
+
+let tvc = 
+    tv.Pillars    
+    |> Set.filter( fun p -> c.Contracts.[p] > pd )
+    |> Set.map( fun p ->
+        let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+        let v = tv[p] |> float
+        t, v )
+    |> Set.toArray
+    |> Array.sortBy fst
+
+let tvt,tvv = Array.unzip tvc
+
+#!fsharp
+
+let ts = [0.1 .. 0.1 ..20]
+
+#!fsharp
+
+let lvc' = 
+    let vols = ts |> List.map( fun t -> fwdVol 0 0.01 t sigmas sigmal k rho)
+    List.zip ts vols
+
+let tvc' = 
+    let vols = ts |> List.map( fun t -> fwdVol 0 t t sigmas sigmal k rho)
+    List.zip ts vols
+
+#!fsharp
+
+[0.1 .. 5]
+
+#!fsharp
+
+let v2 = 
+    let ts = [0.1 .. 0.1 .. 2 ]
+    let vols =  ts |> List.map( fun t -> fwdVol 0 t 2.0 sigmas sigmal k rho)
+    List.zip ts vols
+let v5 = 
+    let ts = [0.1 .. 0.1 .. 5 ]
+    let vols =  ts |> List.map( fun t -> fwdVol 0 t 5.0 sigmas sigmal k rho)
+    List.zip ts vols
+
+#!fsharp
+
+[ 
+    Chart.Line( tvc', Name="calibrated term vol")
+    Chart.Point(tvt, tvv, Name="input term vol")
+    Chart.Line( lvc', Name="calibrated local vol")
+    Chart.Point(lvt,  lvv, Name="input local vol")
+    Chart.Line(v2, Name="2yr future term vol")
+    Chart.Line(v5, Name="5yr future term vol")
+]
+|> Chart.combine
+|>Chart.withTitle($"sv=%0.2f{res[0]}, lv=%0.2f{res[1]}, k=%0.2f{res[2]} r=%0.2f{res[3]}")
+|> Chart.withXAxisStyle(MinMax=(0,20))
+
+#!fsharp
+
+//compute implied Correlation

@@ -35,16 +35,9 @@ open MathNet.Numerics.Optimization
 #!fsharp
 
 #r "nuget: CommodLib"
-
-#!fsharp
-
 open Commod
-Commod.IOcsv.ROOT<-Path.Combine(__SOURCE_DIRECTORY__, @"..\Library")
+Commod.IOcsv.ROOT<- __SOURCE_DIRECTORY__ +/ ".." +/ "Library"
 reload()
-
-#!fsharp
-
-open System
 
 #!fsharp
 
@@ -74,11 +67,11 @@ let gradientfunc sigmas sigmal k rho (ins:Instrument) pd =
 let lv = 
     [
         ("MAR-24",PercentVol 80)
-        ("DEC-24",PercentVol 45)
-        ("DEC-25",PercentVol 35)
-        ("DEC-26",PercentVol 25)
-        ("DEC-27",PercentVol 18)
-        ("DEC-40",PercentVol 18)
+        ("DEC-24",PercentVol 47)
+        ("DEC-25",PercentVol 37)
+        ("DEC-26",PercentVol 27)
+        ("DEC-27",PercentVol 21)
+        ("DEC-40",PercentVol 20)
     ] |> Map.ofList |> VolCurve
 
 #!fsharp
@@ -96,7 +89,8 @@ let tv =
 #!fsharp
 
 let corr3m5y = 0.3
-let corr3m1y = 0.65
+let corr3m10y = 0.3
+// let corr3m1y = 0.65
 let corr1y5y = 0.55
 
 #!fsharp
@@ -121,9 +115,10 @@ let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
                     let v' = fwdVol 0.0 t t sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
             let c = ((fwdCorr 0 0.1 0.25 5 sigmas sigmas sigmal k rho) - corr3m5y) ** 2
-            let c' = ((fwdCorr 0 0.1 0.25 1 sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
+            let c''' = ((fwdCorr 0 0.1 0.25 10 sigmas sigmas sigmal k rho) - corr3m5y) ** 2
+            // let c' = ((fwdCorr 0 0.1 0.25 1 sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
             let c'' = ((fwdCorr 0 0.1 1 5 sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
-            e*3.0 + e' + c + c' + c''
+            e*3.0 + e' + (c + c'' + c''')*3.0
         let eps = 1e-6
         let r0 = targetfunc (sigmas+eps) sigmal k rho 
         let r1 = targetfunc sigmas (sigmal+eps) k rho
@@ -216,11 +211,11 @@ let tvc' =
 #!fsharp
 
 let v2 = 
-    let ts = [0.1 .. 0.1 .. 2 ]
+    let ts = [0. .. 0.1 .. 2 ]
     let vols =  ts |> List.map( fun t -> fwdVol 0 t 2.0 sigmas sigmal k rho)
     List.zip ts vols
 let v5 = 
-    let ts = [0.1 .. 0.1 .. 5 ]
+    let ts = [0. .. 0.1 .. 5 ]
     let vols =  ts |> List.map( fun t -> fwdVol 0 t 5.0 sigmas sigmal k rho)
     List.zip ts vols
 
@@ -246,12 +241,12 @@ let v5 =
     |> Chart.Line
     |> Chart.withTraceInfo(Name="corr 3m vs others ")
 
-    Chart.Point([ 1, 0.6; 5, 0.3], Name="inputs")
+    Chart.Point([ 5, 0.3; 10, 0.3;  1, 0.55], Name="inputs")
 
     [0.1 .. 0.1 .. 20]
-    |> List.map( fun t -> t, fwdCorr 0 0.1 t 20 sigmas sigmas sigmal k rho)
+    |> List.map( fun t -> t, fwdCorr 0 0.1 t 5 sigmas sigmas sigmal k rho)
     |> Chart.Line
-    |> Chart.withTraceInfo(Name="corr various vs long ")
+    |> Chart.withTraceInfo(Name="corr 5y vs various ")
     
 ]
 |> Chart.combine

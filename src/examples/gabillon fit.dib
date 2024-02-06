@@ -4,28 +4,20 @@
 
 #!fsharp
 
-#r "nuget: FsCheck"
 #r "nuget: FSharp.Data"
-#r "nuget: FSharpx.Extras"
 #r "nuget: Deedle"
 #r "nuget: Deedle.Interactive"
 #r "nuget: Plotly.NET"
 #r "nuget: Plotly.NET.Interactive"
-#r "nuget:Plotly.NET.ImageExport"
 #r "nuget:MathNet.Numerics"
 #r "nuget:MathNet.Numerics.fsharp"
 // #r "nuget:MathNet.Numerics.MKL.Win-x64"
 open FSharp.Data
-open FSharp.Control
-open FSharpx.Control
-open FSharpx.TimeMeasurement
-open FsCheck
 open System
 open System.IO
 open Deedle
 open Plotly.NET
 open Plotly.NET.LayoutObjects
-open Plotly.NET.ImageExport
 Defaults.DefaultTemplate <- ChartTemplates.light
 open MathNet.Numerics
 open MathNet.Numerics.LinearAlgebra
@@ -71,11 +63,9 @@ let lv =
         ("DEC-25",PercentVol 37)
         ("DEC-26",PercentVol 27)
         ("DEC-27",PercentVol 21)
-        ("DEC-40",PercentVol 20)
+        ("DEC-40",PercentVol 19)
+        ("DEC-41",PercentVol 18)
     ] |> Map.ofList |> VolCurve
-
-#!fsharp
-
 let tv = 
     [
         ("MAR-24",PercentVol 80)
@@ -83,28 +73,23 @@ let tv =
         ("DEC-25",PercentVol 57)
         ("DEC-26",PercentVol 53)
         ("DEC-27",PercentVol 52)
-        ("DEC-40",PercentVol 30)
+        ("DEC-40",PercentVol 27)
+        ("DEC-41",PercentVol 26)
     ] |> Map.ofList |> VolCurve
-
-#!fsharp
-
 let corr3m5y = 0.3
 let corr3m10y = 0.3
-// let corr3m1y = 0.65
+let corr3m1y = 0.65
 let corr1y5y = 0.55
-
-#!fsharp
-
-let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
+let gradientfuncjoint sigmas sigmal k rho shift (ins:Instrument) pd =
         let c = getCommod ins 
-        let targetfunc sigmas sigmal k rho =
+        let targetfunc sigmas sigmal k rho shift =
             let e = 
                 lv.Pillars
                 |> Set.filter( fun p -> c.Contracts.[p] > pd )
                 |> Set.fold( fun acc p ->
                     let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
                     let v = lv.[p] |> float
-                    let v' = fwdVol 0.0 0.01 t sigmas sigmal k rho 
+                    let v' = fwdVol 0.0 0.01 (t+shift) sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
             let e' = 
                 tv.Pillars
@@ -112,21 +97,22 @@ let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
                 |> Set.fold( fun acc p ->
                     let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
                     let v = tv.[p] |> float
-                    let v' = fwdVol 0.0 t t sigmas sigmal k rho 
+                    let v' = fwdVol 0.0 t (t+shift) sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
-            let c = ((fwdCorr 0 0.1 0.25 5 sigmas sigmas sigmal k rho) - corr3m5y) ** 2
-            let c''' = ((fwdCorr 0 0.1 0.25 10 sigmas sigmas sigmal k rho) - corr3m5y) ** 2
-            // let c' = ((fwdCorr 0 0.1 0.25 1 sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
-            let c'' = ((fwdCorr 0 0.1 1 5 sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
-            e*3.0 + e' + (c + c'' + c''')*3.0
+            let c = ((fwdCorr 0 0.1 (0.25 + shift) (5.0 + shift) sigmas sigmas sigmal k rho) - corr3m5y) ** 2
+            let c''' = ((fwdCorr 0 0.1 (0.25+shift) (10. + shift) sigmas sigmas sigmal k rho) - corr3m5y) ** 2
+            let c' = ((fwdCorr 0 0.1 (0.25+shift) (1.0 + shift) sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
+            let c'' = ((fwdCorr 0 0.1 (1.0 + shift) (5.0 + shift) sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
+            e*2.0 + e' + (c + c'*1.5+ c'' + c''')*2.0
         let eps = 1e-6
-        let r0 = targetfunc (sigmas+eps) sigmal k rho 
-        let r1 = targetfunc sigmas (sigmal+eps) k rho
-        let r2 = targetfunc sigmas sigmal (k+eps) rho
-        let r3 = targetfunc sigmas sigmal k (rho+eps) 
-        let r = targetfunc sigmas sigmal k rho 
+        let r0 = targetfunc (sigmas+eps) sigmal k rho shift
+        let r1 = targetfunc sigmas (sigmal+eps) k rho shift
+        let r2 = targetfunc sigmas sigmal (k+eps) rho shift
+        let r3 = targetfunc sigmas sigmal k (rho+eps)  shift
+        let r4 = targetfunc sigmas sigmal k rho  (shift+eps)
+        let r = targetfunc sigmas sigmal k rho shift
         let df x = ( x - r ) / eps
-        let d' = [ r0; r1 ; r2; r3 ] |> List.map df |> vector        
+        let d' = [ r0; r1 ; r2; r3; r4 ] |> List.map df |> vector        
         struct (r,d')
 
 #!fsharp
@@ -134,10 +120,10 @@ let gradientfuncjoint sigmas sigmal k rho (ins:Instrument) pd =
 let bestfit ins pd = 
     let solver = Optimization.BfgsBMinimizer( 1e-5, 1e-5, 1e-5, 1000)
     //let solver = Optimization.ConjugateGradientMinimizer(1e-5, 1000)
-    let ig = DenseVector.ofList [ 0.5; 0.25; 1.0 ; 0.3 ] //sigmas sigmal k rho
-    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.99 ] //sigmas sigmal k rho
-    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0. ] //sigmas sigmal k rho
-    let o = ObjectiveFunction.Gradient( fun (iv:Vector<float>) -> gradientfuncjoint iv.[0] iv.[1] iv.[2] iv.[3] ins pd )        
+    let ig = DenseVector.ofList [ 0.5; 0.25; 1.0 ; 0.3; 0.] //sigmas sigmal k rho
+    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.99; 1.0 ] //sigmas sigmal k rho
+    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0.;-1.0 ] //sigmas sigmal k rho
+    let o = ObjectiveFunction.Gradient( fun (iv:Vector<float>) -> gradientfuncjoint iv.[0] iv.[1] iv.[2] iv.[3] iv.[4] ins pd )        
     solver.FindMinimum( o, l, u, ig)
 
 #!fsharp
@@ -148,12 +134,9 @@ let pd = DateTime(2023,2,1)
 #!fsharp
 
 let res = (bestfit Instrument.TTF pd).MinimizingPoint
+res
 
 // res.MinimizingPoint
-
-#!fsharp
-
-res
 
 #!fsharp
 
@@ -162,6 +145,15 @@ let sigmas = res.[0]
 let sigmal = res.[1]
 let k = res.[2]
 let rho = res.[3]
+let shift = res.[4]
+
+#!fsharp
+
+// let sigmas = 1.5
+// let sigmal = 0.27
+// let k = 1.
+// let rho = 0.3
+// let shift = 0.
 
 #!fsharp
 
@@ -175,13 +167,6 @@ let lvc =
     |> Set.toArray
     |> Array.sortBy fst
 let (lvt,lvv) = Array.unzip lvc
-
-#!fsharp
-
-lvv
-
-#!fsharp
-
 let tvc = 
     tv.Pillars    
     |> Set.filter( fun p -> c.Contracts.[p] > pd )
@@ -193,30 +178,21 @@ let tvc =
     |> Array.sortBy fst
 
 let tvt,tvv = Array.unzip tvc
-
-#!fsharp
-
 let ts = [0.1 .. 0.1 ..20]
-
-#!fsharp
-
 let lvc' = 
-    let vols = ts |> List.map( fun t -> fwdVol 0 0.01 t sigmas sigmal k rho)
+    let vols = ts |> List.map( fun t -> fwdVol 0 0.01 (t + shift) sigmas sigmal k rho)
     List.zip ts vols
 
 let tvc' = 
-    let vols = ts |> List.map( fun t -> fwdVol 0 t t sigmas sigmal k rho)
+    let vols = ts |> List.map( fun t -> fwdVol 0 t (t+shift) sigmas sigmal k rho)
     List.zip ts vols
-
-#!fsharp
-
 let v2 = 
     let ts = [0. .. 0.1 .. 2 ]
-    let vols =  ts |> List.map( fun t -> fwdVol 0 t 2.0 sigmas sigmal k rho)
+    let vols =  ts |> List.map( fun t -> fwdVol 0 t (2.0+shift) sigmas sigmal k rho)
     List.zip ts vols
 let v5 = 
     let ts = [0. .. 0.1 .. 5 ]
-    let vols =  ts |> List.map( fun t -> fwdVol 0 t 5.0 sigmas sigmal k rho)
+    let vols =  ts |> List.map( fun t -> fwdVol 0 t (5.0+shift) sigmas sigmal k rho)
     List.zip ts vols
 
 #!fsharp
@@ -230,21 +206,21 @@ let v5 =
     Chart.Line(v5, Name="5yr future term vol")
 ]
 |> Chart.combine
-|>Chart.withTitle($"sv=%0.2f{res[0]}, lv=%0.2f{res[1]}, k=%0.2f{res[2]} r=%0.2f{res[3]}")
+|>Chart.withTitle($"sv=%0.2f{sigmas}, lv=%0.2f{sigmal}, k=%0.2f{k} r=%0.2f{rho} shift=%0.2f{shift}")
 |> Chart.withXAxisStyle(MinMax=(0,20))
 
 #!fsharp
 
 [ 
     [0.1 .. 0.1 .. 20]
-    |> List.map( fun t -> t, fwdCorr 0 0.1 0.25 t sigmas sigmas sigmal k rho)
+    |> List.map( fun t -> t, fwdCorr 0 0.1 (0.25+shift) (t+shift) sigmas sigmas sigmal k rho)
     |> Chart.Line
     |> Chart.withTraceInfo(Name="corr 3m vs others ")
 
-    Chart.Point([ 5, 0.3; 10, 0.3;  1, 0.55], Name="inputs")
+    Chart.Point([1,0.65; 5, 0.3; 10, 0.3;  1, 0.55], Name="inputs")
 
     [0.1 .. 0.1 .. 20]
-    |> List.map( fun t -> t, fwdCorr 0 0.1 t 5 sigmas sigmas sigmal k rho)
+    |> List.map( fun t -> t, fwdCorr 0 0.1 (t + shift) ( 5. + shift) sigmas sigmas sigmal k rho)
     |> Chart.Line
     |> Chart.withTraceInfo(Name="corr 5y vs various ")
     

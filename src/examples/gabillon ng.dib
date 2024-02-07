@@ -1,0 +1,237 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"}]}}
+
+#!fsharp
+
+#r "nuget: FSharp.Data"
+#r "nuget: Deedle"
+#r "nuget: Deedle.Interactive"
+#r "nuget: Plotly.NET"
+#r "nuget: Plotly.NET.Interactive"
+#r "nuget:MathNet.Numerics"
+#r "nuget:MathNet.Numerics.fsharp"
+// #r "nuget:MathNet.Numerics.MKL.Win-x64"
+open FSharp.Data
+open System
+open System.IO
+open Deedle
+open Plotly.NET
+open Plotly.NET.LayoutObjects
+Defaults.DefaultTemplate <- ChartTemplates.light
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
+open MathNet.Numerics.Statistics
+open MathNet.Numerics.Optimization
+
+#!fsharp
+
+#r "nuget: CommodLib"
+open Commod
+Commod.IOcsv.ROOT<- __SOURCE_DIRECTORY__ +/ ".." +/ "Library"
+reload()
+
+#!fsharp
+
+let gradientfunc sigmas sigmal k rho (ins:Instrument) pd =
+        let c = getCommod ins 
+        let vols = getVols ins 
+        let targetfunc sigmas sigmal k rho =
+            vols.Pillars
+            |> Set.filter( fun p -> c.Contracts.[p] > pd )
+            |> Set.fold( fun acc p ->
+                let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+                let v = vols.[p] |> float
+                let v' = fwdVol 0.0 t t sigmas sigmal k rho 
+                (pown ( v' - v ) 2 ) + acc ) 0.
+        let eps = 1e-6
+        let r0 = targetfunc (sigmas+eps) sigmal k rho 
+        let r1 = targetfunc sigmas (sigmal+eps) k rho
+        let r2 = targetfunc sigmas sigmal (k+eps) rho
+        let r3 = targetfunc sigmas sigmal k (rho+eps) 
+        let r = targetfunc sigmas sigmal k rho 
+        let df x = ( x - r ) / eps
+        let d' = [ r0; r1 ; r2; r3 ] |> List.map df |> vector        
+        struct (r,d')
+
+#!fsharp
+
+let lv = 
+    [
+        ("MAR-24",PercentVol 62)
+        ("DEC-24",PercentVol 29)
+        ("DEC-25",PercentVol 20)
+        ("DEC-26",PercentVol 16)
+        ("DEC-27",PercentVol 16)
+        ("DEC-40",PercentVol 25)
+    ] |> Map.ofList |> VolCurve
+let tv = 
+    [
+        ("MAR-24",PercentVol 62)
+        ("DEC-24",PercentVol 40)
+        ("DEC-25",PercentVol 33)
+        ("DEC-26",PercentVol 32)
+        ("DEC-27",PercentVol 29)
+        ("DEC-40",PercentVol 30)
+    ] |> Map.ofList |> VolCurve
+let corr1m1y = 0.92
+let corr1m5y = 0.45
+let corr1m7y = 0.16
+let corr1y5y = 0.49
+let gradientfuncjoint sigmas sigmal k rho shift (ins:Instrument) pd =
+        let c = getCommod ins 
+        let targetfunc sigmas sigmal k rho shift=
+            let e = 
+                lv.Pillars
+                |> Set.filter( fun p -> c.Contracts.[p] > pd )
+                |> Set.fold( fun acc p ->
+                    let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+                    let v = lv.[p] |> float
+                    let v' = fwdVol 0.0 0.01 (t+shift) sigmas sigmal k rho 
+                    (pown ( v' - v ) 2 ) + acc ) 0.
+            let e' = 
+                tv.Pillars
+                |> Set.filter( fun p -> c.Contracts.[p] > pd )
+                |> Set.fold( fun acc p ->
+                    let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+                    let v = tv.[p] |> float
+                    let v' = fwdVol 0.0 t (t+shift) sigmas sigmal k rho 
+                    (pown ( v' - v ) 2 ) + acc ) 0.
+            let c = ((fwdCorr 0 0.1 (0.1+shift) (1.0+shift) sigmas sigmas sigmal k rho) - corr1m1y) ** 2 
+            let c' = ((fwdCorr 0 0.1 (0.1+shift) (5.0+shift) sigmas sigmas sigmal k rho) - corr1m5y) ** 2
+            let c'' = ((fwdCorr 0 0.1 (0.1+shift) (7.0+shift) sigmas sigmas sigmal k rho) - corr1m7y) ** 2
+            let c''' = ((fwdCorr 0 0.1 (1.0+shift) (5.0+shift) sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
+            e*3.0 + e' + ( c + c' + c'' + c''')*3.0
+        let eps = 1e-6
+        let r0 = targetfunc (sigmas+eps) sigmal k rho shift
+        let r1 = targetfunc sigmas (sigmal+eps) k rho shift
+        let r2 = targetfunc sigmas sigmal (k+eps) rho shift
+        let r3 = targetfunc sigmas sigmal k (rho+eps) shift  
+        let r4 = targetfunc sigmas sigmal k rho (shift+eps) 
+        let r = targetfunc sigmas sigmal k rho shift
+        let df x = ( x - r ) / eps
+        let d' = [ r0; r1 ; r2; r3; r4 ] |> List.map df |> vector        
+        struct (r,d')
+
+#!fsharp
+
+let bestfit ins pd = 
+    let solver = Optimization.BfgsBMinimizer( 1e-5, 1e-5, 1e-5, 1000)
+    //let solver = Optimization.ConjugateGradientMinimizer(1e-5, 1000)
+    let ig = DenseVector.ofList [ 0.5; 0.25; 1.0 ; 0.3; 0.0 ] //sigmas sigmal k rho
+    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.99; 0.01 ] //sigmas sigmal k rho
+    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0.; 0 ] //sigmas sigmal k rho
+    let o = ObjectiveFunction.Gradient( fun (iv:Vector<float>) -> gradientfuncjoint iv.[0] iv.[1] iv.[2] iv.[3] iv[4] ins pd  )        
+    solver.FindMinimum( o, l, u, ig)
+
+#!fsharp
+
+// let pd = DateTime.Today
+let pd = DateTime(2023,2,1)
+
+#!fsharp
+
+// let res = (bestfit Instrument.BRT pd).MinimizingPoint
+let res = (bestfit Instrument.BRT pd).MinimizingPoint
+res
+
+// res.MinimizingPoint
+
+#!fsharp
+
+let c = getCommod BRT 
+let sigmas = res.[0]
+let sigmal = res.[1]
+let k = res.[2]
+let rho = res.[3]
+let shift = res.[4]
+
+#!fsharp
+
+let lvc = 
+    lv.Pillars
+    |> Set.filter( fun p -> c.Contracts.[p] > pd )
+    |> Set.map( fun p ->
+        let t = ( c.Contracts.[p] - pd ).TotalDays / 365. 
+        let v = lv.[p] |> float
+        t, v)
+    |> Set.toArray
+    |> Array.sortBy fst
+let (lvt,lvv) = Array.unzip lvc
+
+#!fsharp
+
+lvv
+
+#!fsharp
+
+let tvc = 
+    tv.Pillars    
+    |> Set.filter( fun p -> c.Contracts.[p] > pd )
+    |> Set.map( fun p ->
+        let t = ( c.Contracts.[p] - pd ).TotalDays / 365.
+        let v = tv[p] |> float
+        t, v )
+    |> Set.toArray
+    |> Array.sortBy fst
+
+let tvt,tvv = Array.unzip tvc
+
+#!fsharp
+
+let ts = [0.1 .. 0.1 ..20]
+
+#!fsharp
+
+let lvc' = 
+    let vols = ts |> List.map( fun t -> fwdVol 0 0.01 (t+shift) sigmas sigmal k rho)
+    List.zip ts vols
+
+let tvc' = 
+    let vols = ts |> List.map( fun t -> fwdVol 0 t (t+shift) sigmas sigmal k rho)
+    List.zip ts vols
+
+#!fsharp
+
+let v2 = 
+    let ts = [0.1 .. 0.1 .. 2 ]
+    let vols =  ts |> List.map( fun t -> fwdVol 0 t (2.0+shift) sigmas sigmal k rho)
+    List.zip ts vols
+let v5 = 
+    let ts = [0.1 .. 0.1 .. 5 ]
+    let vols =  ts |> List.map( fun t -> fwdVol 0 t (5.0+shift) sigmas sigmal k rho)
+    List.zip ts vols
+
+#!fsharp
+
+[ 
+    Chart.Line( tvc', Name="calibrated term vol")
+    Chart.Point(tvt, tvv, Name="input term vol")
+    Chart.Line( lvc', Name="calibrated local vol")
+    Chart.Point(lvt,  lvv, Name="input local vol")
+    Chart.Line(v2, Name="2yr future term vol")
+    Chart.Line(v5, Name="5yr future term vol")
+]
+|> Chart.combine
+|>Chart.withTitle($"sv=%0.2f{sigmas}, lv=%0.2f{sigmal}, k=%0.2f{k} r=%0.2f{rho} shift=%0.2f{shift}")
+|> Chart.withXAxisStyle(MinMax=(0,20))
+
+#!fsharp
+
+[ 
+    [0.1 .. 0.1 .. 20]
+    |> List.map( fun t -> t, fwdCorr 0 0.1 (0.1+shift) (t+shift) sigmas sigmas sigmal k rho)
+    |> Chart.Line
+    |> Chart.withTraceInfo(Name="corr 1m vs others ")
+
+    Chart.Point([ 1, corr1m1y; 5, corr1m5y; 7, corr1m7y; 1, corr1y5y], Name="inputs")
+
+    [0.1 .. 0.1 .. 20]
+    |> List.map( fun t -> t, fwdCorr 0 0.1 (t + shift) ( 5.0 + shift) sigmas sigmas sigmal k rho)
+    |> Chart.Line
+    |> Chart.withTraceInfo(Name="corr 5y vs others ")
+    
+]
+|> Chart.combine
+|> Chart.withYAxisStyle(MinMax=(0,1))
+|> Chart.withXAxisStyle(MinMax=(0,20))

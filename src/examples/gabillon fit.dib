@@ -76,10 +76,10 @@ let tv =
         ("DEC-40",PercentVol 27)
         ("DEC-41",PercentVol 26)
     ] |> Map.ofList |> VolCurve
-let corr3m5y = 0.3
-let corr3m10y = 0.3
-let corr3m1y = 0.65
-let corr1y5y = 0.55
+let corr3m1y = 0.99
+let corr3m5y = 0.75
+let corr3m10y = 0.53
+let corr1y5y = 0.76
 let gradientfuncjoint sigmas sigmal k rho shift (ins:Instrument) pd =
         let c = getCommod ins 
         let targetfunc sigmas sigmal k rho shift =
@@ -99,11 +99,11 @@ let gradientfuncjoint sigmas sigmal k rho shift (ins:Instrument) pd =
                     let v = tv.[p] |> float
                     let v' = fwdVol 0.0 t (t+shift) sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
-            let c = ((fwdCorr 0 0.1 (0.25 + shift) (5.0 + shift) sigmas sigmas sigmal k rho) - corr3m5y) ** 2
-            let c''' = ((fwdCorr 0 0.1 (0.25+shift) (10. + shift) sigmas sigmas sigmal k rho) - corr3m5y) ** 2
-            let c' = ((fwdCorr 0 0.1 (0.25+shift) (1.0 + shift) sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
-            let c'' = ((fwdCorr 0 0.1 (1.0 + shift) (5.0 + shift) sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
-            e*2.0 + e' + (c + c'*1.5+ c'' + c''')*2.0
+            let c = ((fwdCorr 0 0.1 (0.25+shift) (1.0 + shift) sigmas sigmas sigmal k rho) - corr3m1y) ** 2 
+            let c' = ((fwdCorr 0 0.1 (0.25 + shift) (5.0 + shift) sigmas sigmas sigmal k rho) - corr3m5y) ** 2
+            let c'' = ((fwdCorr 0 0.1 (0.25+shift) (10. + shift) sigmas sigmas sigmal k rho) - corr3m10y) ** 2
+            let c''' = ((fwdCorr 0 0.1 (1.0 + shift) (5.0 + shift) sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
+            e*2.0 + e' + (c + c' + c'' + c''')*2.0
         let eps = 1e-6
         let r0 = targetfunc (sigmas+eps) sigmal k rho shift
         let r1 = targetfunc sigmas (sigmal+eps) k rho shift
@@ -217,7 +217,7 @@ let v5 =
     |> Chart.Line
     |> Chart.withTraceInfo(Name="corr 3m vs others ")
 
-    Chart.Point([1,0.65; 5, 0.3; 10, 0.3;  1, 0.55], Name="inputs")
+    Chart.Point([1,corr3m1y; 5, corr3m5y; 10, corr3m10y;  1, corr1y5y], Name="inputs")
 
     [0.1 .. 0.1 .. 20]
     |> List.map( fun t -> t, fwdCorr 0 0.1 (t + shift) ( 5. + shift) sigmas sigmas sigmal k rho)

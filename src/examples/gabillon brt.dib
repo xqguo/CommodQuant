@@ -74,10 +74,10 @@ let tv =
         ("DEC-27",PercentVol 26)
         ("DEC-40",PercentVol 18)
     ] |> Map.ofList |> VolCurve
-let corr1m1y = 0.92
-let corr1m5y = 0.55
-let corr1m7y = 0.35
-let corr1y5y = 0.7
+let corr1m1y = 0.99
+let corr1m5y = 0.82
+let corr1m7y = 0.75
+let corr1y5y = 0.876
 let gradientfuncjoint sigmas sigmal k rho shift (ins:Instrument) pd =
         let c = getCommod ins 
         let targetfunc sigmas sigmal k rho shift=
@@ -97,10 +97,10 @@ let gradientfuncjoint sigmas sigmal k rho shift (ins:Instrument) pd =
                     let v = tv.[p] |> float
                     let v' = fwdVol 0.0 t (t+shift) sigmas sigmal k rho 
                     (pown ( v' - v ) 2 ) + acc ) 0.
-            let c = ((fwdCorr 0 0.1 (0.1+shift) (5.0+shift) sigmas sigmas sigmal k rho) - corr1m5y) ** 2
-            let c' = ((fwdCorr 0 0.1 (1.0+shift) (5.0+shift) sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
-            let c'' = ((fwdCorr 0 0.1 (0.1+shift) (1.0+shift) sigmas sigmas sigmal k rho) - corr1m1y) ** 2 
-            let c''' = ((fwdCorr 0 0.1 (0.1+shift) (7.0+shift) sigmas sigmas sigmal k rho) - corr1m7y) ** 2
+            let c = ((fwdCorr 0 0.1 (0.1+shift) (1.0+shift) sigmas sigmas sigmal k rho) - corr1m1y) ** 2 
+            let c' = ((fwdCorr 0 0.1 (0.1+shift) (5.0+shift) sigmas sigmas sigmal k rho) - corr1m5y) ** 2
+            let c'' = ((fwdCorr 0 0.1 (0.1+shift) (7.0+shift) sigmas sigmas sigmal k rho) - corr1m7y) ** 2
+            let c''' = ((fwdCorr 0 0.1 (1.0+shift) (5.0+shift) sigmas sigmas sigmal k rho) - corr1y5y) ** 2 
             e*3.0 + e' + ( c + c' + c'' + c''')*3.0
         let eps = 1e-6
         let r0 = targetfunc (sigmas+eps) sigmal k rho shift
@@ -119,8 +119,8 @@ let bestfit ins pd =
     let solver = Optimization.BfgsBMinimizer( 1e-5, 1e-5, 1e-5, 1000)
     //let solver = Optimization.ConjugateGradientMinimizer(1e-5, 1000)
     let ig = DenseVector.ofList [ 0.5; 0.25; 1.0 ; 0.3; 0.0 ] //sigmas sigmal k rho
-    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.99; 1 ] //sigmas sigmal k rho
-    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0.; -1 ] //sigmas sigmal k rho
+    let u = DenseVector.ofList [ 1.5; 0.5; 10.0 ; 0.99; 0.01 ] //sigmas sigmal k rho
+    let l = DenseVector.ofList [ 0.01; 0.01; 0.01 ; 0.; 0 ] //sigmas sigmal k rho
     let o = ObjectiveFunction.Gradient( fun (iv:Vector<float>) -> gradientfuncjoint iv.[0] iv.[1] iv.[2] iv.[3] iv[4] ins pd  )        
     solver.FindMinimum( o, l, u, ig)
 

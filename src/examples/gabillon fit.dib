@@ -183,8 +183,14 @@ let lvc' =
     let vols = ts |> List.map( fun t -> fwdVol 0 0.01 (t + shift) sigmas sigmal k rho)
     List.zip ts vols
 
+let lvc'' = 
+    let vols = ts |> List.map( fun t -> fwdVol 0 0.01 (t + shift) 1.0 0.2 0.5 0.)
+    List.zip ts vols
 let tvc' = 
     let vols = ts |> List.map( fun t -> fwdVol 0 t (t+shift) sigmas sigmal k rho)
+    List.zip ts vols
+let tvc'' = 
+    let vols = ts |> List.map( fun t -> fwdVol 0 t (t+shift) 1.0 0.2 0.5 0.)
     List.zip ts vols
 let v2 = 
     let ts = [0. .. 0.1 .. 2 ]
@@ -199,8 +205,10 @@ let v5 =
 
 [ 
     Chart.Line( tvc', Name="calibrated term vol")
+    Chart.Line( tvc'', Name="sample term vol")
     Chart.Point(tvt, tvv, Name="input term vol")
     Chart.Line( lvc', Name="calibrated local vol")
+    Chart.Line( lvc'', Name="sample local vol")
     Chart.Point(lvt,  lvv, Name="input local vol")
     Chart.Line(v2, Name="2yr future term vol")
     Chart.Line(v5, Name="5yr future term vol")
@@ -217,6 +225,10 @@ let v5 =
     |> Chart.Line
     |> Chart.withTraceInfo(Name="corr 3m vs others ")
 
+    [0.1 .. 0.1 .. 20]
+    |> List.map( fun t -> t, fwdCorr 0 0.1 (0.25+shift) (t+shift) 1.0 1.0 0.2 0.5 0)
+    |> Chart.Line
+    |> Chart.withTraceInfo(Name="sample corr 3m vs others ")
     Chart.Point([1,corr3m1y; 5, corr3m5y; 10, corr3m10y;  1, corr1y5y], Name="inputs")
 
     [0.1 .. 0.1 .. 20]

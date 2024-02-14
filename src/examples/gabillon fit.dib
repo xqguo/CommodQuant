@@ -63,7 +63,7 @@ let lv =
         ("DEC-25",PercentVol 37)
         ("DEC-26",PercentVol 27)
         ("DEC-27",PercentVol 21)
-        ("DEC-40",PercentVol 19)
+        ("DEC-40",PercentVol 18)
         ("DEC-41",PercentVol 18)
     ] |> Map.ofList |> VolCurve
 let tv = 
@@ -74,7 +74,7 @@ let tv =
         ("DEC-26",PercentVol 53)
         ("DEC-27",PercentVol 52)
         ("DEC-40",PercentVol 27)
-        ("DEC-41",PercentVol 26)
+        ("DEC-41",PercentVol 27)
     ] |> Map.ofList |> VolCurve
 let corr3m1y = 0.99
 let corr3m5y = 0.75

@@ -368,3 +368,16 @@ module Gabillon =
         let p1 = getGabillonParam ins1
         let p2 = getGabillonParam ins2
         combineGabillonParam p1 p2 rho
+
+    let getGabillonImpliedVol ins sigmas sigmal k rho pd = 
+        let c = getCommod ins
+        c.Contracts.Opt 
+        |> Map.filter(fun pillar v -> pd < v)
+        |> Map.map( fun pillar v -> 
+            let t = getTTM pd v
+            let T = c.Contracts.Fut.[pillar] |> getTTM pd
+            fwdVol 0 t T sigmas sigmal k rho |> decimal |> AbsoluteVol )
+        |> Map.toArray
+        |> Array.sortBy (fst >> pillarToDate)
+        |> Map.ofArray
+        |> VolCurve

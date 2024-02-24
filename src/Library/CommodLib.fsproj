@@ -10,8 +10,8 @@
     <None Include="iceexpiry.fsx" />
     <None Include="../../LICENSE.txt" />
     <None Include="paket.references" />
-    <Compile Include="DomainTypes.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="DomainTypes.fs" />
     <Compile Include="Units.fs" />
     <Compile Include="Math.fs" />
     <Compile Include="IO.fs" />

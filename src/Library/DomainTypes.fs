@@ -216,6 +216,9 @@ module DomainTypes  =
         member this.shift s = 
             let (VolCurve c) = this
             c |> Map.map( fun k v -> AbsoluteVol ( this.Item k  + s )) |> VolCurve
+        member this.Observations = 
+            let (VolCurve c) = this
+            c |> Map.map( fun k v -> this.Item k ) |> Map.toArray |> Array.sortBy ( fst >> pillarToDate)
 
     type RateCurves = 
         | USDOIS of PiecewiseYieldCurve

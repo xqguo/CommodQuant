@@ -195,6 +195,9 @@ module DomainTypes  =
         member this.shift s = 
             let (PriceCurve c) = this
             c |> Map.map( fun _ v -> UnitPrice.applyCase v.Case (v.Value + s)) |> PriceCurve
+        member this.Observations = 
+            let (PriceCurve c) = this
+            c |> Map.map( fun k v -> v.value ) |> Map.toArray |> Array.sortBy ( fst >> pillarToDate)
 
     type Vol = 
         | PercentVol of decimal //percentage vol e.g. 20

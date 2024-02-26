@@ -92,6 +92,7 @@ module Markets =
             |> applyMapUnit i.Quotation.Case
             |> PriceCurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
+
     let pctvolcurve (data:seq<string*float>)= 
             data
             |> Seq.map( fun (p,v) ->  
@@ -103,6 +104,7 @@ module Markets =
                 pillar, ( PercentVol (decimal v)))
             |> Map.ofSeq
             |> VolCurve
+            
     let absvolcurve (data:seq<string*float>) = 
             data
             |> Seq.map( fun (p,v) ->  

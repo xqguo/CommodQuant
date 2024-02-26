@@ -1,18 +1,12 @@
-﻿#I "../../../.paket/load/"
-#load "FSharp.Data.fsx"
-#load "MathNet.Numerics.FSharp.fsx"
-#load "QLNet.fsx"
-#load "FsCheck.fsx"
-#r "C:\\Users\\xguo\\OneDrive - Pavilion Energy\\Commodities\\bin\\CommodLib.dll"
+﻿#r "nuget: FSharp.Data"
+#r "nuget: MathNet.Numerics"
+#r "nuget: CommodLib, version>=1.0.1"
 open System
-open FSharp.Reflection
-open FsCheck
 open MathNet.Numerics
 open MathNet.Numerics.LinearAlgebra
-open MathNet.Numerics.Statistics
-open MathNet.Numerics.Distributions
-open QLNet
 open Commod
+Commod.IOcsv.ROOT<- __SOURCE_DIRECTORY__ +/ ".." +/ "Library"
+reload()
 
 let getGabillonCov' ins (vols:VolCurve) (sl, k, rho) (fixings: (DateTime*string) []) pd = 
     let c = getCommod ins

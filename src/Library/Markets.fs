@@ -92,7 +92,28 @@ module Markets =
             |> applyMapUnit i.Quotation.Case
             |> PriceCurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
-
+    let pctvolcurve data = 
+            data
+            |> Seq.map( fun (p,v) ->  
+                let pillar = 
+                    match p with
+                    | "TODAY" -> "TODAY"
+                    | s when s.StartsWith "BOM" -> "BOM"
+                    | x -> pillarToDate x |> formatPillar
+                pillar, ( PercentVol (decimal v)))
+            |> Map.ofSeq
+            |> VolCurve
+    let absvolcurve data = 
+            data
+            |> Seq.map( fun (p,v) ->  
+                let pillar = 
+                    match p with
+                    | "TODAY" -> "TODAY"
+                    | s when s.StartsWith "BOM" -> "BOM"
+                    | x -> pillarToDate x |> formatPillar
+                pillar, ( AbsoluteVol (decimal v)))
+            |> Map.ofSeq
+            |> VolCurve
     // these depends on the data format
     // commod curve pillars are either MMM-yy or TODAY or BOM, all in upper case.
     // vols data in market quote ( percent ), e.g. 20.1
@@ -105,16 +126,8 @@ module Markets =
             //let data = PriceCsv.AsyncLoad v |> Async.RunSynchronously
             //data.Rows
             getPrice v 
-            |> Seq.map( fun (p,v) ->  
-                let pillar = 
-                    match p with
-                    | "TODAY" -> "TODAY"
-                    | s when s.StartsWith "BOM" -> "BOM"
-                    | x -> pillarToDate x |> formatPillar
-                pillar, ( PercentVol (decimal v)))
             |> Seq.filter( fun (p,_) -> c.ContainsKey p || p = "TODAY" || p = "BOM" )
-            |> Map.ofSeq
-            |> VolCurve
+            |> pctvolcurve
         | None -> invalidOp <| sprintf "Cannot load prices for %A" ins
 
     // commod curve pillars are in MMM-yy

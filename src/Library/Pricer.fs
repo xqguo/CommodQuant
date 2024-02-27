@@ -321,7 +321,8 @@ module Pricer =
             xParam pricecurve1 volcurve1 pricecurve2 volcurve2 o [|(1.0,0)|]
  
   ///asian and swaption pricer using Gabillon model
-    let AsianOptionPricerGabillon inst lags avg k callput expDate  
+    let AsianOptionPricerGabillon inst lags avg k
+        callput expDate  
         refMonth (pricingDate:DateTime)
         gParam pricecurve volcurve =
         let (f1,fw1,x1,a1) = getInputsG pricingDate expDate refMonth lags avg inst 1.0M pricecurve 

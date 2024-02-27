@@ -78,3 +78,11 @@ SpreadOptionPricerXGabillon ins' [|0|] BusinessDays ins [|0|] BusinessDays 0.125
 #!fsharp
 
 applyFormula "603" ("DEC-24"|> pillarToDate)
+
+#!fsharp
+
+vols'.Observations |> Chart.Line
+
+#!fsharp
+
+prices'.Observations |> Chart.Line

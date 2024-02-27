@@ -235,6 +235,6 @@ module Math =
     // o is a list of order of Ghass Hermite for each dim of integration
     let ghint (o:int list) (f:(float[]->float)) =
         let zs,ws = gh o 
-        let o = zs |> Array.map f
-        (o,ws) ||> Array.map2 (*) |> Array.sum
+        let os = zs |> Array.map f
+        (os,ws) ||> Array.map2 ( * ) |> Array.sum
 

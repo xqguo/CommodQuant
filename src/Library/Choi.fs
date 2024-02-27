@@ -74,9 +74,9 @@ module Choi =
             opt, delta
         else
             if f.Count = 1 then // use bs
-                let o = bs (f.[0]*w.[0]) strike (sqrt sigma.[0,0]) 1.0 callput 
+                let opt = bs (f.[0]*w.[0]) strike (sqrt sigma.[0,0]) 1.0 callput 
                 let delta = ( bsdelta (f.[0]*w.[0]) strike (sqrt sigma.[0,0]) 1.0 callput ) * w.[0]
-                o, [|delta|]
+                opt, [|delta|]
             else 
             let V = getVChoi f w sigma //sigma is fixed already, when using mkl, another fixcov seems to point to wrong matrix.
             //for each z_dot, find z1 and then C_bs, and then sum them using GH

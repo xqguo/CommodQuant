@@ -34,6 +34,10 @@ reload()
 
 #!fsharp
 
+//this notebook provides sample option pricing using CommodLib
+
+#!fsharp
+
 // let pd = DateTime.Today
 let pd = DateTime.Today
 let ins = TTF
@@ -58,3 +62,15 @@ prices.Observations |> Chart.Line
 #!fsharp
 
 AsianOptionPricerGabillon ins [|0|] LastBD 10.0 Call exp "DEC-24" pd gparam prices vols 
+
+#!fsharp
+
+let ins' = BRT
+let prices' = getPriceCurve ins' None
+let vols' = getVolCurve ins' None
+
+SpreadOptionPricerXGabillon ins' [|0|] BusinessDays ins [|0|] BusinessDays 0.125M 1.0 Call exp "DEC-24" pd (getXGabillonParam ins' ins [0.4]) prices' vols' prices vols [7;5;5]  
+
+#!fsharp
+
+SpreadOptionPricerXGabillon ins' [|0|] BusinessDays ins [|0|] BusinessDays 0.125M 1.0 Call exp "DEC-24" pd (getXGabillonParam ins' ins [0.4]) prices' vols' prices vols [7;5;2]  

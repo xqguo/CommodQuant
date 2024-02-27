@@ -53,4 +53,8 @@ vols.Observations |> Chart.Line
 
 #!fsharp
 
+prices.Observations |> Chart.Line
+
+#!fsharp
+
 AsianOptionPricerGabillon ins [|0|] LastBD 10.0 Call exp "DEC-24" pd gparam prices vols 

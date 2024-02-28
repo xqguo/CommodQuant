@@ -28,12 +28,12 @@ module Choi =
         //eps * s * v.[n] )
         let mu = (ci * V1').L2Norm()
         let V1'' = V1' / mu
-        let Q1' = ci * V1''
-        let R = householderR Q1'
+        let Q1' = ci * V1'' //formula 23 scale Q1 to unit vector
+        let R = householderR Q1' //formula 24
         //let CR = c * R
         let svd = (c * R).SubMatrix(0, n, 1, n - 1).Svd() //drop 1st column.
         //let svd = CR'.Svd()
-        let V = V1''.ToColumnMatrix().Append(svd.U * svd.W)
+        let V = V1''.ToColumnMatrix().Append(svd.U * svd.W) //formula 25
         V
 
     ///get V with Choi's method for 2 assets with constant correlation.
@@ -96,7 +96,7 @@ module Choi =
             //for each z_dot, find z1 and then C_bs, and then sum them using GH
             let n = f.Count
 
-            let fk k (z: Vector<float>) = //formula 7
+            let fk k (z: Vector<float>) = //formula 7/15, forward factor
                 let vk = V.Row(k) //kth row vector
                 let vksum = vk * vk - vk.[0] * vk.[0]
                 exp (-0.5 * vksum + vk.SubVector(1, z.Count) * z) //fk for some z
@@ -112,28 +112,38 @@ module Choi =
             let dim = min (n - 1) (o.Length) //cap at l levels
             let zs, ws = gh o.[0 .. (dim - 1)]
 
-            let wf z =
+            let wf z = //weighted forward factor
                 w //for each kth fixing
-                |> Vector.mapi (fun k w ->
+                |> Vector.mapi (fun k x ->
                     let fki = fk k z
-                    w * fki)
+                    x * fki)
 
-            let wff z =
+            let wff z = //weighted forwards
                 wf z //for each kth fixing
                 |> Vector.mapi (fun k x -> x * f.[k])
 
-            let fn z1 z = //for each risk factor scenario
-                (wff z //for each kth fixing
-                 |> Vector.mapi (fun k w -> w * exp (-0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1))
-                 |> Vector.sum)
-                - strike
+            let fn' z1 z = // weighted forwards for each risk factor scenario, formula 8 before sum and strike
+                w //for each kth fixing
+                |> Vector.mapi (fun k x ->
+                    let fki = fk k z
+                    x * f.[k] * fki  * exp (-0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1))
+
+            let fn z1 z = //for each risk factor scenario formula 8
+                // (wff z //for each kth fixing
+                //  |> Vector.mapi (fun k w -> w * exp (-0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1))
+                Vector.sum (fn' z1 z)  - strike //payiff eval formula 8
+
+            // let difffn z1 z =
+            //     wff z //for each kth fixing
+            //     |> Vector.mapi (fun k w -> w * exp (- 0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1) * V.[k, 0])
+            //     |> Vector.sum //payoff derivative
 
             let difffn z1 z =
-                wff z //for each kth fixing
-                |> Vector.mapi (fun k w -> w * exp (- 0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1) * V.[k, 0])
-                |> Vector.sum
+                fn' z1 z 
+                |> Vector.mapi (fun k x -> x * V.[k, 0])
+                |> Vector.sum //payoff derivative
 
-            let roots =
+            let roots = //find the roots of the payoff kink point in d(.) formula 8
                 zs
                 |> Array.map (fun x ->
                     // fn is increasing in z1, linked to fixing0

@@ -19,7 +19,7 @@ module Math =
         let e = DenseVector.init n (fun n -> if n = 0 then 1.0 else 0.0)
         let q' = (q - e)
         let v = q' / q'.L2Norm()
-        (DiagonalMatrix.identity n) - 2.0 * v.OuterProduct(v)
+        (DiagonalMatrix.identity n) - 2.0 * v.OuterProduct(v) //formua 24
 
     /// helper function to get multi-dim GH zs
     /// permulate x y into x*y entries of zs.

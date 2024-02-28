@@ -1,5 +1,6 @@
 ﻿namespace Commod
-module Rates = 
+
+module Rates =
     open System
     open QLNet
 
@@ -9,25 +10,26 @@ module Rates =
     ///    PILLAR,PRICE
     ///    1M,2.3517
     ///    2M,2.3208
-    let getUSDOIS (td:DateTime) = 
+    let getUSDOIS (td: DateTime) =
         let f = USDOISSOURCE
         let i = FedFunds()
-        let helpers = 
+
+        let helpers =
             getPrice f
-            |> Seq.map( fun (p,v) ->     
+            |> Seq.map (fun (p, v) ->
                 match p with
-                | Period (n, p ) ->
-                    let u = 
-                      match p with
-                      |"W" -> TimeUnit.Weeks
-                      |"M" -> TimeUnit.Months
-                      |"Y" -> TimeUnit.Years
-                      | _ -> invalidOp <| sprintf "Unknown pillar format, expect W/M/Y, got %s" p
+                | Period(n, p) ->
+                    let u =
+                        match p with
+                        | "W" -> TimeUnit.Weeks
+                        | "M" -> TimeUnit.Months
+                        | "Y" -> TimeUnit.Years
+                        | _ -> invalidOp <| sprintf "Unknown pillar format, expect W/M/Y, got %s" p
+
                     let q = SimpleQuote(Nullable(v)) :> Quote
                     let h = Handle(q)
-                    OISRateHelper(2, Period(n, u), h, i ) :> RateHelper        
+                    OISRateHelper(2, Period(n, u), h, i) :> RateHelper
                 | _ -> invalidOp <| sprintf "Unknown pillar format, expect W/M/Y, got %s" p)
+
         let instruments = ResizeArray(helpers)
-        PiecewiseYieldCurve<Discount, LogLinear>( Date td, instruments, Actual360())
-
-
+        PiecewiseYieldCurve<Discount, LogLinear>(Date td, instruments, Actual360())

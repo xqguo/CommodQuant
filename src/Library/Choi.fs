@@ -136,14 +136,17 @@ module Choi =
                                 l, u)) * -1.)
             let opt = 
                 roots
-                |> Array.mapi( fun i d -> 
+                |> Array.mapi( fun i d -> //put numerically solves d into bs formula perform numerically integration
                     let z = vector zs.[i]
                     let o = 
                         match callput with
                         | Call -> 
-                            (wff z
-                            |> Vector.mapi( fun k w -> w * normcdf( d + V.[k,0]))
-                            |> Vector.sum )- strike * normcdf(d)                       
+                            ( 
+                                wff z
+                                |> Vector.mapi( fun k w -> w * normcdf( d + V.[k,0]))
+                                |> Vector.sum 
+                            )   
+                            - strike * normcdf(d)                       
                         | Put ->
                             strike * normcdf(-d) - 
                                 (wff z

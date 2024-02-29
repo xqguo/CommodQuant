@@ -96,7 +96,7 @@ module Choi =
             //for each z_dot, find z1 and then C_bs, and then sum them using GH
             let n = f.Count
 
-            let fk k (z: Vector<float>) = //formula 7/15, forward factor
+            let fk k (z: Vector<float>) = //formula 7/15, forward factor, z is one scenario of the k-th fixing
                 let vk = V.Row(k) //kth row vector
                 let vksum = vk * vk - vk.[0] * vk.[0]
                 exp (-0.5 * vksum + vk.SubVector(1, z.Count) * z) //fk for some z
@@ -128,7 +128,7 @@ module Choi =
                     let fki = fk k z
                     x * f.[k] * fki  * exp (-0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1))
 
-            let fn z1 z = //for each risk factor scenario formula 8
+            let fn z1 z = //for each risk factor scenario z formula 8, payoff for z1. target func.
                 // (wff z //for each kth fixing
                 //  |> Vector.mapi (fun k w -> w * exp (-0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1))
                 Vector.sum (fn' z1 z)  - strike //payiff eval formula 8
@@ -138,12 +138,12 @@ module Choi =
             //     |> Vector.mapi (fun k w -> w * exp (- 0.5 * V.[k, 0] * V.[k, 0] + V.[k, 0] * z1) * V.[k, 0])
             //     |> Vector.sum //payoff derivative
 
-            let difffn z1 z =
+            let difffn z1 z = //dfn'/dz1
                 fn' z1 z 
                 |> Vector.mapi (fun k x -> x * V.[k, 0])
                 |> Vector.sum //payoff derivative
 
-            let roots = //find the roots of the payoff kink point in d(.) formula 8
+            let roots = //find the roots (z1) of the payoff kink point in d(.) formula 8
                 zs
                 |> Array.map (fun x ->
                     // fn is increasing in z1, linked to fixing0

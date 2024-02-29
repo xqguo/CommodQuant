@@ -162,9 +162,8 @@ module Choi =
 
             let opt =
                 roots
-                |> Array.mapi (fun i d -> //put numerically solves d into bs formula perform numerically integration
+                |> Array.mapi (fun i d -> //put numerically solved roots d into inner most bs formula and perform numerically integration
                     let z = vector zs.[i]
-
                     let o =
                         match callput with
                         | Call ->

@@ -53,6 +53,7 @@ module Pricer =
                 match com.Instrument with
                 | JKM
                 | TTF
+                | NBP
                 | NG -> //for gas, use the contract month
                     getContractMonth contracts' contract
                 | _ -> refMonth, dateAdjust' "e" refMonth

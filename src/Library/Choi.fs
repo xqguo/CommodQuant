@@ -230,9 +230,17 @@ module Choi =
         o
         =
         //validate inputs
+
+        if (f1.Count + f2.Count) = 0 then
+            invalidArg "f1 and f2'" "no future fixings"
         //call general case
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.)
+        
+        // Print f, w, and sigma to stdout
+        //printfn "f: %A" f
+        //printfn "w: %A" w
+        //printfn "sigma: %A" sigma
 
         let rho =
             sigma.[0, f.Count - 1] / sqrt (sigma.[0, 0] * sigma.[f.Count - 1, f.Count - 1])

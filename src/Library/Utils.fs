@@ -8,7 +8,7 @@ open System.Threading.Tasks
 [<AutoOpen>]
 module Utils =
     open FSharp.Data
-    open FSharpx.Control
+    // open FSharpx.Control
     open Microsoft.FSharp.Reflection
 
     let toString (x: 'a) =
@@ -100,9 +100,9 @@ module Utils =
             do! sourceFile.CopyToAsync(destFile) |> Async.AwaitPlainTask
         }
 
-    let writeTextAsync f str = File.AsyncWriteAllText(f, str)
+    // let writeTextAsync f str = File.AsyncWriteAllText(f, str)
 
-    let writeLinesAsync (f: string) l = File.AsyncWriteAllLines(f, l)
+    // let writeLinesAsync (f: string) l = File.AsyncWriteAllLines(f, l)
 
     ///readline without locking file
     let readLines (path: string) =
@@ -114,7 +114,7 @@ module Utils =
                 yield sr.ReadLine()
         }
 
-    let writeFile f lines = File.AsyncWriteAllLines(f, lines)
+    let writeFile f lines = File.WriteAllLines(f, lines)
 
     ///move file with tests and return filename
     let moveFile outputdir (file: string) =

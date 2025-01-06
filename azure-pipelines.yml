@@ -12,8 +12,8 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   vmImageName: 'windows-2022'
-  framework: 'net8.0'
-  testframework: 'net8.0-windows'
+  framework: 'net9.0'
+  testframework: 'net9.0-windows'
 stages:
   - stage: Build
 

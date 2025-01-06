@@ -2,10 +2,10 @@ FSharp.Core
 FSharp.Data
 FSharpx.Extras
 MathNet.Numerics
-#MathNet.Numerics.MKL.Win-x64
+MathNet.Numerics.MKL.Win-x64
 MathNet.Numerics.FSharp
 Deedle
 QLNet
 Serilog
 Serilog.Sinks.File
-#MathNet.Numerics.Providers.MKL
+MathNet.Numerics.Providers.MKL

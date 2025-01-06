@@ -8,9 +8,9 @@ nuget FSharp.Data
 nuget FSharpx.Extras
 nuget Deedle 
 nuget MathNet.Numerics 
-#nuget MathNet.Numerics 6.0.0-beta1
-#nuget MathNet.Numerics.MKL.Win-x64
-#nuget MathNet.Numerics.Providers.MKL 6.0.0-beta1
+nuget MathNet.Numerics 6.0.0-beta1
+nuget MathNet.Numerics.MKL.Win-x64
+nuget MathNet.Numerics.Providers.MKL 6.0.0-beta1
 nuget MathNet.Numerics.FSharp
 nuget Argu
 nuget Serilog

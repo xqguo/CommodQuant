@@ -1,5 +1,5 @@
 GENERATE-LOAD-SCRIPTS: ON
-RESTRICTION: || (== net9.0) (== net9.0-windows7.0)
+RESTRICTION: == net9.0
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Argu (6.2.5)
@@ -53,14 +53,14 @@ NUGET
     FSharpx.Extras (3.2.1)
       FSharp.Core (>= 6.0.6)
       FSharpx.Collections (>= 3.0.1)
-    MathNet.Numerics (6.0.0-beta1)
+    MathNet.Numerics (5.0)
     MathNet.Numerics.FSharp (5.0)
       FSharp.Core (>= 6.0.2)
       MathNet.Numerics (>= 5.0)
     MathNet.Numerics.MKL.Win-x64 (3.0)
       MathNet.Numerics.Providers.MKL (>= 5.0)
-    MathNet.Numerics.Providers.MKL (6.0.0-beta1)
-      MathNet.Numerics (>= 6.0.0-beta1)
+    MathNet.Numerics.Providers.MKL (5.0)
+      MathNet.Numerics (>= 5.0)
     Microsoft.CodeCoverage (17.12)
     Microsoft.NET.Test.Sdk (17.12)
       Microsoft.CodeCoverage (>= 17.12)

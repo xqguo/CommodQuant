@@ -10,7 +10,7 @@
 #r "nuget: Plotly.NET"
 #r "nuget: Plotly.NET.Interactive"
 #r "nuget:MathNet.Numerics"
-#r "nuget:MathNet.Numerics.fsharp"
+#r "nuget:MathNet.Numerics.fsharp"#
 // #r "nuget:MathNet.Numerics.MKL.Win-x64"
 open FSharp.Data
 open System

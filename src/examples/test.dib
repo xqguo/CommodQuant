@@ -1,22 +1,53 @@
 #!meta
 
-{"kernelInfo":{"defaultKernelName":"fsharp","items":[{"aliases":[],"languageName":"fsharp","name":"fsharp"}]}}
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"},{"aliases":[],"languageName":"fsharp","name":"fsharp"}]}}
 
 #!fsharp
 
-#r "nuget: CommodLib"
+#r "nuget: FSharp.Data"
+#r "nuget: Deedle"
+#r "nuget: Deedle.Interactive"
+#r "nuget: Plotly.NET"
+#r "nuget: Plotly.NET.Interactive"
+#r "nuget:MathNet.Numerics"
+#r "nuget:MathNet.Numerics.fsharp"
+// #r "nuget:MathNet.Numerics.MKL.Win-x64"
+open FSharp.Data
+open System
+open System.IO
+open Deedle
+open Plotly.NET
+open Plotly.NET.LayoutObjects
+Defaults.DefaultTemplate <- ChartTemplates.light
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
+open MathNet.Numerics.Statistics
+open MathNet.Numerics.Optimization
+
+#!fsharp
+
+// #r "nuget: CommodLib"
+
+#!fsharp
+
+#I "..\\Test\\bin\\Release\\net8.0"
+#r "CommodLib.dll"
+
+#!fsharp
+
+open Commod
 
 #!fsharp
 
 open Commod
 let onedrive = Environment.GetEnvironmentVariable("OneDrive")
-Commod.IOcsv.ROOT<- onedrive +/ "Commodities" 
+// Commod.IOcsv.ROOT<- onedrive +/ "Commodities" 
 Commod.IOcsv.ROOT<- @"C:\Users\xguo\source\repos\efsquant\CommodQuant\src\Library"
 reload()
 
 #!fsharp
 
-let ins = BRT
+let ins = MFO
 let cmd = getCommod ins
 let p = getPrices ins
 let (PriceCurve c) = p
@@ -33,6 +64,10 @@ let mv =
 
          let v = genericFuturePricer fut p
          v.Value)
+
+#!fsharp
+
+p
 
 #!fsharp
 

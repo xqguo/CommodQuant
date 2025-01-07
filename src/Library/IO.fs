@@ -5,7 +5,6 @@ module IOcsv =
     open System
     open System.IO
     open Deedle
-
     let mutable ROOT =
         let dllDir = AppDomain.CurrentDomain.BaseDirectory
         let parDir = dllDir +/ ".."
@@ -87,10 +86,3 @@ module IOcsv =
                     failwith $"missing historical fixing for {ins} on %A{m}"
             | OptionalValue.Missing -> failwith $"missing {ins} in fixing file"
         | None -> failwith $"missing historical fixing file"
-
-    let reload () =
-        USDOISSOURCE <- (ROOT +/ "csv" +/ "USD OIS_Rate.csv")
-
-        fixings <-
-            tryFile (ROOT +/ "csv" +/ "fixings.csv")
-            |> Option.map (fun f -> Frame.ReadCsv(f) |> Frame.indexRowsDate "Date")

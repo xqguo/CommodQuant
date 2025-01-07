@@ -4,6 +4,7 @@ namespace Commod
 module Markets =
     open IOcsv
     open System
+    open Deedle
     open FSharp.Data
     //cache the commods as it involves disk IO
     let commoddict =
@@ -227,3 +228,12 @@ module Markets =
 
     let getTTM (pd: DateTime) (d: DateTime) = max ((d - pd).TotalDays / 365.) 0.
 //let getTTM expDate (pricingDate:DateTime) d getTTMM' pricingDate ( min d expDate )
+    let reload () =
+        USDOISSOURCE <- (ROOT +/ "csv" +/ "USD OIS_Rate.csv")
+
+        fixings <-
+            tryFile (ROOT +/ "csv" +/ "fixings.csv")
+            |> Option.map (fun f -> Frame.ReadCsv(f) |> Frame.indexRowsDate "Date")
+        
+        commoddict.Clear()
+        hols.Clear()

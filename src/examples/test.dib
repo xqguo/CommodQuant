@@ -1,0 +1,43 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"fsharp","items":[{"aliases":[],"languageName":"fsharp","name":"fsharp"}]}}
+
+#!fsharp
+
+#r "nuget: CommodLib"
+
+#!fsharp
+
+open Commod
+let onedrive = Environment.GetEnvironmentVariable("OneDrive")
+Commod.IOcsv.ROOT<- onedrive +/ "Commodities" 
+Commod.IOcsv.ROOT<- @"C:\Users\xguo\source\repos\efsquant\CommodQuant\src\Library"
+reload()
+
+#!fsharp
+
+let ins = BRT
+let cmd = getCommod ins
+let p = getPrices ins
+let (PriceCurve c) = p
+
+let mv =
+     c
+     |> Map.toList
+     |> List.map (fun (m, k) ->
+         let fut =
+             { Fut = cmd
+               ContractMonth = m
+               Quantity = 1M<lot>
+               FixedPrice = k }
+
+         let v = genericFuturePricer fut p
+         v.Value)
+
+#!fsharp
+
+c |> Map.toList |> List.sortBy (fun (m, _) -> pillarToDate m ) 
+
+#!fsharp
+
+cmd

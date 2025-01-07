@@ -175,6 +175,9 @@ module Contracts =
     //            Map.add key value acc
     //        else acc ) rulebased actuals
 
+    //set global contract start date and end date to be used and possible to reload
+    let mutable contractStart = DateTime(2020, 1, 1)
+    let mutable contractEnd = DateTime(2051, 1, 1)
     let getGenericContracts getfile getrule ins =
         let f = getfile ins
 
@@ -186,8 +189,8 @@ module Contracts =
         let rulebased =
             let td = DateTime.Today |> dateAdjust' "-1ya"
 
-            generateMonth (td |> dateAdjust' "a") true
-            |> Seq.takeWhile (fun d -> d.Year < 2051)
+            generateMonth (contractStart |> dateAdjust' "a") true
+            |> Seq.takeWhile (fun d -> d < contractEnd )
             |> Seq.map (fun x -> (formatPillar x, getrule x ins))
             |> Map.ofSeq
         //use actuals to override rulebased

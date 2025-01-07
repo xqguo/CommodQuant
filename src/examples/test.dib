@@ -30,12 +30,9 @@ open MathNet.Numerics.Optimization
 
 #!fsharp
 
-#I "..\\Test\\bin\\Release\\net8.0"
-#r "CommodLib.dll"
-
-#!fsharp
-
-open Commod
+// #I "..\\Test\\bin\\Release\\net9.0"
+#r "..\\Test\\bin\\Release\\net9.0\\CommodLib.dll"
+// #r "CommodLib.dll"
 
 #!fsharp
 

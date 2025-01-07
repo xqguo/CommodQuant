@@ -2,13 +2,19 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <PackageId>CommodLib</PackageId>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
+    <PackageReleaseNotes>use net9.0</PackageReleaseNotes>
     <Authors>Xiaoqiang Guo</Authors>
+    <RepositoryUrl>https://github.com/xqguo/CommodQuant</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Company></Company>
   </PropertyGroup>
   <ItemGroup>
     <None Include="iceexpiry.fsx" />
-    <None Include="../../LICENSE.txt" />
+    <None Include="../../LICENSE.txt" Pack="true" PackagePath=""/>
+    <None Include="../../README.md" Pack="true" PackagePath=""/>
     <None Include="paket.references" />
     <Compile Include="Utils.fs" />
     <Compile Include="DomainTypes.fs" />

@@ -5,7 +5,6 @@ source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core
 nuget FSharp.Data 
-nuget FSharpx.Extras
 nuget Deedle 
 nuget MathNet.Numerics 
 nuget MathNet.Numerics.MKL.Win-x64

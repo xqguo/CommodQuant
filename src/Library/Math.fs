@@ -235,6 +235,19 @@ module Math =
     let gh o = ghzn o, ghwn o
 
     // o is a list of order of Ghass Hermite for each dim of integration
+    /// <summary>
+    /// Performs numerical integration over a normal distribution using Gauss-Hermite quadrature.
+    /// </summary>
+    /// <param name="o">A list of integers specifying the Gauss-Hermite quadrature order for each dimension. Higher orders provide more accurate results.</param>
+    /// <param name="f">A function that takes an array of floats (representing points in the integration space) and returns a float (the value of the function to integrate).</param>
+    /// <returns>A single float representing the approximate value of the integral.</returns>
+    /// <example>
+    /// // Example: Integrate f(x) = x^2 over a normal distribution in 1D
+    /// let f (xs: float[]) = xs.[0] * xs.[0]
+    /// let orders = [5] // Use 5 nodes for 1D integration
+    /// let result = ghint orders f
+    /// printfn "The integral is approximately: %f" result
+    /// </example>
     let ghint (o: int list) (f: (float[] -> float)) =
         let zs, ws = gh o
         let os = zs |> Array.map f

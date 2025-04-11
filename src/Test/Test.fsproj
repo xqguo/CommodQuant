@@ -18,6 +18,7 @@
     <Compile Include="TestUnitTypes.fs" />
     <Compile Include="TestCalendar.fs" />
     <Compile Include="TestUtilities.fs" />
+    <Compile Include="TestMath.fs" />
     <Compile Include="TestMarket.fs" />
     <Compile Include="TestGabillon.fs" />
     <Compile Include="TestOptions.fs" />

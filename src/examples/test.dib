@@ -44,8 +44,8 @@ reload()
 
 #!fsharp
 
-let f (xs: float[]) = 1.0 // Constant function
-ghint [7; 5; 2] f
+let f (xs: float[]) = xs.[0] // Constant function
+ghint [42] f
 
 #!fsharp
 

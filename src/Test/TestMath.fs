@@ -163,7 +163,6 @@ module TestMath =
     // Integral of exp(-(x/2)^2) dx from -inf to inf is 1
     [<Property(Arbitrary = [| typeof<GHGenerators> |])>]
     let ``ghint integrates constant function correctly`` (orders: int list) =
-        let dim = orders.Length
         let f (xs: float[]) = 1.0 // Constant function
         let integral = ghint orders f
         let expected = 1.0
@@ -174,18 +173,18 @@ module TestMath =
     [<Property>]
     let ``ghint integrates x correctly in 1D`` () =
         // Use a reasonably high order for accuracy
-        let orders = [ 42 ] // Increase order for higher precision
+        let orders = [ 42 ] 
         let f (x:float[]) = x.[0]
         let integral = ghint orders f
-        let expected = 1.0 // Ensure correct computation of sqrt(pi)/2
-        abs (integral - expected) < 1e-6
+        let expected = 0.0
+        abs (integral - expected) < 1e-9
 
     [<Property(Arbitrary = [| typeof<GHGenerators> |])>]
     let ``ghint integrates standard normal distribution correctly`` (orders: int list) =
         let dim = orders.Length
         let f (xs: float[]) = 1.0 // Constant function over normal distribution
         let integral = ghint orders f
-        let expected = System.Math.PI ** (float dim / 2.0) // (sqrt(pi))^dim
+        let expected = 1.0 // Integral of standard normal distribution is 1
         abs (integral - expected) < 1e-9
 
     [<Property>]
@@ -193,7 +192,7 @@ module TestMath =
         let orders = [5] // Use 5 nodes for 1D integration
         let f (xs: float[]) = xs.[0] * xs.[0] // f(x) = x^2
         let integral = ghint orders f
-        let expected = sqrt System.Math.PI / 2.0 // Integral of x^2 * exp(-x^2)
+        let expected = 1.0 // Variance of the standard normal distribution
         abs (integral - expected) < 1e-9
 
     // Test ghz3/ghw3 wrappers

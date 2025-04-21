@@ -1,9 +1,10 @@
 module TestPricer
 
 open Xunit
-open Commod.Pricer
+open Commod
 open FsCheck
 open FsCheck.Xunit
+open FsCheckTypes
 
 [<Fact>]
 let ``getEqualWeights returns equal weights for array`` () =
@@ -109,3 +110,20 @@ let ``splitDetails partitions correctly`` (now: System.DateTime) (triples: (Syst
     let details = triples |> Array.sortBy (fun (d,_,_) -> d) // ensure order
     let past, future = splitDetails now details
     Array.forall (fun (d,_,_) -> d <= now) past && Array.forall (fun (d,_,_) -> d > now) future && Array.append past future = details
+
+//test SwapPricer
+[<Property(MaxTest = 10)>]
+let ``SwapPricer returns finite value for random price curves`` (NormalFloat price) =
+    // Arrange
+    let inst = DBRT // Use a standard instrument, e.g., NG (Natural Gas)
+    let d1 = System.DateTime(2025, 5, 1)
+    let d2 = System.DateTime(2025, 5, 31)
+    let p = decimal price
+    // Construct a simple PriceCurve with one pillar and price
+    let priceMap = Map.ofList [ ("MAY-25", USDBBL(p*1.0M<USD/bbl>))]
+    let priceCurve = PriceCurve priceMap
+    let pricingDate = System.DateTime(2025, 4, 21)
+    // Act
+    let result = SwapPricer inst d1 d2 priceCurve pricingDate
+    // Assert: result should be a float and not throw
+    nearstr result price 1E-8 "Expected value for price curve" // Adjust tolerance as needed

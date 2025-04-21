@@ -197,12 +197,3 @@ let ``test updatedirAsync function`` () =
     Directory.Delete(sourceDir, true)
     Directory.Delete(destDir, true)
     result = "test content"
-
-// Test for getPrice function
-[<Fact>]
-let ``test getPrice function`` () =
-    let path = "test.csv"
-    File.WriteAllLines(path, [| "Pillar,Price"; "P1,100.0"; "P2,200.0" |])
-    let result = getPrice path |> Seq.toList
-    File.Delete(path)
-    result = [ ("P1", 100.0); ("P2", 200.0) ]

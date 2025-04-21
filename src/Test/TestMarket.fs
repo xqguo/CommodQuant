@@ -4,6 +4,8 @@ Test markets using fscheck
 *)
 module TestMarket
 
+open Xunit
+open System.IO
 open FsCheck
 open FsCheck.Xunit
 open Commod
@@ -85,3 +87,12 @@ let ``test getPrices`` (ins: Instrument) =
              let s = p |> Map.filter (fun _ v -> v.Value < 0M)
              Map.isEmpty s |@ "All prices are greater than 0")
         |> Prop.ofTestable
+
+// Test for getPrice function
+[<Fact>]
+let ``test getPrice function`` () =
+    let path = "test.csv"
+    File.WriteAllLines(path, [| "Pillar,Price"; "P1,100.0"; "P2,200.0" |])
+    let result = getPrice path |> Seq.toList
+    File.Delete(path)
+    result = [ ("P1", 100.0); ("P2", 200.0) ]

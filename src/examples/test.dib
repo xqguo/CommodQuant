@@ -1,6 +1,6 @@
 #!meta
 
-{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"},{"aliases":[],"languageName":"fsharp","name":"fsharp"}]}}
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"name":"csharp"},{"name":"fsharp","languageName":"fsharp"},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
 
 #!fsharp
 
@@ -31,7 +31,7 @@ open MathNet.Numerics.Optimization
 #!fsharp
 
 // #I "..\\Test\\bin\\Release\\net9.0"
-#r "..\\Test\\bin\\Release\\net9.0\\CommodLib.dll"
+#r "..\\Test\\bin\\Debug\\net9.0\\CommodLib.dll"
 // #r "CommodLib.dll"
 
 #!fsharp
@@ -41,6 +41,11 @@ let onedrive = Environment.GetEnvironmentVariable("OneDrive")
 // Commod.IOcsv.ROOT<- onedrive +/ "Commodities" 
 Commod.IOcsv.ROOT<- @"C:\Users\xguo\source\repos\efsquant\CommodQuant\src\Library"
 reload()
+
+#!fsharp
+
+let f (xs: float[]) = xs.[0] // Constant function
+ghint [42] f
 
 #!fsharp
 

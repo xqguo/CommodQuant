@@ -25,6 +25,7 @@
     <Compile Include="TestSwaps.fs" />
     <Compile Include="TestMonteCarlo.fs" />
     <Compile Include="TestRates.fs" />
+    <Compile Include="TestPricer.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

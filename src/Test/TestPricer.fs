@@ -23,7 +23,7 @@ let ``getEqualWeights returns empty for empty array`` () =
 let ``getEqualWeights returns 1.0 for single element array`` () =
     let arr = [|42|]
     let weights = getEqualWeights arr
-    Assert.Single(weights)
+    Assert.Single(weights) |> ignore
     Assert.Equal(1.0, weights.[0], 6)
 
 [<Fact>]
@@ -31,8 +31,8 @@ let ``splitDetails splits correctly for future and past`` () =
     let now = System.DateTime(2025, 4, 21)
     let details = [| now.AddDays(-1.0), 1.0, "A"; now.AddDays(1.0), 2.0, "B" |]
     let past, future = splitDetails now details
-    Assert.Single(past)
-    Assert.Single(future)
+    Assert.Single(past) |> ignore
+    Assert.Single(future) |> ignore
     Assert.Equal("A", (past.[0] |> fun (_,_,c) -> c))
     Assert.Equal("B", (future.[0] |> fun (_,_,c) -> c))
 
@@ -67,16 +67,21 @@ let ``toVector handles empty array`` () =
     let v = toVector arr
     Assert.Equal(0, v.Count)
 
-[<Fact>]
-let ``shiftMonth shifts by positive and negative months`` () =
+[<Property(Verbose= true, Arbitrary = [| typeof<ValidDate>;typeof<IntLessThan100> |])>]
+let ``shiftMonth shifts by positive and negative months`` d n =
     // Assuming pillarToDate and formatPillar are available and work as expected
     // These are stubbed for test purposes
-    let origPillar = "2025-04"
-    let result1 = shiftMonth origPillar 2
-    let result2 = shiftMonth origPillar -2
-    Assert.NotNull(result1)
-    Assert.NotNull(result2)
-    // More specific asserts can be added if pillarToDate/formatPillar logic is known
+    let origPillar = formatPillar d
+    let n = if d < System.DateTime(2025, 1, 1) then n else -n // Ensure n is negative for past dates
+    let result1 = shiftMonth origPillar n
+    let result2 = shiftMonth result1 -n
+    let d0 = (pillarToDate result1)
+    let d1 = (pillarToDate result2)
+    let d2 = d1.AddMonths(n)
+    (d2 = d0 |@ sprintf "Expected %A, got %A" d0 d2) .&.
+    (result2 = origPillar |@ sprintf "Expected %A, got %A" origPillar result2)
+    
+    
 
 [<Fact>]
 let ``applyFormula throws on invalid formula`` () =

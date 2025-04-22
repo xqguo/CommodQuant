@@ -62,7 +62,7 @@ type MyGenerator =
 
 type IntLessThan100 =
     static member Int() =
-        Arb.Default.Int32() |> Arb.filter (fun t -> (t >= 0) && (t < 80))
+        Arb.Default.Int32() |> Arb.filter (fun t -> (t >= 0) && (t < 100))
 
 let inline near a b eps =
     (a - eps <= b && a + eps >= b) |@ sprintf "%A vs %A with %A" a b eps

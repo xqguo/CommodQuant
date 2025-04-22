@@ -31,6 +31,12 @@ module Pricer =
         | Some i -> Array.splitAt i details
         | None -> (details, Array.empty)
 
+    /// <summary>
+    /// Shifts a reference month by a specified number of months and returns the resulting contract pillar string.
+    /// </summary>
+    /// <param name="refMonth">The reference contract pillar (string) to shift, e.g., "JAN-25".</param>
+    /// <param name="l">The number of months to shift the reference month by (integer).</param>
+    /// <returns>The shifted contract pillar as a string.</returns>
     let shiftMonth refMonth l =
         let refDate = refMonth |> pillarToDate
         refDate.AddMonths l |> formatPillar

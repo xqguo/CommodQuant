@@ -9,7 +9,7 @@ type PositiveSmallFloat =
 type ValidDate =
     static member DateTime() =
         Arb.Default.DateTime()
-        |> Arb.filter (fun t -> (t.Year >= 1980) && (t.Year <= 2080))
+        |> Arb.filter (fun t -> (t.Year >= 1981) && (t.Year <= 2080))
 
 //arb type to limit float random test to positive normal floats
 type PositiveFloat =

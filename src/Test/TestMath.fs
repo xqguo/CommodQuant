@@ -80,6 +80,7 @@ module TestMath =
     // Helper to generate non-zero vectors for householder tests
     let arbNonZeroVector (size: int) : Arbitrary<Vector<float>> =
         arbVector size
+        |> Arb.filter (fun v -> v.ForAll( fun x -> not (System.Double.IsNaN x || System.Double.IsInfinity x)))
         |> Arb.filter (fun v -> v.L2Norm() > 1e-10 && (v - (DenseVector.init size (fun i -> if i = 0 then 1.0 else 0.0))).L2Norm() > 1e-10)
 
     // Register the generator for a specific size (e.g., 3)

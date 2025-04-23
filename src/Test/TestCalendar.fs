@@ -6,10 +6,10 @@ module TestCalendar
 
 open System
 open FsCheck
+open FsCheck.FSharp
 open FsCheck.Xunit
 open FsCheckTypes
 open Commod
-open Commod.Contracts.Conventions
 
 let cal = [ DateTime(2019, 1, 1); DateTime(2019, 12, 25) ] |> set
 
@@ -19,31 +19,16 @@ let ``test dateAdjust`` d =
     let dn = dateAdjust cal "n" d
     let dp = dateAdjust cal "p" d
     let df = dateAdjust cal "f" d
-    ///nextbd adjust is same as -1b+1b or 0b
-    (dn = dateAdjust cal "-1b+1b" d) |@ "nextbd check"
-    .&. (dn = dateAdjust cal "+0b" d)
-    |@ "nextbd check"
-    .&.
-    ///prevbd adjust is same as 1b-1b
-    (dp = dateAdjust cal "+1b-1b" d)
-    |@ "previousbd check"
-    .&.
-    ///add 2b is same as 1b+1b
-    (dateAdjust cal "2b" d = dateAdjust cal "+1b+1b" d)
-    |@ "plus incremental check"
-    .&.
-    ///-2b is same as -1b-1b
-    (dateAdjust cal "-2b" d = dateAdjust cal "-1b-1b" d)
-    |@ "minus incremental check"
-    .&.
-    ///add 2b is same as -3b+5b, if starting from a bd
-    (dateAdjust cal "2b" dn = dateAdjust cal "-3b+5b" dn)
-    |@ "positive and negative sum check"
-    .&.
-    ///modified following adjust never cross the month and same as either n or p
-    (df.Month = d.Month && (df = dn || df = dp))
-    |@ "modified following check"
-
+    (dn = dateAdjust cal "-1b+1b" d |> Prop.label "nextbd check") .&.
+    (dn = dateAdjust cal "+0b" d |> Prop.label "nextbd check") .&.
+    (dp = dateAdjust cal "+1b-1b" d |> Prop.label "previousbd check") .&. 
+    (dateAdjust cal "2b" d = dateAdjust cal "+1b+1b" d |> Prop.label "plus incremental check") .&.
+    (dateAdjust cal "-2b" d = dateAdjust cal "-1b-1b" d |> Prop.label "minus incremental check") .&.
+    (dateAdjust cal "2b" dn = dateAdjust cal "-3b+5b" dn |> Prop.label "positive and negative sum check") .&.
+    ((df.Month = d.Month && (df = dn || df = dp)) |> Prop.label "modified following check")
+     
+     
+    
 [<Property>]
 let ``test dateAdjust Q returns beginning of current quarter`` d =
     let d1 = dateAdjust cal "Q" d
@@ -51,7 +36,7 @@ let ``test dateAdjust Q returns beginning of current quarter`` d =
 
     d.Month >= d1.Month
     && d.Month - d1.Month < 3
-    && (months |> List.contains d1.Month)
+    && months |> List.contains d1.Month
 
 [<Property>]
 let ``test dateAdjust 3W returns Wednesday`` d =
@@ -74,22 +59,24 @@ let ``test calmonth`` (d1: DateTime) (d2: DateTime) =
     let dates = generateCalMonthSchedule d1' d2'
 
     (dates |> Seq.head |> fst = d1')
-    |@ sprintf "same start %A vs %A" (dates |> Seq.head) d1'
-    .&. //format property with data
+    |> Prop.label (sprintf "same start %A vs %A" (dates |> Seq.head) d1')//format property with data
+    .&.
     (dates |> Seq.last |> snd = d2')
-    |@ "same end"
-    .&. (dates |> Seq.forall (fun (s, e) -> s.Month = e.Month && s.Year = e.Year))
-    |@ "all periods same month"
+    |> Prop.label "same end"
+    .&.
+    (dates |> Seq.forall (fun (s, e) -> s.Month = e.Month && s.Year = e.Year))
+    |> Prop.label "all periods same month"
 
 [<Property>]
 let ``test getPerid`` () =
     (getPeriod "Jan19" = (DateTime(2019, 1, 1), DateTime(2019, 1, 31)))
-    |@ "test Jan19"
-    .&. (getPeriod "Cal19" = (DateTime(2019, 1, 1), DateTime(2019, 12, 31)))
-    |@ "test Cal19"
-    .&. (getPeriod "4Q19" = (DateTime(2019, 10, 1), DateTime(2019, 12, 31)))
-    |@ "test 4Q19"
-
+    |> Prop.label "test Jan19"
+    .&.
+    (getPeriod "Cal19" = (DateTime(2019, 1, 1), DateTime(2019, 12, 31)))
+    |> Prop.label "test Cal19"
+    .&.
+    (getPeriod "4Q19" = (DateTime(2019, 10, 1), DateTime(2019, 12, 31)))
+    |> Prop.label "test 4Q19"
 //[<Property( MaxTest = 500, Arbitrary = [| typeof<SmallInt>;typeof<ValidDate>|])>]
 [<Property>]
 let ``testaddbusinessday`` (PositiveInt n1) (PositiveInt n2) (dt: DateTime) =
@@ -108,16 +95,16 @@ let ``testaddbusinessday`` (PositiveInt n1) (PositiveInt n2) (dt: DateTime) =
 
     if isBusinessDay holiday dt then
         date1 = date3
-        |@ sprintf
+        |> Prop.label (sprintf
             "Move n1 biz days forward from bizday should be same as move n2 biz days backward and then move n1+n2 forward. %A %A"
             date1
-            date3
+            date3)
     else
         date1 = date4
-        |@ sprintf
+        |> Prop.label (sprintf
             "Move n1 biz days forward from non-biz day would equal to move n2 backward then n1+n2-1 forward. %A %A"
             date1
-            date4
+            date4)
 
 [<Property>]
 let ``testnumBizdays`` (d1: DateTime) (d2: DateTime) (PositiveInt n) =
@@ -143,10 +130,10 @@ let ``testnumBizdays`` (d1: DateTime) (d2: DateTime) (PositiveInt n) =
     let num2 = numBizdays holiday d3 d4
 
     num2 = num1
-    |@ sprintf
+    |> Prop.label (sprintf
         "Move n biz days forward from a, b, and we get d3, d4, diff between d3, d4 should be the same as diff between a, b %d %d"
         num1
-        num2
+        num2)
 
 [<Property>]
 let ``testdayOfWeek`` (d0: DateTime) (n: int) =
@@ -179,11 +166,9 @@ let ``testdayOfWeek`` (d0: DateTime) (n: int) =
         else
             delta3 = 7
 
-    delta_days = delta2
-    |@ sprintf "the diff between date and the diff of week days should be consistent %d %d" delta_days delta2
-    .&. c
-    |@ sprintf
-        "if we find the next day of week let say Monday, and then find the last monday, the difference should be zero or 7"
+    delta_days = delta2 |> Prop.label (sprintf "the diff between date and the diff of week days should be consistent %d %d" delta_days delta2)
+    .&.
+    c |> Prop.label (sprintf "if we find the next day of week let say Monday, and then find the last monday, the difference should be zero or 7")
 
 
 [<Property>]
@@ -209,11 +194,8 @@ let ``testmonthOfYear`` (d0: DateTime) n =
         else
             delta_months2 >= 365
 
-    delta_months = delta
-    |@ sprintf "diff between returned month and expected month should be the same"
-    .&. c
-    |@ sprintf
-        "if we find one next month say July, we find last July, the difference days should be zero(if we are in July) or one year"
+    delta_months = delta |> Prop.label "diff between returned month and expected month should be the same"
+    .&. c |> Prop.label "if we find one next month say July, we find last July, the difference days should be zero(if we are in July) or one year"
 
 [<Property(Arbitrary = [| typeof<MyGenerator> |])>]
 let ``testbeginOfCalendarPeriod`` (d0: DateTime) (BeginOfCalendarInt n) =
@@ -221,12 +203,12 @@ let ``testbeginOfCalendarPeriod`` (d0: DateTime) (BeginOfCalendarInt n) =
 
     if (n = 0) || (n = 1) then
         ((d1.Month = d0.Month) && (d1.Day = 1) && (d1.Year = d0.Year))
-        |@ sprintf "When n=0 or 1, the result should have the same month and same year and day1 %A" d1
+        |> Prop.label (sprintf "When n=0 or 1, the result should have the same month and same year and day1 %A" d1)
     else
         ((d1.Month = d0.Month - (d0.Month - 1) % n)
          && (d1.Day = 1)
          && (d1.Year = d0.Year))
-        |@ sprintf " Wrong with %A" d1
+        |> Prop.label $"Wrong with {d1}"
 
 [<Property>]
 let ``testdateAdjustIgnoreholiday`` d0 n =
@@ -244,12 +226,9 @@ let ``testdateAdjustIgnoreholiday`` d0 n =
     let d4 = dateAdjust holiday "1y" d0
     let d5 = dateAdjust holiday "12m" d0
 
-    (d1 = d3)
-    |@ sprintf " adding n weeks should be the same as add 7 * n days %A %A" d1 d3
-    .&. (d0 = d2)
-    |@ sprintf " adding n weeks and then reduce n weeks on one day, it should be still the same day %A %A" d0 d2
-    .&. (d4 = d5)
-    |@ sprintf "adding 1 year should be the same as adding 12 months %A %A" d4 d5
+    (d1 = d3) |> Prop.label $"adding n weeks should be the same as add 7 * n days {d1} {d3}"
+    .&. (d0 = d2) |> Prop.label $"adding n weeks and then reduce n weeks on one day, it should be still the same day {d0} {d2}"
+    .&. (d4 = d5) |> Prop.label $"adding 1 year should be the same as adding 12 months {d4} {d5}"
 
 [<Property>]
 let ``testdateAdjustaeAZ`` d0 =
@@ -278,19 +257,8 @@ let ``testdateAdjustaeAZ`` d0 =
         && (d3.AddDays(-1.).Year + 1 = d3.Year)
         && (d4.AddDays(1.).Year = d4.Year + 1)
 
-    cdt1
-    |@ sprintf
-        " when finding start day and end day in a month of a datetime, it should have the same month, one first day one last day %A %A %A"
-        d0
-        d1
-        d2
-    .&. cdt2
-    |@ sprintf
-        "when finding the start day and end day in a year, it should have same year, one day is 1/1 and the other is 12/31 %A %A %A"
-        d0
-        d3
-        d4
-
+    cdt1 |> Prop.label $"when finding start day and end day in a month of a datetime, it should have the same month, one first day one last day {d0} {d1} {d2}"
+    .&.    cdt2 |> Prop.label $"when finding the start day and end day in a year, it should have same year, one day is 1/1 and the other is 12/31 {d0} {d3} {d4}"
 
 [<Property(MaxTest = 500, Arbitrary = [| typeof<IntLessThan100> |])>]
 let ``testgetPeriod`` n1 n2 =
@@ -329,7 +297,5 @@ let ``testgetPeriod`` n1 n2 =
     let test2 =
         (startdate.Month = n1') && (startdate.Year = 2000 + n2) && (startdate.Day = 1)
 
-    test1
-    |@ sprintf "should be the same year and same month %A %A" startdate enddate
-    .&. test2
-    |@ sprintf "should be the same month and same year as the original one %s %A %A" str startdate enddate
+    test1 |> Prop.label $"should be the same year and same month {startdate} {enddate}"
+    .&. test2 |> Prop.label $"should be the same month and same year as the original one {str} {startdate} {enddate}"

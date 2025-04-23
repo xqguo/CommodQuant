@@ -5,12 +5,15 @@ open FsCheck
 open FsCheck.Xunit
 open MathNet.Numerics.LinearAlgebra // For vector creation in tests
 open Commod // Access the Math module
+open FsCheck.FSharp
 
 module TestMath =
 
     // Helper to create vectors for testing
     let arbVector (size: int) : Arbitrary<Vector<float>> =
-        Arb.generate<float list>
+        ArbMap.defaults
+        |> ArbMap.arbitrary<float list>
+        |> Arb.toGen
         |> Gen.map (fun l ->
             let limitedList = l |> List.truncate size
             let paddedList =
@@ -26,21 +29,21 @@ module TestMath =
     [<Property>]
     let ``normcdf is between 0 and 1`` (NormalFloat x) =
         let p = normcdf x
-        p >= 0.0 && p <= 1.0
+        (p >= 0.0 && p <= 1.0) |> Prop.label "normcdf in [0,1]"
 
     [<Property>]
-    let ``normcdf symmetry`` (x: float) =
+    let ``normcdf symmetry`` (NormalFloat x) =
         // Avoid NaNs or infinities which might break comparison
-        if Double.IsNaN(x) || Double.IsInfinity(x) then true else
         let p1 = normcdf x
         let p2 = normcdf -x
-        abs (p1 + p2 - 1.0) < 1e-10 // Use tolerance for float comparison
+        abs (p1 + p2 - 1.0) < 1e-10 |> Prop.label "normcdf symmetry"  
 
     // Test normpdf properties
     [<Property>]
     let ``normpdf is non-negative`` (NormalFloat x) =
         let p = normpdf x
-        p >= 0.0
+        p >= 0.0 |> Prop.label "normpdf non-negative"  
+        
 
     // Test norminvcdf properties
     [<Property(MaxTest = 100)>]
@@ -50,7 +53,7 @@ module TestMath =
         if validP <= 0.0 || validP >= 1.0 then true else // Skip invalid inputs for InvCDF
         let x = norminvcdf validP
         let p' = normcdf x
-        abs (p' - validP) < 1e-6 // Use tolerance
+        abs (p' - validP) < 1e-6 //|> Prop.label "norminvcdf is inverse of normcdf" 
 
     // Test appendVector
     [<Property>]
@@ -58,7 +61,7 @@ module TestMath =
         let v1 = DenseVector.ofList list1
         let v2 = DenseVector.ofList list2
         let v = appendVector v1 v2
-        v.Count = v1.Count + v2.Count
+        v.Count = v1.Count + v2.Count |> Prop.label "appendVector length"
 
     [<Property>]
     let ``appendVector elements are correct`` (list1: float list, list2: float list) =
@@ -75,7 +78,7 @@ module TestMath =
         let v = appendVector v1 v2
         let expected = list1 @ list2
         let actual = v |> Vector.toList
-        areListsEqual expected  actual
+        areListsEqual expected actual |> Prop.label "appendVector elements" 
 
     // Helper to generate non-zero vectors for householder tests
     let arbNonZeroVector (size: int) : Arbitrary<Vector<float>> =
@@ -87,7 +90,7 @@ module TestMath =
     type TestGenerators = 
         static member Vector3() = arbNonZeroVector 3
 
-    Arb.register<TestGenerators>() |> ignore
+    // Arb.register<TestGenerators>() |> ignore
 
     // Test householderR properties
     [<Property(Arbitrary = [| typeof<TestGenerators> |])>]
@@ -131,15 +134,13 @@ module TestMath =
 
     // Generator for a list of orders (dimension 1 to 3)
     let arbOrderList = 
-        Gen.choose (1, 3) 
-        |> Gen.map (fun _ -> List.init (Gen.choose (1, 3) |> Gen.sample 1 1 |> List.head) (fun _ -> genOrder |> Gen.sample 1 1 |> List.head))
+        Gen.choose (1, 3)
+        |> Gen.bind (fun len -> Gen.listOfLength len genOrder)
         |> Arb.fromGen
 
     // Register the order list generator
     type GHGenerators = 
         static member OrderList() = arbOrderList
-
-    Arb.register<GHGenerators>() |> ignore
 
     [<Property(Arbitrary = [| typeof<GHGenerators> |])>]
     let ``ghzn returns correct number of nodes`` (orders: int list) =

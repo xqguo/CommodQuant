@@ -3,6 +3,7 @@ module TestPricer
 open Xunit
 open Commod
 open FsCheck
+open FsCheck.FSharp
 open FsCheck.Xunit
 open FsCheckTypes
 
@@ -78,11 +79,9 @@ let ``shiftMonth shifts by positive and negative months`` d n =
     let d0 = (pillarToDate result1)
     let d1 = (pillarToDate result2)
     let d2 = d1.AddMonths(n)
-    (d2 = d0 |@ sprintf "Expected %A, got %A" d0 d2) .&.
-    (result2 = origPillar |@ sprintf "Expected %A, got %A" origPillar result2)
+    d2 = d0 |> Prop.label (sprintf "Expected %A, got %A" d0 d2 ) .&.
+    (result2 = origPillar |> Prop.label (sprintf "Expected %A, got %A" origPillar result2))
     
-    
-
 [<Fact>]
 let ``applyFormula throws on invalid formula`` () =
     let dt = System.DateTime(2025, 4, 1)

@@ -1,5 +1,6 @@
 ﻿module TestUtils
 
+open FsCheck.FSharp
 open System
 open System.IO
 open Xunit

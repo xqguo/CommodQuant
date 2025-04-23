@@ -1,5 +1,6 @@
 ﻿module TestSwaps
 
+open FsCheck.FSharp
 open System
 open Xunit
 open FsCheck
@@ -28,10 +29,12 @@ let ``test futPricing`` (ins: Instrument) =
                  let v = genericFuturePricer fut p
                  v.Value)
 
-         not c.IsEmpty |@ "Curve is no empty" .&. (mv |> List.forall (fun v -> v = 0M))
-         |@ "All Fut at matrket price have mtk value")
+         not c.IsEmpty |> Prop.label "Curve is no empty" .&.
+         (mv |> List.forall (fun v -> v = 0M)) |> Prop.label "All Fut at matrket price have mtk value" 
+           )
 
 //TODO add nrby and swap tests
+
 [<Property(MaxTest = 1)>]
 let ``test nrby`` () =
     let ins = BRT
@@ -64,8 +67,7 @@ let ``test nrby`` () =
     let dates1 = opendates.[1 .. (opendates.Length - 1)]
     let p = getFixingPrices cnt dates1 crv ins pd //nrby 0 on next month
     let p' = getFixingPrices cnt1 dates0 crv ins pd //nrby 1 on current month
-    //Assert.Equal<seq<UnitPrice>>( p, p')  |@ "nrby 1 will shift price pillar out by 1 month"
-    Array.forall2 (=) p p' |@ "nrby 1 will shift price pillar out by 1 month"
+    Array.forall2 (=) p p' |> Prop.label "nrby 1 will shift price pillar out by 1 month"
 
 [<Property(MaxTest = 1)>]
 let ``test rolladjust`` () =
@@ -99,4 +101,4 @@ let ``test rolladjust`` () =
     let dates1 = opendates.[1 .. (opendates.Length - 1)]
     let p = getFixingPrices cnt dates1 crv ins pd //nrby 0 on next month
     let p' = getFixingPrices cnt1 dates0 crv ins pd //nrby 1 on current month
-    Array.forall2 (=) p p' |@ "rolladj 1 will shift price pillar out by 1 month"
+    Array.forall2 (=) p p' |> Prop.label "rolladj 1 will shift price pillar out by 1 month"

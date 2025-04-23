@@ -1,5 +1,6 @@
 ﻿module TestRates
 
+open FsCheck.FSharp
 open System
 open FsCheck
 open FsCheck.Xunit

@@ -1,5 +1,6 @@
 ﻿module TestGabillon
 
+open FsCheck.FSharp
 open Xunit
 open FsCheck.Xunit
 open Commod
@@ -16,7 +17,7 @@ let ``forward cross covariance equivalence to forward covariance`` tn Ti Tj sigm
         fwdXCovariance tm tn Ti Tj sigmas1 sigmas2 sigmal sigmal k k 1.0 rho rho 1.0
 
     let v = fwdCovariance tm tn Ti Tj sigmas1 sigmas2 sigmal k rho
-    near xv v 1E-6 |@ sprintf "variance identical"
+    near xv v 1E-6 |> Prop.label (sprintf "variance identical") 
 
 [<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
 let ``forward cross covariance equivalence to forward variance`` tn Ti sigmas1 sigmal k rho =
@@ -27,4 +28,4 @@ let ``forward cross covariance equivalence to forward variance`` tn Ti sigmas1 s
         fwdXCovariance tm tn Ti Ti sigmas1 sigmas1 sigmal sigmal k k 1.0 rho rho 1.0
 
     let v = fwdVariance tm tn Ti sigmas1 sigmal k rho
-    near xv v 1E-6 |@ sprintf "variance identical"
+    near xv v 1E-6 |> Prop.label (sprintf "variance identical") 

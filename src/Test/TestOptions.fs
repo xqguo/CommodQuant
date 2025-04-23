@@ -6,6 +6,7 @@ open Commod
 open FsCheck
 open FsCheckTypes
 open MathNet.Numerics.LinearAlgebra
+open FsCheck.FSharp
 
 
 [<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
@@ -21,10 +22,10 @@ let ``test bs`` f k v t =
     let c2 = (bs (f + 0.001) k v t Call)
     let delta = (c2 - c) / 0.001
 
-    (p >= 0.0) |@ sprintf "Option value is non-negative" .&. (abs (diff) <= 0.001)
-    |@ sprintf "Must satisfy call put parity %f" diff
-    .&. (delta >= 0.0)
-    |@ sprintf "Call option delta is positive"
+    (p >= 0.0) |> Prop.label (sprintf "Option value is non-negative") .&.
+    (abs (diff) <= 0.001) |> Prop.label (sprintf "Must satisfy call put parity %f" diff) .&.
+    (delta >= 0.0) |> Prop.label (sprintf "Call option delta is positive") 
+    
 
 [<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
 let ``test spread`` f k =
@@ -51,8 +52,8 @@ let ``test spread`` f k =
     let so = spreadoption f1 fw1 t1 v1 f2 fw2 t2 v2 k rho callput p1 pw1 p2 pw2
     let ao = asianoption f1 fw1 t1 v1 k callput 0.
 
-    abs (so - ao) < 0.001
-    |@ sprintf "spread option and asian option price are close: %f, %f" so ao
+    abs (so - ao) < 0.001 |> Prop.label (sprintf "spread option and asian option price are close: %f, %f" so ao) 
+
 
 [<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
 let ``test choi vs V norm is input vol for long only basket`` f1 f2 v1 v2 =
@@ -71,21 +72,22 @@ let ``test choi vs V norm is input vol for long only basket`` f1 f2 v1 v2 =
     let V = getVChoi2Asset f1 fw1 t1 V1 f2 fw2 t2 V2 rho
 
     near (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(1).L2Norm()) (v1 * sqrt t1.[1]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(2).L2Norm()) (v1 * sqrt t1.[2]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(3).L2Norm()) (v1 * sqrt t1.[3]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(8).L2Norm()) (v2 * sqrt t1.[0]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(9).L2Norm()) (v2 * sqrt t1.[1]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(10).L2Norm()) (v2 * sqrt t1.[2]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(11).L2Norm()) (v2 * sqrt t1.[3]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(1).L2Norm()) (v1 * sqrt t1.[1]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(2).L2Norm()) (v1 * sqrt t1.[2]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(3).L2Norm()) (v1 * sqrt t1.[3]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(8).L2Norm()) (v2 * sqrt t1.[0]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(9).L2Norm()) (v2 * sqrt t1.[1]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(10).L2Norm()) (v2 * sqrt t1.[2]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(11).L2Norm()) (v2 * sqrt t1.[3]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) 
+
 
 [<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
 let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2 =
@@ -106,21 +108,22 @@ let ``test choi vs V norm is input vol for long short spread`` f1 f2 v1 v2 =
     let V = getVChoi2Asset f1 fw1 t1 V1 f2 fw2 t2 V2 rho
 
     near (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(1).L2Norm()) (v1 * sqrt t1.[1]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(2).L2Norm()) (v1 * sqrt t1.[2]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(3).L2Norm()) (v1 * sqrt t1.[3]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(8).L2Norm()) (v2 * sqrt t1.[0]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(9).L2Norm()) (v2 * sqrt t1.[1]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(10).L2Norm()) (v2 * sqrt t1.[2]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
-    .&. near (V.Row(11).L2Norm()) (v2 * sqrt t1.[3]) 1E-6
-    |@ (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0]))
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(1).L2Norm()) (v1 * sqrt t1.[1]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(2).L2Norm()) (v1 * sqrt t1.[2]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(3).L2Norm()) (v1 * sqrt t1.[3]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(8).L2Norm()) (v2 * sqrt t1.[0]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(9).L2Norm()) (v2 * sqrt t1.[1]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(10).L2Norm()) (v2 * sqrt t1.[2]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) .&.
+    near (V.Row(11).L2Norm()) (v2 * sqrt t1.[3]) 1E-6
+    |> Prop.label (sprintf "V nomral is input vol %f %f" (V.Row(0).L2Norm()) (v1 * sqrt t1.[0])) 
+
 
 [<Property(MaxTest = 100, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>; typeof<MyGenerator> |])>]
 let ``test choi vs moment matching`` f1 f2 t v1 v2 (NormalFloat k) (Corr rho) callput (PositiveInt n) =

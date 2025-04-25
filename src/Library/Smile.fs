@@ -174,7 +174,7 @@ module Smile =
     //deltas should be in range (0, 1)
     //vols are abs values, e.g 0.2 for 20% vol.
     let interpolateVolfromDeltaSmile delta (deltas: double[]) (vols: double[]) =
-        let cs = CubicSpline.InterpolatePchipSorted(deltas, vols)
+        let cs = CubicSpline.InterpolatePchip(deltas, vols)
         let d = if delta < 0.0 then 1.0 + delta else delta //call delta
         cs.Interpolate(d)
 

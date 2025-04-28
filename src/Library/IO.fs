@@ -64,11 +64,30 @@ module IOcsv =
 
     let mutable fixings =
         tryFile (ROOT +/ "csv" +/ "fixings.csv")
-        |> Option.map (fun f -> Frame.ReadCsv(f) |> Frame.indexRowsDate "Date")
+        |> Option.map (fun f -> 
+            Frame.ReadCsv(f) |> Frame.indexRowsDate "Date")
+
+    let addfixings ins d v  =
+        let k = ins.ToString()
+        let s0 = Array.zip d v |> series
+        match fixings with
+        | Some f ->
+            let s = f.TryGetColumn<float>(k, Lookup.Exact)
+            match s with 
+            | OptionalValue.Present ss ->
+                let s1 = Series.mergeUsing UnionBehavior.PreferLeft s0 ss 
+                f.[k] <- s1
+                fixings <- Some f
+            | OptionalValue.Missing -> 
+                f.[k] <- s0
+                fixings <- Some f
+        | None -> 
+            fixings <- [k => s0] |> frame |> Some
 
     let getfixing (ins: Instrument) (d: DateTime) =
         fixings
-        |> Option.bind (fun f -> f.GetColumn(ins.ToString()) |> Series.tryGet d |> Option.map decimal)
+        |> Option.bind (fun f -> 
+            f.GetColumn(ins.ToString()) |> Series.tryGet d |> Option.map decimal)
 
     let getfixings (ins: Instrument) (d: DateTime[]) =
         match fixings with

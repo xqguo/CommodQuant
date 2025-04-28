@@ -27,6 +27,15 @@ open MathNet.Numerics.Optimization
 #!fsharp
 
 // #r "nuget: CommodLib"
+let s = series [1.0=>2. ; 2.0=>3.]
+
+#!fsharp
+
+let s1 = series [1.0=>2.5 ; 2.0=>3.5; 3.0=>4.5; 4.0=>5.5; 5.0=>6.5] |> Series.mapValues (fun x -> x + 1.0)
+
+#!fsharp
+
+Series.mergeUsing UnionBehavior.PreferLeft s1 s
 
 #!fsharp
 

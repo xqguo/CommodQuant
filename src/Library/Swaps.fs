@@ -91,7 +91,10 @@ module Swaps =
             | Some _ -> (dates |> Array.filter (fun x -> x <= pd)), (dates |> Array.filter (fun x -> x > pd))
             | None -> (dates |> Array.filter (fun x -> x < pd)), (dates |> Array.filter (fun x -> x >= pd))
 
-        let p1 = past |> getfixings ins |> Array.map (applyCaseDecimal unit)
+        let p1 = 
+            match past with 
+            | [||] -> [||]
+            | x -> x |> getfixings ins |> Array.map (applyCaseDecimal unit)
 
         let p2 =
             getFixingContracts c future

@@ -1,0 +1,86 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"fsharp","items":[{"name":"csharp","languageName":"C#","aliases":["c#","cs"]},{"name":"fsharp","languageName":"fsharp"},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
+
+#!fsharp
+
+#r "nuget: FsCheck"
+
+#!fsharp
+
+open FsCheck
+open FsCheck.FSharp
+
+#!fsharp
+
+let g = Gen.choose (0, 100)
+let g2 = Gen.choose (0, 100) |> Gen.map (fun x -> x * 2)
+
+#!fsharp
+
+let a = Arb.fromGen g
+
+#!fsharp
+
+g2 |> Gen.sample 4
+
+#!fsharp
+
+type TestEnum =
+    | First = 0
+
+let testEnum (e:TestEnum) = e = TestEnum.First
+Check.Quick testEnum
+
+#!fsharp
+
+type FormatResGenerators =
+    static member FormatResInput() : Arbitrary<(int * (string * obj)[])> =
+        let genPrintableString = 
+            // Arb.generate<string> 
+            ArbMap.defaults
+            |> ArbMap.generate<string>
+            |> Gen.map (fun s -> 
+                let chars = s.ToCharArray() |> Array.filter (fun c -> System.Char.IsLetterOrDigit c || System.Char.IsWhiteSpace c) 
+                new string(chars |> Array.truncate 20)) // Keep strings reasonably short 
+            |> Gen.filter (fun s -> not (String.IsNullOrWhiteSpace s)) // non-whitespace 
+
+        // Generator for the object part of the data tuples
+        let genObjValue =
+             Gen.oneof [
+                 ArbMap.defaults |> ArbMap.generate<int> |> Gen.map box
+                 ArbMap.defaults |> ArbMap.generate<float> |> Gen.map box
+                 genPrintableString |> Gen.map box // Re-use string generator for values
+                 ArbMap.defaults |> ArbMap.generate<bool> |> Gen.map box
+             ]
+
+        // Generator for a single (string * obj) data entry
+        let genDataEntry = Gen.map2 (fun k v -> (k, v)) genPrintableString genObjValue
+
+        // Generator for the array of (string * obj)
+        let genDataArray = 
+            Gen.nonEmptyListOf genDataEntry 
+            |> Gen.map List.toArray
+            |> Gen.resize 5
+            // |> Gen.sequenceToArray// Keep data arrays relatively small (0 to 5 elements)
+    // Module to hold custom FsCheck generators for formatRes
+
+    // Generator for the tuple (format_code, data_array)
+    // This generator ensures that if format_code > 0, it's a valid 1-based index for the generated data_array.
+        let generator =
+            genDataArray
+            |> Gen.bind( fun dataArr -> 
+                let validIndices = [ -1; 0 ] @ (if Array.length dataArr > 0 then [ 1 .. Array.length dataArr ] else [])
+                Gen.elements validIndices
+                |> Gen.map (fun fmt -> (fmt, dataArr))
+            )
+        Arb.fromGen generator
+
+#!fsharp
+
+FormatResGenerators.FormatResInput().Generator 
+|> Gen.sample 5 
+|> Seq.iter (fun (fmt, data) -> 
+    printfn "Format Code: %d" fmt
+    data |> Array.iter (fun (k, v) -> printfn "  Key: %s, Value: %A" k v)
+)

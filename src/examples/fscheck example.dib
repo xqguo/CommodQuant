@@ -41,9 +41,12 @@ type FormatResGenerators =
             ArbMap.defaults
             |> ArbMap.generate<string>
             |> Gen.map (fun s -> 
-                let chars = s.ToCharArray() |> Array.filter (fun c -> System.Char.IsLetterOrDigit c || System.Char.IsWhiteSpace c) 
+                let chars = 
+                    s.ToCharArray() 
+                    |> Array.filter (fun c -> System.Char.IsAsciiLetterOrDigit c || System.Char.IsWhiteSpace c) 
+                    |> Array.filter ( fun c -> not <| System.Char.IsControl c)
                 new string(chars |> Array.truncate 20)) // Keep strings reasonably short 
-            |> Gen.filter (fun s -> not (String.IsNullOrWhiteSpace s)) // non-whitespace 
+            |> Gen.filter (fun s -> not (String.IsNullOrWhiteSpace s )) // non-whitespace 
 
         // Generator for the object part of the data tuples
         let genObjValue =
@@ -79,8 +82,38 @@ type FormatResGenerators =
 #!fsharp
 
 FormatResGenerators.FormatResInput().Generator 
-|> Gen.sample 5 
+|> Gen.sample 10 
 |> Seq.iter (fun (fmt, data) -> 
     printfn "Format Code: %d" fmt
     data |> Array.iter (fun (k, v) -> printfn "  Key: %s, Value: %A" k v)
 )
+
+#!fsharp
+
+"他".ToCharArray() |> Array.iter (fun c -> 
+    printfn "%A" <| System.Char.IsAsciiLetterOrDigit( c )
+)
+
+#!fsharp
+
+let keyisnotempty (a:(int*(string*obj)[])) =
+    let (fmt, data) = a
+    let keys = 
+        Array.tryFind (fun (k, v) -> (String.IsNullOrWhiteSpace k)) data
+    keys.IsNone
+
+#!fsharp
+
+//with the custom generator, the test will pass
+
+Check.One(Config.Quick.WithArbitrary([typeof<FormatResGenerators>]), keyisnotempty)
+
+#!fsharp
+
+//with default config, the test will fail
+Check.Quick(keyisnotempty)
+
+#!fsharp
+
+//replay some case the investigate. use of property attributes
+Check.One( Config.Quick.WithReplay(9606483055554133962UL,11636943459687056285UL), keyisnotempty)

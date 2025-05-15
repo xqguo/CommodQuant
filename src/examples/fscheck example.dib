@@ -12,15 +12,22 @@
 
 open MathNet.Numerics
 open MathNet.Numerics.LinearAlgebra
-open MathNet.Numerics.FSharp
 
 #!fsharp
 
-let a = Array2D.init 3 3 (fun i j -> float (i + j))
+let a = Array2D.init 4 10  (fun i j -> float (i + j))
 
 #!fsharp
 
-a |> DenseMatrix.ofArray2
+let b = a |> DenseMatrix.ofArray2
+
+#!fsharp
+
+b.[0,0]
+
+#!fsharp
+
+b.SubMatrix(1,3,1,9)
 
 #!fsharp
 

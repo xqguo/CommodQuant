@@ -2,6 +2,15 @@
 
 {"kernelInfo":{"defaultKernelName":"fsharp","items":[{"name":"csharp","languageName":"C#","aliases":["c#","cs"]},{"name":"fsharp","languageName":"fsharp"},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
 
+#!mermaid
+
+graph LR;
+    A[Start] --> B(Process 1);
+    B --> C{Decision};
+    C -- Yes --> D[End];
+    C -- No --> E[Process 2];
+    E --> D;
+
 #!fsharp
 
 #r "nuget: FsCheck"

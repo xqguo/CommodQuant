@@ -1,6 +1,6 @@
 #!meta
 
-{"kernelInfo":{"defaultKernelName":"fsharp","items":[{"name":"csharp","languageName":"C#","aliases":["c#","cs"]},{"name":"fsharp","languageName":"fsharp"},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"name":"csharp","languageName":"C#","aliases":["c#","cs"]},{"name":"fsharp","languageName":"fsharp"},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
 
 #!mermaid
 
@@ -14,6 +14,29 @@ graph LR;
 #!fsharp
 
 #r "nuget: FsCheck"
+#r "nuget:MathNet.Numerics"
+#r "nuget:MathNet.Numerics.fsharp"
+
+#!fsharp
+
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
+
+#!fsharp
+
+let a = Array2D.init 4 10  (fun i j -> float (i + j))
+
+#!fsharp
+
+let b = a |> DenseMatrix.ofArray2
+
+#!fsharp
+
+b.[0,0]
+
+#!fsharp
+
+b.SubMatrix(1,3,1,9)
 
 #!fsharp
 
@@ -27,7 +50,7 @@ let g2 = Gen.choose (0, 100) |> Gen.map (fun x -> x * 2)
 
 #!fsharp
 
-let a = Arb.fromGen g
+let ab = Arb.fromGen g
 
 #!fsharp
 
@@ -87,6 +110,70 @@ type FormatResGenerators =
                 |> Gen.map (fun fmt -> (fmt, dataArr))
             )
         Arb.fromGen generator
+
+#!fsharp
+
+type MatrixGenerators =
+    static member NiceMatrix() : Arbitrary<float[,]> =
+        let genFiniteFloat = 
+            ArbMap.defaults 
+            |> ArbMap.arbitrary<NormalFloat> 
+            |> Arb.convert NormalFloat float
+            |> Arb.generate<float> 
+            // |> Gen.map (fun x -> if System.Double.IsFinite x then x else 0.0)
+
+        let genMatrix: Gen<float[,]> =
+            Gen.sized (fun size ->
+                // Ensure dimensions are at least 1, and scale with FsCheck's size parameter
+                let s = max 1 (size % 4 + 1) // Dimensions from 1 to 4 for reasonable test times
+                Gen.map2 (fun rows cols -> Array2D.init rows cols (fun _ _ -> Gen.sample 1 genFiniteFloat |> Seq.head))
+                    (Gen.choose (1, s))
+                    (Gen.choose (1, s)))
+        genMatrix |> Arb.fromGen
+
+#!fsharp
+
+let array2DDoublesEqualWithTolerance (precision: int) (expected: float[,]) (actual: float[,]) : bool =
+    if Array2D.length1 expected <> Array2D.length1 actual || Array2D.length2 expected <> Array2D.length2 actual then
+        // printfn "Array dimensions differ. Expected (%d,%d), Actual (%d,%d)" (Array2D.length1 expected) (Array2D.length2 expected) (Array2D.length1 actual) (Array2D.length2 actual)
+        false
+    else
+        let mutable isEqual = true
+        // Define a sample 2D array
+        let flattenArray (arr: 'a[,]) : 'a[] =
+            arr |> Seq.cast<'a> |> Seq.toArray
+
+        // Perform the conversion
+        let e1d = flattenArray expected
+        let a1d = flattenArray actual
+        let tolerance = System.Math.Pow(10.0, -float precision) // Calculate tolerance
+        Array.forall2 (fun e a -> abs (e - a) <= tolerance) e1d a1d
+
+#!fsharp
+
+MatrixGenerators.NiceMatrix().Generator
+|> Gen.sample 10
+|> Array.map( fun m -> printfn "%A" m; m)
+|> Array.iter (fun m -> 
+    let svd = ( m |> DenseMatrix.ofArray2 ).Svd()
+    printfn "SVD: %A" svd
+    printfn "U: %A" svd.U
+    printfn "S: %A" svd.S
+    printfn "V: %A" svd.VT)
+
+#!fsharp
+
+let x = [[33.98008291; -44.03071605; -38.20637293]
+         [30.99657108; -1.797693135; 23.86798604]]
+
+#!fsharp
+
+x |> matrix |> (fun m -> 
+    let svd = m.Svd()
+    printfn "SVD: %A" svd
+    printfn "U: %A" svd.U
+    printfn "S: %A" svd.S
+    printfn "V: %A" svd.VT)
 
 #!fsharp
 

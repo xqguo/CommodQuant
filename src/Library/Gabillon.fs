@@ -386,10 +386,10 @@ module Gabillon =
         match ins with
         | TTF
         | NBP
-        | JKM -> (0.19, 0.49, 0.47)
+        | JKM -> (0.22, 0.5, 0.32)
         | NG -> (0.17, 0.48, 0.)
         | BRT
-        | DBRT -> (0.15, 0.4, 0.66)
+        | DBRT -> (0.12, 0.5, 0.7)
         | _ -> (0.001, 0.001, 0.0) //bs equivalent
 
     let combineGabillonParam (l1, k1, r1) (l2, k2, r2) rho =

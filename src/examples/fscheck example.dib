@@ -2,6 +2,15 @@
 
 {"kernelInfo":{"defaultKernelName":"csharp","items":[{"name":"csharp","languageName":"C#","aliases":["c#","cs"]},{"name":"fsharp","languageName":"fsharp"},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
 
+#!mermaid
+
+graph LR;
+    A[Start] --> B(Process 1);
+    B --> C{Decision};
+    C -- Yes --> D[End];
+    C -- No --> E[Process 2];
+    E --> D;
+
 #!fsharp
 
 #r "nuget: FsCheck"
@@ -32,6 +41,10 @@ b.[0,0]
 #!fsharp
 
 b.SubMatrix(1,3,1,9)
+
+#!fsharp
+
+b.ToMatrixString()
 
 #!fsharp
 
@@ -208,3 +221,104 @@ Check.Quick(keyisnotempty)
 
 //replay some case the investigate. use of property attributes
 Check.One( Config.Quick.WithReplay(9606483055554133962UL,11636943459687056285UL), keyisnotempty)
+
+#!fsharp
+
+open System
+open System.Text
+open Microsoft.DotNet.Interactive.Formatting // Required for display(HTML(...))
+
+/// Formats a 2D array of floats into an HTML table string, potentially scrollable.
+///
+/// Parameters:
+///   - matrix: The 2D array (float[,]) to format.
+///   - decimalPlaces: The number of decimal places for formatting float values.
+///   - maxHeightPx: Optional. If Some(height), sets the maximum height of the table container
+///                  in pixels, enabling vertical scrolling if content exceeds this height.
+///   - includeHeaders: If true, includes row and column index headers in the table.
+///
+/// Returns:
+///   A string containing the HTML representation of the table.
+let matrixToHtmlTable (matrix: float[,]) (decimalPlaces: int) (maxHeightPx: int option) (includeHeaders: bool) : string =
+    let rows = Array2D.length1 matrix
+    let cols = Array2D.length2 matrix
+
+    if rows = 0 || cols = 0 then
+        "<p><em>Matrix is empty or has zero dimensions.</em></p>"
+    else
+        let sb = StringBuilder()
+        let valueFormat = sprintf "%%.%df" decimalPlaces // e.g., "%.2f"
+
+        // Start outer div for styling and scrolling
+        let divStyle =
+            match maxHeightPx with
+            | Some height -> sprintf "max-height: %dpx; overflow-y: auto; border: 1px solid #ccc; display: inline-block;" height
+            | None        -> "border: 1px solid #ccc; display: inline-block;" // No scrolling, but keep border and inline-block
+        sb.AppendFormat("<div style=\"%s\">\n", divStyle) |> ignore
+
+        // Start table
+        sb.Append("<table style=\"border-collapse: collapse; font-family: monospace; margin: 5px;\">\n") |> ignore
+
+        // Table Headers (Column Indices)
+        if includeHeaders then
+            sb.Append("  <thead>\n    <tr>\n") |> ignore
+            // Empty cell for top-left corner if row headers are also present
+            sb.Append("      <th style=\"border: 1px solid #ddd; padding: 6px 8px; background-color: #f2f2f2; text-align: center;\"></th>\n") |> ignore
+            for j in 0 .. cols - 1 do
+                sb.AppendFormat("      <th style=\"border: 1px solid #ddd; padding: 6px 8px; background-color: #f2f2f2; text-align: right;\">Col %d</th>\n", j) |> ignore
+            sb.Append("    </tr>\n  </thead>\n") |> ignore
+
+        // Table Body
+        sb.Append("  <tbody>\n") |> ignore
+        for i in 0 .. rows - 1 do
+            sb.Append("    <tr>\n") |> ignore
+            // Row Header (Row Index)
+            if includeHeaders then
+                sb.AppendFormat("      <th style=\"border: 1px solid #ddd; padding: 6px 8px; background-color: #f2f2f2; text-align: right;\">Row %d</th>\n", i) |> ignore
+
+            // Data cells
+            for j in 0 .. cols - 1 do
+                let value = matrix.[i, j]
+                let sVal = sprintf (PrintfFormat<float->string>valueFormat+"%s") value
+                // let sVal = sprintf "%A" value
+                let tds = sprintf "      <td style=\"border: 1px solid #ddd; padding: 6px 8px; text-align: right;\">%s</td>\n" sVal
+                sb.Append( tds ) |> ignore
+            sb.Append("    </tr>\n") |> ignore
+        sb.Append("  </tbody>\n") |> ignore
+
+        sb.Append("</table>\n") |> ignore
+        sb.Append("</div>\n") |> ignore
+
+        sb.ToString()
+
+#!fsharp
+
+// --- Example Usage in a .NET Interactive Notebook Cell ---
+
+// 1. Define a sample matrix (make it large enough to demonstrate scrolling)
+let largeMatrix =
+    Array2D.init 25 8 (fun r c ->
+        // Some arbitrary data for demonstration
+        (float r * 1.1) + (float c * 0.33) + sin (float (r+c)) * 5.0
+    )
+
+// 2. Generate the HTML string for a scrollable table
+//    - 2 decimal places
+//    - Max height of 400 pixels (adjust as needed)
+//    - Include row and column headers
+let htmlTableOutput = matrixToHtmlTable largeMatrix 2 (Some 400) true
+
+// 3. Display the HTML in the notebook
+//    The `display` function with `HTML()` tells the notebook to render the string as HTML.
+display(HTML(htmlTableOutput))
+
+#!fsharp
+
+// --- Another example with a smaller matrix and no explicit height (won't scroll unless cell is too small) ---
+printfn "\n\n--- Small Matrix Example ---"
+let smallMatrix = array2D [
+    [ 1.0/3.0; 2.71828; 3.14159 ];
+    [ 100.5;   2000.0;  0.007   ]
+]
+let htmlSmallTable = matrixToHtmlTable smallMatrix 4 None true // No max-height, include headers
+display(HTML(htmlSmallTable))

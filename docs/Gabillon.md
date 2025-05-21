@@ -14,6 +14,12 @@ $$E(dW_s(t)dW_l(t)) = \rho dt$$
 
 There are two part of model parameter fitting. Firstly, the structural parameters $k$, $rho$, $\sigma_l$ are chosen to be constants that reflect the desired level of mean reversion, curve intra pillar correlation, and long term vols. These can also be chosen according to observed market prices that are sensitive to them, e.g. swaptions, time spread options etc. 
 
+Calibration Sample results
+
+![Calibrated vol ](Pasted%20image%2020250521125509.png)
+![Calibrated correlation](Pasted%20image%2020250521125545.png)
+
+
 In the second step, we choose to calibrate a piecewise constant time dependent $\sigma_s(t)$ to the market implied volatilities of listed options. These are pseudo-realtime and are always recalibrated on the fly when the market vol changes. This is often used for oil contracts. 
 
 Alternatively, we can also fit a constant $\sigma(t,T_i)$ in time dimension, and a different one per futures maturity. This is often more suitable for gas contracts. 

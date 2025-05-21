@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <PackageId>CommodLib</PackageId>
-    <Version>1.0.7</Version>
+    <Version>1.0.8</Version>
     <PackageReleaseNotes>use net9.0</PackageReleaseNotes>
     <Authors>Xiaoqiang Guo</Authors>
     <RepositoryUrl>https://github.com/xqguo/CommodQuant</RepositoryUrl>

@@ -14,6 +14,11 @@ module Contracts =
         //    |> ContractDates
 
 
+        /// <summary>
+        /// Reads contract dates from a CSV file.
+        /// </summary>
+        /// <param name="v">The path to the CSV file.</param>
+        /// <returns>A map of pillar strings to DateTime objects.</returns>
         let readContracts (v: string) =
             ContractCsv.Load(v).Rows
             |> Seq.map (fun r ->
@@ -22,8 +27,15 @@ module Contracts =
             |> Map.ofSeq
         // |> ContractDates
 
-        // if date is bd before Christmas or New Year, then the bd before
-        // the rule seems to be applied using calendar day
+        /// <summary>
+        /// Adjusts a date if it falls on the business day before Christmas or New Year.
+        /// if date is bd before Christmas or New Year, then the bd before
+        /// This is used for Brent futures expiration, where the last trading day is adjusted if 
+        /// it falls on the day before Christmas or New Year.
+        /// </summary>
+        /// <param name="hol">A set of holiday dates.</param>
+        /// <param name="d">The date to adjust.</param>
+        /// <returns>The adjusted date.</returns>
         let prevChrismasNY hol (d: DateTime) =
             match d.Month with
             | 12 ->
@@ -36,52 +48,99 @@ module Contracts =
                     d
             | _ -> d
 
-        //https://www.theice.com/products/219/Brent-Crude-Futures
-        //Expiration Date
-        //Trading shall cease at the end of the designated settlement period on the last Business Day of the second month preceding the relevant contract month (e.g. the March contract month will expire on the last Business Day of January).
-        //if the day on which trading is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the next preceding Business Day
+        /// <summary>
+        /// Gets the expiration date for Brent (BRT) futures.
+        /// https://www.theice.com/products/219/Brent-Crude-Futures
+        /// Expiration Date
+        /// Trading shall cease at the end of the designated settlement period on the last Business Day of the second month preceding the relevant contract month 
+        /// (e.g. the March contract month will expire on the last Business Day of January).
+        /// if the day on which trading is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the next preceding Business Day
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getBrtExp month =
             let hol = Set.union (getCalendar BRT) (getCalendarbyCode UK)
             //let hol = getCalendar BRT
             dateAdjust hol "a-1m-1b" month |> prevChrismasNY hol
 
-        //https://www.theice.com/products/27996665/Dutch-TTF-Gas-Futures/
-        //Expiration Date
-        //Trading will cease at the close of business two UK Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
+        /// <summary>
+        /// Gets the expiration date for TTF futures.
+        /// https://www.theice.com/products/27996665/Dutch-TTF-Gas-Futures/
+        /// Expiration Date
+        /// Trading will cease at the close of business two UK Business Days prior to the 
+        /// first calendar day of the delivery month, quarter, season, or calendar.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getTtfExp month =
             let hol = Set.union (getCalendar TTF) (getCalendarbyCode UK) //include ICE
             //let hol = getCalendar TTF
             dateAdjust hol "a-2b" month
 
-        //https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
-        //Expiration Date
-        //Trading will cease at the close of business three Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
+        /// <summary>
+        /// Gets the expiration date for Natural Gas (NG) futures.
+        /// https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_product_calendar_futures.html
+        /// Expiration Date
+        /// Trading will cease at the close of business three Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getNgExp month =
             let hol = getCalendar NG
             dateAdjust hol "a-3b" month
 
-        //https://www.theice.com/products/910/UK-Natural-Gas-Futures
-        //Trading will cease at the close of business two Business Days prior to the first calendar day of the delivery month, quarter, season, or calendar.
+        /// <summary>
+        /// Gets the expiration date for NBP futures.
+        /// https://www.theice.com/products/910/UK-Natural-Gas-Futures
+        /// Expiration Date
+        /// Trading will cease at the close of business two Business Days prior to the 
+        /// first calendar day of the delivery month, quarter, season, or calendar.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getNbpExp month =
             let hol = getCalendar NBP
             dateAdjust hol "a-2b" month
 
-        //GO contracts: https://www.theice.com/products/34361119/Low-Sulphur-Gasoil-Future
-        //compute Last Trading Day: Trading shall cease at 12:00 hours, 2 business days prior to the 14th calendar day of the delivery.
+        /// <summary>
+        /// Gets the expiration date for Gas Oil (GO) futures.
+        /// GO contracts: https://www.theice.com/products/34361119/Low-Sulphur-Gasoil-Future
+        /// compute Last Trading Day: Trading shall cease at 12:00 hours, 
+        /// 2 business days prior to the 14th calendar day of the delivery.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getGoExp month =
             let hol = getCalendar GO
             dateAdjust hol "a13d-2b" month
 
-        ///jkm contracts expiration is 15th of m-1, or previous bd.
+        /// <summary>
+        /// Gets the expiration date for JKM futures.
+        /// jkm contracts expiration is 15th of m-1, or previous bd.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getJkmExp month =
             let hol = getCalendar JKM
             dateAdjust hol "a-1m15d-1b" month
 
-        //use 1 bd of the month
+        /// <summary>
+        /// Gets the expiration date for JCC futures.
+        /// JCC is effectively a basket of oil prices wiht lags.
+        /// Here we use 1st bd of the month
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The expiration date.</returns>
         let getJccExp month =
             let hol = getCalendar JCC
             dateAdjust hol "an" month
 
+        /// <summary>
+        /// Gets the expiration date for a given instrument and month.
+        /// </summary>
+        /// <param name="d">The contract month.</param>
+        /// <param name="ins">The instrument.</param>
+        /// <returns>The expiration date.</returns>
         let getExp d ins =
             match ins with
             | BRT -> getBrtExp d
@@ -93,18 +152,38 @@ module Contracts =
             | JCC -> getJccExp d
             | _ -> dateAdjust (getCalendar ins) "ep" d
 
-        //https://www.theice.com/products/218/Brent-Crude-American-style-Options
-        //Last Trading Day
-        //Trading shall cease at the end of the designated settlement period of the ICE Brent Crude Futures Contract three Business Days before the scheduled cessation of trading for the relevant contract month of the ICE Brent Crude Futures Contract.
-        //If the day on which trading in the relevant option is due to cease would be either: (i) the Business Day preceding Christmas Day, or (ii) the Business Day preceding New Year’s Day, then trading shall cease on the immediately preceding Business Day
+        /// <summary>
+        /// Gets the option expiration date for Brent (BRT).
+        /// https://www.theice.com/products/218/Brent-Crude-American-style-Options
+        /// Last Trading Day
+        /// Trading shall cease at the end of the designated settlement period of the 
+        /// ICE Brent Crude Futures Contract three Business Days before the scheduled 
+        /// cessation of trading for the relevant contract month of the ICE Brent Crude Futures Contract.
+        /// If the day on which trading in the relevant option is due to cease would be 
+        /// either: 
+        /// (i) the Business Day preceding Christmas Day, or 
+        /// (ii) the Business Day preceding New Year’s Day, then trading shall cease on the immediately preceding Business Day
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The option expiration date.</returns>
         let getBrtOptExp month =
             let hol = Set.union (getCalendar BRT) (getCalendarbyCode UK)
             getExp month BRT |> dateAdjust hol "-3b" |> prevChrismasNY hol
         //getBrtOptExp (DateTime(2020,2,1))
 
-        //https://www.theice.com/products/71085679/Dutch-TTF-Gas-Options-Futures-Style-Margin
-        //Expiration Date
-        //Trading will cease when the intraday reference price is set , approximately 14:00 CET (as specified in the Operating Schedule - Appendix B.1), of the underlying futures contract five calendar days before the start of the contract month. If that day is a non-business day, expiry will occur on the nearest prior business day, except where that day is also the expiry date of the underlying futures contract, in which case expiry will occur on the preceding business day.
+        /// <summary>
+        /// Gets the option expiration date for TTF.
+        /// https://www.theice.com/products/71085679/Dutch-TTF-Gas-Options-Futures-Style-Margin
+        /// Expiration Date
+        /// Trading will cease when the intraday reference price is set , approximately 14:00 CET 
+        /// (as specified in the Operating Schedule - Appendix B.1), 
+        /// of the underlying futures contract five calendar days before the start of the contract month. 
+        /// If that day is a non-business day, expiry will occur on the nearest prior business day, 
+        /// except where that day is also the expiry date of the underlying futures contract, 
+        /// in which case expiry will occur on the preceding business day.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The option expiration date.</returns>
         let getTtfOptExp month =
             //let hol = getCalendar TTF
             let hol = Set.union (getCalendar TTF) (getCalendarbyCode UK)
@@ -112,9 +191,18 @@ module Contracts =
             let opt = dateAdjust hol "a-5dp" month
             if fut = opt then dateAdjust hol "-1b" opt else opt
 
-        //https://www.theice.com/products/71085728/UK-Natural-Gas-Options-Futures-Style-Margin
-        //Expiration Date
-        //Trading will cease when the intraday reference price is set, 12:50 - 13:00 LLT, of the underlying futures contract five calendar days before the start of the contract month. If that day is a non-business day, expiry will occur on the nearest prior business day, except where that day is also the expiry date of the underlying futures contract, in which case expiry will be occur on the preceding business day.
+        /// <summary>
+        /// Gets the option expiration date for NBP.
+        /// https://www.theice.com/products/71085728/UK-Natural-Gas-Options-Futures-Style-Margin
+        /// Expiration Date
+        /// Trading will cease when the intraday reference price is set, 12:50 - 13:00 LLT, 
+        /// of the underlying futures contract five calendar days before the start of the contract month. 
+        /// If that day is a non-business day, expiry will occur on the nearest prior business day, 
+        /// except where that day is also the expiry date of the underlying futures contract, 
+        /// in which case expiry will be occur on the preceding business day.
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The option expiration date.</returns>
         let getNbpOptExp month =
             //let hol = getCalendar TTF
             let hol = Set.union (getCalendar NBP) (getCalendarbyCode UK)
@@ -122,11 +210,22 @@ module Contracts =
             let opt = dateAdjust hol "a-5dp" month
             if fut = opt then dateAdjust hol "-1b" opt else opt
 
+        /// <summary>
+        /// Gets the option expiration date for Natural Gas (NG).
+        /// </summary>
+        /// <param name="month">The contract month.</param>
+        /// <returns>The option expiration date.</returns>
         let getNgOptExp month =
             let hol = getCalendar NG
             let fut = getExp month NG
             dateAdjust hol "-1b" fut
 
+        /// <summary>
+        /// Gets the option expiration date for a given instrument and month.
+        /// </summary>
+        /// <param name="d">The contract month.</param>
+        /// <param name="ins">The instrument.</param>
+        /// <returns>The option expiration date.</returns>
         let getOptExp d ins =
             match ins with
             | BRT -> getBrtOptExp d
@@ -178,6 +277,13 @@ module Contracts =
     //set global contract start date and end date to be used and possible to reload
     let mutable contractStart = DateTime(2020, 1, 1)
     let mutable contractEnd = DateTime(2051, 1, 1)
+    /// <summary>
+    /// Gets generic contract dates by combining actuals from a file and rule-based generation.
+    /// </summary>
+    /// <param name="getfile">A function to get the file path for actual contract dates.</param>
+    /// <param name="getrule">A function to get the rule-based contract date for a given month and instrument.</param>
+    /// <param name="ins">The instrument.</param>
+    /// <returns>A map of pillar strings to DateTime objects representing contract dates.</returns>
     let getGenericContracts getfile getrule ins =
         let f = getfile ins
 
@@ -199,12 +305,27 @@ module Contracts =
             rulebased
             actuals
 
+    /// <summary>
+    /// Gets future contract dates for a given instrument.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <returns>A map of pillar strings to DateTime objects representing future contract dates.</returns>
     let getFutContracts ins =
         getGenericContracts tryFutExpFile Conventions.getExp ins
 
+    /// <summary>
+    /// Gets option contract dates for a given instrument.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <returns>A map of pillar strings to DateTime objects representing option contract dates.</returns>
     let getOptContracts ins =
         getGenericContracts tryOptExpFile Conventions.getOptExp ins
 
+    /// <summary>
+    /// Gets both future and option contract dates for a given instrument.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <returns>A ContractDates object containing maps for future and option expiration dates.</returns>
     let getContracts ins =
         let opt = getOptContracts ins
         getFutContracts ins |> Map.map (fun k v -> v, opt.[k]) |> ContractDates

@@ -8,6 +8,15 @@ module Pricer =
     open MathNet.Numerics.Statistics
     open MathNet.Numerics.Differentiation
 
+    /// <summary>
+    /// Calculates the standard swap price for a given instrument and period.
+    /// </summary>
+    /// <param name="inst">The instrument for which to price the swap.</param>
+    /// <param name="d1">The start date of the swap period.</param>
+    /// <param name="d2">The end date of the swap period.</param>
+    /// <param name="f">The price curve function.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>The calculated swap price as a float.</returns>
     let SwapPricer inst d1 d2 (f: PriceCurve) pd = //std swap pricer
         let c = getCommod inst
         let s = getSwap inst d1 d2 (c.LotSize) (c.Quotation * 0.M)
@@ -15,13 +24,29 @@ module Pricer =
         a.Value / s.Quantity.Value |> float
 
     // get equal weights based on the number of fixings
+    /// <summary>
+    /// Calculates equal weights based on the number of items in an array.
+    /// </summary>
+    /// <param name="x">The input array.</param>
+    /// <returns>An array of floats representing equal weights.</returns>
     let getEqualWeights x =
         let n = Array.length x
         let w = 1.0 / float n
         Array.replicate n w
 
+    /// <summary>
+    /// Converts an array of numbers (typically floats or values convertible to float) into a MathNet dense vector of floats.
+    /// </summary>
+    /// <param name="s">The input array to convert.</param>
+    /// <returns>A MathNet dense vector of floats.</returns>
     let inline toVector s = s |> Array.map float |> vector
 
+    /// <summary>
+    /// Splits an array of details (tuples containing a date) into two arrays: one with past details and one with future details, based on a pricing date.
+    /// </summary>
+    /// <param name="pricingDate">The date used to split the details. Details on or before this date are considered past.</param>
+    /// <param name="details">An array of tuples, where the first element of the tuple is a DateTime representing the date of the detail.</param>
+    /// <returns>A tuple containing two arrays: the first array holds details on or before the pricingDate (past), and the second array holds details after the pricingDate (future).</returns>
     /// split fixings into future and past using pricingDate
     let splitDetails pricingDate details =
         let n = details |> Array.tryFindIndex (fun (x, _, _) -> x > pricingDate)
@@ -41,6 +66,17 @@ module Pricer =
         let refDate = refMonth |> pillarToDate
         refDate.AddMonths l |> formatPillar
 
+    /// <summary>
+    /// Generates an array of fixing details (date, weight, contract) based on a reference month, commodity information, lags, slope, averaging rule, and expiration date.
+    /// The slope is applied to the weights.
+    /// </summary>
+    /// <param name="refMonth">The reference contract pillar string (e.g., "JAN-25").</param>
+    /// <param name="com">The commodity object containing instrument details.</param>
+    /// <param name="lags">An array of integers representing the month lags to apply to the reference month.</param>
+    /// <param name="slope">A decimal value representing the slope to be applied to the weights.</param>
+    /// <param name="avg">A boolean indicating whether to use an averaging rule for fixing dates (e.g. average of month for JKM).</param>
+    /// <param name="expDate">The expiration date, used to cap fixing dates if they fall beyond it.</param>
+    /// <returns>An array of tuples, where each tuple contains a fixing date (DateTime), a weight (float), and a contract pillar string. Weights are grouped by identical fixing date and contract.</returns>
     ///take refmonth and return array of tuple:
     ///fixingdate, weight, contract,
     ///slope is applied here into the weights.
@@ -83,6 +119,18 @@ module Pricer =
         |> Array.groupBy (fun (x, _, z) -> x, z)
         |> Array.map (fun ((k1, k2), v) -> k1, (v |> Array.sumBy (fun (_, x, _) -> x)), k2)
 
+    /// <summary>
+    /// Generates fixing details similar to `getFixings`, but allows for applying an additional layer of weighting based on an input `weights` array.
+    /// Each element in the `weights` array (a tuple of weight and lag) results in a call to `getFixings` for a shifted reference month, and the results are aggregated.
+    /// </summary>
+    /// <param name="refMonth">The base reference contract pillar string.</param>
+    /// <param name="com">The commodity object.</param>
+    /// <param name="lags">An array of month lags passed to `getFixings` for each weighted calculation.</param>
+    /// <param name="slope">The base slope value, which gets further multiplied by the individual weight from the `weights` array.</param>
+    /// <param name="avg">A boolean indicating whether to use an averaging rule for fixing dates.</param>
+    /// <param name="expDate">The expiration date.</param>
+    /// <param name="weights">An array of (float, int) tuples, where the float is a weighting factor and the int is an additional month lag for each call to `getFixings`.</param>
+    /// <returns>An array of tuples (DateTime, float, string) representing aggregated and weighted fixing details, filtered to remove zero-weight entries.</returns>
     ///take array of weights and lags as well as the necessary arguments to
     ///call getFixings with each refMonth with lag applied
     ///Finally group the results
@@ -97,6 +145,21 @@ module Pricer =
         |> Array.map (fun ((k1, k2), v) -> k1, (v |> Array.sumBy (fun (_, x, _) -> x)), k2)
         |> Array.filter (fun (_, w, _) -> abs w > 1E-12) //ignore 0 weights
 
+    /// <summary>
+    /// Parses a 3-digit string formula (e.g., "601", "311") and a reference month to determine a set of month lags.
+    /// The formula encodes averaging period, lag, and delivery period duration, commonly used in oil-linked LNG pricing.
+    /// </summary>
+    /// <param name="f">A 3-digit string representing the formula. E.g., "601" for a six-month average, no lag, one month delivery.</param>
+    /// <param name="refMonth">The reference DateTime for the delivery period.</param>
+    /// <returns>An array of integers representing the calculated month lags relative to the (potentially adjusted) reference month.
+    /// For example, for "601" and refMonth "JAN-25", it would return lags for a 6-month average period ending before JAN-25.</returns>
+    /// <remarks>
+    /// The formula digits typically represent:
+    /// - Digit 1: Number of months for averaging (e.g., '6' for six months).
+    /// - Digit 2: Lag in months between the end of the averaging period and the start of the delivery period.
+    /// - Digit 3: Number of months of delivery (e.g., '1' for one month, '3' for a quarter, '6' for a semester).
+    /// The function adjusts the reference month to the start of the calendar period if delivery is for a quarter or semester.
+    /// </remarks>
     //https://www.argusmedia.com/-/media/Files/methodology/argus-lng-daily.ashx
     //The construction of the oil-price average is expressed as three figures,
     //for example 601, representing the number of months over which the oil
@@ -134,6 +197,19 @@ module Pricer =
         | _ -> failwith $"Unknown formula {f}"
         |> Array.map ((+) l)
 
+    /// <summary>
+    /// Prepares inputs for option pricing based on future fixing details.
+    /// It takes future fixing details and functions to retrieve prices and volatilities, then returns these as arrays.
+    /// </summary>
+    /// <param name="futureDetails">An array of tuples, each containing a fixing date (DateTime), a weight (float), and a contract pillar string.</param>
+    /// <param name="getPriceFunc">A function that takes a contract pillar string and returns its price (float).</param>
+    /// <param name="getVolFunc">A function that takes a contract pillar string and returns its volatility (float).</param>
+    /// <returns>A tuple of four arrays:
+    /// 1. `f1`: Array of forward prices (float[]).
+    /// 2. `fw1`: Array of weights (float[]).
+    /// 3. `t1`: Array of fixing dates (DateTime[]).
+    /// 4. `v1`: Array of volatilities (float[]).
+    /// </returns>
     ///generate inputs for option pricing
     /// inputs are
     /// futureDetails is a list of tuple of fixingdate, weight, ContractPillar
@@ -148,12 +224,37 @@ module Pricer =
         let v1 = contracts |> Array.map getVolFunc
         (f1, fw1, t1, v1)
 
+    /// <summary>
+    /// Calculates the weighted average of past fixings.
+    /// </summary>
+    /// <param name="pastDetails">An array of tuples, where each tuple contains a past fixing date (DateTime), its weight (float), and the contract pillar string.</param>
+    /// <param name="getFixingFunc">A function that takes a DateTime (fixing date) and a contract pillar string, and returns the fixing value (float) for that date and contract.</param>
+    /// <returns>The sum of (fixing value * weight) for all past details, as a float.</returns>
     ///generate past average required for asian option
     let getPastInputs pastDetails getFixingFunc =
         pastDetails
         |> Array.map (fun (d, w, c) -> float (getFixingFunc d c) * w)
         |> Array.sum
 
+    /// <summary>
+    /// Gathers all necessary inputs for pricing models, including separating past and future fixings, and retrieving market data.
+    /// </summary>
+    /// <param name="pricingDate">The date for which pricing is being performed.</param>
+    /// <param name="expDate">The expiration date of the instrument being priced.</param>
+    /// <param name="refMonth">The reference month pillar string for the instrument.</param>
+    /// <param name="lags">An array of integer month lags used by `getFixings`.</param>
+    /// <param name="avg">A boolean indicating if averaging rules apply for `getFixings`.</param>
+    /// <param name="inst">The instrument type/name.</param>
+    /// <param name="slope">The slope parameter for `getFixings`.</param>
+    /// <param name="pricecurve">The PriceCurve object to fetch prices if not fixed.</param>
+    /// <param name="volcurve">The VolCurve object to fetch volatilities.</param>
+    /// <returns>A tuple containing:
+    /// 1. `f1Vec`: Vector of forward prices for future fixings.
+    /// 2. `fw1Vec`: Vector of weights for future fixings.
+    /// 3. `t1Vec`: Vector of times to maturity (in years) for future fixings.
+    /// 4. `v1Vec`: Vector of volatilities for future fixings.
+    /// 5. `p1`: The weighted average of past fixings.
+    /// </returns>
     //for the final portfolio we need just functions that take price curve and return price.
     let getInputs pricingDate expDate refMonth lags avg inst slope (pricecurve: PriceCurve) (volcurve: VolCurve) =
         let com = getCommod inst
@@ -184,7 +285,29 @@ module Pricer =
         let t1 = d1 |> Array.map (getTTM pricingDate)
         (toVector f1, toVector fw1, toVector t1, toVector v1, p1)
 
-
+    /// <summary>
+    /// Prices a spread option using a Black-Scholes-like model (Choi's 2-asset correlation option).
+    /// This function orchestrates input gathering via `getInputs` and then calls the core option pricing logic.
+    /// </summary>
+    /// <param name="inst1">Instrument 1 name/type.</param>
+    /// <param name="lags1">Lags for instrument 1.</param>
+    /// <param name="avg1">Averaging rule for instrument 1.</param>
+    /// <param name="inst2">Instrument 2 name/type.</param>
+    /// <param name="lags2">Lags for instrument 2.</param>
+    /// <param name="avg2">Averaging rule for instrument 2.</param>
+    /// <param name="slope">Slope parameter (typically for instrument 1's pricing formula).</param>
+    /// <param name="freight">Freight cost, used in calculating the strike for the spread.</param>
+    /// <param name="callput">Option type: Call or Put.</param>
+    /// <param name="expDate">Expiration date of the option.</param>
+    /// <param name="refMonth">Reference month for the option contracts.</param>
+    /// <param name="pricingDate">The date as of which pricing is performed.</param>
+    /// <param name="rho">Correlation between instrument 1 and instrument 2.</param>
+    /// <param name="pricecurve1">Price curve for instrument 1.</param>
+    /// <param name="volcurve1">Volatility curve for instrument 1.</param>
+    /// <param name="pricecurve2">Price curve for instrument 2.</param>
+    /// <param name="volcurve2">Volatility curve for instrument 2.</param>
+    /// <param name="o">Integration order/parameter for `optionChoi2AssetN`.</param>
+    /// <returns>An array of (string, float) tuples representing pricing results (e.g., "Option", "Delta1", "P1", "Intrinsic").</returns>
     ///spread option of inst1 (e.g DBRT ) vs inst2 (e.g. JKM)
     let SpreadOptionPricerBS
         inst1
@@ -245,6 +368,14 @@ module Pricer =
 
         optPricer inst1 inst2 rho refMonth
 
+    /// <summary>
+    /// Retrieves a price for a contract, prioritizing an optional override price.
+    /// If the override price `p` is Some, its value is returned. Otherwise, the price is fetched from the `crv` (PriceCurve) for contract `c`.
+    /// </summary>
+    /// <param name="crv">The PriceCurve to use if no override price is provided.</param>
+    /// <param name="p">An optional float representing an override price.</param>
+    /// <param name="c">The contract pillar string for which to get the price.</param>
+    /// <returns>The override price if available, otherwise the price from the curve. Raises an error if the contract is not on the curve and no override is given.</returns>
     let getPricesWithOverride (crv: PriceCurve) p c =
         match p with
         | Some v -> v
@@ -254,6 +385,28 @@ module Pricer =
             else
                 failwithf "try to getPrice:%s from %A" c crv
 
+    /// <summary>
+    /// Prices a spread option using the Gabillon model for Asian options, adapted for spreads.
+    /// It uses `getInputsG` (Gabillon-specific input gathering) and `optionChoi2AssetN` (Choi's 2-asset numerical integration).
+    /// </summary>
+    /// <param name="inst1">Instrument 1 name/type.</param>
+    /// <param name="lags1">Lags for instrument 1.</param>
+    /// <param name="avg1">Averaging rule for instrument 1.</param>
+    /// <param name="inst2">Instrument 2 name/type.</param>
+    /// <param name="lags2">Lags for instrument 2.</param>
+    /// <param name="avg2">Averaging rule for instrument 2.</param>
+    /// <param name="slope">Slope parameter.</param>
+    /// <param name="freight">Freight cost for strike calculation.</param>
+    /// <param name="callput">Option type: Call or Put.</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="rho">Correlation between instruments.</param>
+    /// <param name="pricecurve1">Price curve for instrument 1.</param>
+    /// <param name="volcurve1">Volatility curve for instrument 1 (used for Gabillon covariance).</param>
+    /// <param name="pricecurve2">Price curve for instrument 2.</param>
+    /// <param name="volcurve2">Volatility curve for instrument 2 (used for Gabillon covariance).</param>
+    /// <returns>An array of (string, float) tuples with pricing results.</returns>
     ///spread option using Gabillon model
     let SpreadOptionPricerGabillon
         inst1
@@ -336,6 +489,25 @@ module Pricer =
            "vol1", (Statistics.Mean(v1.Diagonal() ./ t1 |> Vector.Sqrt)) //vol1
            "vol2", (Statistics.Mean(v2.Diagonal() ./ t2 |> Vector.Sqrt)) |] //vol1
 
+    /// <summary>
+    /// Gathers inputs for Gabillon-style pricing, considering an additional layer of weighting.
+    /// It's similar to `getInputs` but uses `getFixingsWeighted` and prepares data specifically for Gabillon models (e.g., not converting volatilities to vectors directly).
+    /// </summary>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month pillar string.</param>
+    /// <param name="lags1">Lags array for the instrument.</param>
+    /// <param name="avg1">Averaging rule for the instrument.</param>
+    /// <param name="inst1">Instrument name/type.</param>
+    /// <param name="slope">Base slope parameter.</param>
+    /// <param name="pricecurve1">Price curve for the instrument.</param>
+    /// <param name="weights">An array of (float, int) tuples for weighted calculations, passed to `getFixingsWeighted`.</param>
+    /// <returns>A tuple containing:
+    /// 1. `f1`: Vector of forward prices.
+    /// 2. `fw1`: Vector of weights.
+    /// 3. `fixings1`: Array of (DateTime, string) tuples representing fixing dates and contract pillars.
+    /// 4. `a1`: Weighted average of past fixings.
+    /// </returns>
     let getInputsGWeighted pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1: PriceCurve) weights =
         let com1 = getCommod inst1
         let getPrices1 = getPricesWithOverride pricecurve1 None
@@ -355,10 +527,47 @@ module Pricer =
 
         (f1, fw1, fixings1, a1)
 
+    /// <summary>
+    /// Gathers inputs for Gabillon-style pricing with a default weighting (single weight of 1.0, lag 0).
+    /// This is a convenience wrapper around `getInputsGWeighted`.
+    /// </summary>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month pillar string.</param>
+    /// <param name="lags1">Lags array for the instrument.</param>
+    /// <param name="avg1">Averaging rule for the instrument.</param>
+    /// <param name="inst1">Instrument name/type.</param>
+    /// <param name="slope">Slope parameter.</param>
+    /// <param name="pricecurve1">Price curve for the instrument.</param>
+    /// <returns>The same tuple structure as `getInputsGWeighted`.</returns>
     let getInputsG pricingDate expDate refMonth lags1 avg1 inst1 slope (pricecurve1: PriceCurve) =
         let weights = [| (1.0, 0) |] // default weight
         getInputsGWeighted pricingDate expDate refMonth lags1 avg1 inst1 slope pricecurve1 weights
 
+    /// <summary>
+    /// Prices a spread option using a cross-asset Gabillon model with weighted inputs.
+    /// This model considers the covariance between the term structures of the two assets.
+    /// </summary>
+    /// <param name="inst1">Instrument 1.</param>
+    /// <param name="lags1">Lags for instrument 1.</param>
+    /// <param name="avg1">Averaging rule for instrument 1.</param>
+    /// <param name="inst2">Instrument 2.</param>
+    /// <param name="lags2">Lags for instrument 2.</param>
+    /// <param name="avg2">Averaging rule for instrument 2.</param>
+    /// <param name="slope">Slope for instrument 1's pricing formula.</param>
+    /// <param name="freight">Freight cost for strike calculation.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="xParam">Cross-Gabillon parameters for covariance calculation.</param>
+    /// <param name="pricecurve1">Price curve for instrument 1.</param>
+    /// <param name="volcurve1">Volatility curve for instrument 1.</param>
+    /// <param name="pricecurve2">Price curve for instrument 2.</param>
+    /// <param name="volcurve2">Volatility curve for instrument 2.</param>
+    /// <param name="o">Integration order for `optionChoi2AssetCov`.</param>
+    /// <param name="weights">Array of (weight, lag) tuples for `getInputsGWeighted`.</param>
+    /// <returns>An array of (string, float) tuples with pricing results.</returns>
     ///spread option using cross Gabillon model
     let SpreadOptionPricerXGabillonWeighted
         inst1
@@ -421,6 +630,29 @@ module Pricer =
            "vol1", (Statistics.Mean v1) //vol1
            "vol2", (Statistics.Mean v2) |] //vol1
 
+    /// <summary>
+    /// Prices a spread option using a cross-asset Gabillon model with default weights.
+    /// Convenience wrapper for `SpreadOptionPricerXGabillonWeighted` with a single (1.0, 0) weight.
+    /// </summary>
+    /// <param name="inst1">Instrument 1.</param>
+    /// <param name="lags1">Lags for instrument 1.</param>
+    /// <param name="avg1">Averaging rule for instrument 1.</param>
+    /// <param name="inst2">Instrument 2.</param>
+    /// <param name="lags2">Lags for instrument 2.</param>
+    /// <param name="avg2">Averaging rule for instrument 2.</param>
+    /// <param name="slope">Slope for instrument 1's pricing formula.</param>
+    /// <param name="freight">Freight cost for strike calculation.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="xParam">Cross-Gabillon parameters.</param>
+    /// <param name="pricecurve1">Price curve for instrument 1.</param>
+    /// <param name="volcurve1">Volatility curve for instrument 1.</param>
+    /// <param name="pricecurve2">Price curve for instrument 2.</param>
+    /// <param name="volcurve2">Volatility curve for instrument 2.</param>
+    /// <param name="o">Integration order for `optionChoi2AssetCov`.</param>
+    /// <returns>An array of (string, float) tuples with pricing results.</returns>
     let SpreadOptionPricerXGabillon
         inst1
         lags1
@@ -462,6 +694,22 @@ module Pricer =
             o
             [| (1.0, 0) |]
 
+    /// <summary>
+    /// Prices an Asian option or swaption using the Gabillon model.
+    /// Calculates option price, delta, gamma, vega, and theta using numerical differentiation for Greeks.
+    /// </summary>
+    /// <param name="inst">Instrument name/type.</param>
+    /// <param name="lags">Lags array for the instrument.</param>
+    /// <param name="avg">Averaging rule for the instrument.</param>
+    /// <param name="k">Strike price.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="gParam">Gabillon model parameters.</param>
+    /// <param name="pricecurve">Price curve for the underlying.</param>
+    /// <param name="volcurve">Volatility curve for Gabillon covariance calculation.</param>
+    /// <returns>An array of (string, float) tuples with pricing results (Option, Delta1, Gamma1, Vega1, Theta1, P1, Intrinsic, Extrinsic, vol1).</returns>
     ///asian and swaption pricer using Gabillon model
     let AsianOptionPricerGabillon
         inst
@@ -517,6 +765,20 @@ module Pricer =
            "Extrinsic", opt - pintr
            "vol1", v1 |]
 
+    /// <summary>
+    /// Prices an Asian option or swaption using a moment-matching approximation.
+    /// </summary>
+    /// <param name="inst">Instrument name/type.</param>
+    /// <param name="lags">Lags array.</param>
+    /// <param name="avg">Averaging rule.</param>
+    /// <param name="k">Strike price.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="pricecurve">Price curve.</param>
+    /// <param name="volcurve">Volatility curve.</param>
+    /// <returns>An array of (string, float) tuples with pricing results (Option, Delta1, P1, Intrinsic, Extrinsic, vol1).</returns>
     ///asian and swaption pricer using moment matching model
     let AsianOptionPricer inst lags avg k callput expDate refMonth (pricingDate: DateTime) pricecurve volcurve =
         let (f1, fw1, t1, v1, a1) =
@@ -537,6 +799,21 @@ module Pricer =
            "Extrinsic", opt - pintr
            "vol1", v1.Mean() |]
 
+    /// <summary>
+    /// Prices an Asian option using a moment-matching model, specifically tailored for scenarios with no past fixings (e.g., ICE settlement style).
+    /// Fixings are considered only from the day after the pricingDate.
+    /// </summary>
+    /// <param name="inst">Instrument name/type.</param>
+    /// <param name="lags">Lags array.</param>
+    /// <param name="avg">Averaging rule.</param>
+    /// <param name="k">Strike price.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="pricecurve">Price curve.</param>
+    /// <param name="volcurve">Volatility curve.</param>
+    /// <returns>An array containing a single (string, float) tuple: ("Option", option_price).</returns>
     ///asian and swaption pricer using moment matching model
     ///with no past fixings, seems to be what ICE settlement is for.
     ///This is used for implied asian vol from listed apo settlements.
@@ -612,6 +889,22 @@ module Pricer =
         let opt = asianoption f1 fw1 t1 v1 k callput 0.
         [| "Option", opt |]
 
+    /// <summary>
+    /// Prices an Asian option incorporating a volatility smile.
+    /// It uses Gabillon-style inputs (`getInputsG`) and numerical differentiation for Greeks.
+    /// The volatility is determined by `getRefDelta` based on the smile parameters.
+    /// </summary>
+    /// <param name="inst">Instrument name/type.</param>
+    /// <param name="lags">Lags array.</param>
+    /// <param name="avg">Averaging rule.</param>
+    /// <param name="k">Strike price.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="pricecurve">Price curve.</param>
+    /// <param name="smile">Volatility smile (VolDeltaSmile object) used to derive volatilities.</param>
+    /// <returns>An array of (string, float) tuples with pricing results (Option, Delta1, Gamma1, Vega1, Theta1, P1, Intrinsic, Extrinsic, vol1).</returns>
     let AsianOptionPricerSmile
         inst
         lags
@@ -676,6 +969,22 @@ module Pricer =
            "Extrinsic", opt - pintr
            "vol1", v1.Mean() |]
 
+    /// <summary>
+    /// Prices an Asian option using the Gabillon model and incorporating a volatility smile.
+    /// Volatility is derived using `getRefDeltaGabillon` which is smile-aware. Greeks are calculated via numerical differentiation.
+    /// </summary>
+    /// <param name="inst">Instrument name/type.</param>
+    /// <param name="lags">Lags array.</param>
+    /// <param name="avg">Averaging rule.</param>
+    /// <param name="k">Strike price.</param>
+    /// <param name="callput">Option type (Call/Put).</param>
+    /// <param name="expDate">Expiration date.</param>
+    /// <param name="refMonth">Reference month.</param>
+    /// <param name="pricingDate">Pricing date.</param>
+    /// <param name="gParam">Gabillon model parameters.</param>
+    /// <param name="pricecurve">Price curve.</param>
+    /// <param name="smile">Volatility smile (VolDeltaSmile object).</param>
+    /// <returns>An array of (string, float) tuples with pricing results (Option, Delta1, Gamma1, Vega1, Theta1, P1, Intrinsic, Extrinsic, vol1).</returns>
     ///asian and swaption pricer using Gabillon model
     let AsianOptionPricerSmileGabillon
         inst

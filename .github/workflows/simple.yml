@@ -8,10 +8,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup .NET 9
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '9.0' # Or '9.0.x' for a specific minor version        
+          dotnet-version: '8.0' # Or '9.0.x' for a specific minor version        
       - name: dotnet build, and test
         run: |
           dotnet tool install --global Paket

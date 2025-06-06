@@ -13,6 +13,28 @@ module Moments =
         let v = sqrt (log (y11 / y1 / y1))
         bs y1 k v 1. o
 
+/// <summary>
+/// Calculates the price of an Asian option using a moment matching method.
+/// </summary>
+/// <param name="f1">Forward prices at the first set of dates.</param>
+/// <param name="fw1">Forward weights at the first set of dates.</param>
+/// <param name="t1">Time to maturity for the first set of dates.</param>
+/// <param name="v1">Volatilities for the first set of dates.</param>
+/// <param name="k'">Strike price.</param>
+/// <param name="o">Option type (call or put).</param>
+/// <param name="p1w">Price of the first weighted average.</param>
+/// <returns>The price of the Asian option.</returns>
+/// <summary>
+/// Calculates the price and delta of an Asian option using a moment matching method.
+/// </summary>
+/// <param name="f1">Forward prices at the first set of dates.</param>
+/// <param name="fw1">Forward weights at the first set of dates.</param>
+/// <param name="t1">Time to maturity for the first set of dates.</param>
+/// <param name="v1">Volatilities for the first set of dates.</param>
+/// <param name="k'">Strike price.</param>
+/// <param name="o">Option type (call or put).</param>
+/// <param name="p1w">Price of the first weighted average.</param>
+/// <returns>A tuple containing the price and delta of the Asian option.</returns>
     //asian fwd price moment matching method
     let asianOptionAndDelta (f1: Vector<float>) (fw1: Vector<float>) t1 v1 k' o p1w =
         let (y1, y11, delta) = moments (f1 .* fw1) v1 t1
@@ -20,6 +42,28 @@ module Moments =
         let v = sqrt (log (y11 / y1 / y1))
         bs y1 k v 1. o, (bsdelta y1 k v 1. o) * fw1.Sum()
 
+/// <summary>
+/// Calculates the price of a spread option using a moment matching method.
+/// This function prices an option on the spread between two assets,
+/// considering their respective forward prices, weights, maturities, and volatilities.
+/// It also accounts for past fixings and the correlation between the assets.
+/// </summary>
+/// <param name="f1">Forward prices for the first asset.</param>
+/// <param name="fw1">Forward weights for the first asset.</param>
+/// <param name="t1">Times to maturity for the first asset.</param>
+/// <param name="v1">Volatilities for the first asset.</param>
+/// <param name="f2">Forward prices for the second asset.</param>
+/// <param name="fw2">Forward weights for the second asset.</param>
+/// <param name="t2">Times to maturity for the second asset.</param>
+/// <param name="v2">Volatilities for the second asset.</param>
+/// <param name="k">Strike price of the spread option.</param>
+/// <param name="rho">Correlation between the two assets.</param>
+/// <param name="callput">Option type (Call or Put indicating whether the option pays out if Asset1 - Asset2 > K or Asset2 - Asset1 > K).</param>
+/// <param name="p1">Past fixings for the first asset. Used to adjust strike for already fixed prices.</param>
+/// <param name="pw1">Weights for past fixings of the first asset.</param>
+/// <param name="p2">Past fixings for the second asset. Used to adjust strike for already fixed prices.</param>
+/// <param name="pw2">Weights for past fixings of the second asset.</param>
+/// <returns>The price of the spread option.</returns>
     ///spread option fwd pricing moment matching
     let rec spreadoption
         (f1: Vector<float>)

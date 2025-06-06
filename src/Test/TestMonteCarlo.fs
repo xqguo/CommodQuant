@@ -27,17 +27,16 @@ type SmallInt =
 
 [<Property(MaxTest = 1000, Arbitrary = [| typeof<SmallInt> |])>]
 let testsmallint s =
-    (s > 1 && s < 11) |> Prop.label "smallint in (1,11)" 
+    (s > 1 && s < 11) |> Prop.label "smallint in (1,11)"
 
 [<Property(MaxTest = 1000, EndSize = 10, Verbose = true)>]
-let testendsize s =
-    s < 11 |> Prop.label "endsize < 11" 
+let testendsize s = s < 11 |> Prop.label "endsize < 11"
 
 [<Property(MaxTest = 10, Arbitrary = [| typeof<SmallInt> |])>]
 let ``test multivariateNormal satisfy our aimed vols and correlation`` size seed1 seed2 =
     let corr' = generateCorrsMatrix size seed1
     let corr = corr' |> validCorrMatrix
-    let (nn, criticalValue) = (10000, 22.)
+    let nn, criticalValue = (10000, 22.)
     let rs = System.Random(seed2)
     let data = multivariateNormal corr nn rs
     let y = data.ToColumnArrays() // transform the matrix to arrays based on rows
@@ -50,7 +49,7 @@ let ``test multivariateNormal satisfy our aimed vols and correlation`` size seed
     let mse (v: Vector<float>) = v |> Statistics.RootMeanSquare
     let mse_corrs = diff |> Matrix.toSeq |> vector |> mse
     let mse_mean_errors = m_vec |> mse // check the difference between data_mean and 0
-    let mse_std_errors = (std_vec - 1.) |> mse // check the difference between data_std and 1
+    let mse_std_errors = std_vec - 1. |> mse // check the difference between data_std and 1
     let mse_skw_errors = skw_vec |> mse // check the difference between data_skw and 1
     let mse_krt_errors = krt_vec |> mse // check the difference between data_skw and 1
 
@@ -59,12 +58,18 @@ let ``test multivariateNormal satisfy our aimed vols and correlation`` size seed
         let x2 = 1. / 4. * (krt_vec .^ 2.)
         float nn / 6. * (x1 + x2) |> Vector.max
 
-    mse_corrs < 0.02 |> Prop.label (sprintf "mse of correlation is large %f" mse_corrs)
-    .&. (mse_mean_errors < 0.02 |> Prop.label (sprintf "mse of mean errors is large %f" mse_mean_errors))
-    .&. (mse_std_errors < 0.02 |> Prop.label (sprintf "mse of std errors is large %f" mse_std_errors))
-    .&. (mse_skw_errors < 0.1 |> Prop.label (sprintf "mse of skw errors is large %f" mse_skw_errors))
-    .&.  (mse_krt_errors < 0.2 |> Prop.label (sprintf "mse of krt errors is large %f" mse_krt_errors))
-    .&.  (jbTest < criticalValue |> Prop.label (sprintf "Jarque Bera statistics is large: %f" jbTest))
+    mse_corrs < 0.02
+    |> Prop.label (sprintf "mse of correlation is large %f" mse_corrs)
+    .&. (mse_mean_errors < 0.02
+         |> Prop.label (sprintf "mse of mean errors is large %f" mse_mean_errors))
+    .&. (mse_std_errors < 0.02
+         |> Prop.label (sprintf "mse of std errors is large %f" mse_std_errors))
+    .&. (mse_skw_errors < 0.1
+         |> Prop.label (sprintf "mse of skw errors is large %f" mse_skw_errors))
+    .&. (mse_krt_errors < 0.2
+         |> Prop.label (sprintf "mse of krt errors is large %f" mse_krt_errors))
+    .&. (jbTest < criticalValue
+         |> Prop.label (sprintf "Jarque Bera statistics is large: %f" jbTest))
 
 let testAsianChoivsMCFun nf k fstart tstart sstart npath maxfixing tol =
     let num = npath
@@ -80,15 +85,18 @@ let testAsianChoivsMCFun nf k fstart tstart sstart npath maxfixing tol =
     let v1, std = asianMC fpp tt vol k Call num
     let v2 = asianoption fpp fww tt vol k Call 0.
 
-    nearstr v0 v1 (std * 3.0 + 1E-4) "Choi vs mc" .&.
-    nearstr v1 v2 (std * 3.0 + tol) "MM vs mc" .&.
-    nearstr v0 v2 tol "Choi vs MM"
-    
+    nearstr v0 v1 (std * 3.0 + 1E-4) "Choi vs mc"
+    .&. nearstr v1 v2 (std * 3.0 + tol) "MM vs mc"
+    .&. nearstr v0 v2 tol "Choi vs MM"
+
 
 [<Property(MaxTest = 30, EndSize = 100, Arbitrary = [| typeof<PositiveFloat> |])>]
 let testAsianChoivsMC (PositiveInt nf) k fstart tstart sstart =
     testAsianChoivsMCFun nf k fstart tstart sstart (int 1E6) 6 0.08
 
+/// <summary></summary>
+/// <param name="v"></param>
+/// <returns></returns>
 [<Property(MaxTest = 30, Verbose = true, EndSize = 100, Arbitrary = [| typeof<PositiveFloat>; typeof<MyGenerator> |])>]
 let ``test spread option Choi vs MM vs MC``
     fa
@@ -125,4 +133,3 @@ let ``test spread option Choi vs MM vs MC``
     nearstr choi c (std * 3.0 + tol) "Choi vs mc"
     .&. nearstr choi c' (std * 3.0 + 0.05) "Choi vs mm"
     .&. nearstr c' c (std * 3.0 + 0.05) "mm vs mc"
-   

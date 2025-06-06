@@ -307,7 +307,7 @@ let testSpreadChoivsKirkZeroStrikeN fa fb t v1 v2 (Corr rho) callput =
     let err = List.max [ 1.; fa; fb; k ] * 1E-4
     nearstr v o err $"Choi{m} vs Kirk vs {v'}"
 
-[<Property(MaxTest = 100, Verbose = false, EndSize = 500, Arbitrary = [| typeof<PositiveFloat>; typeof<MyGenerator> |])>]
+[<Property(MaxTest = 100, Verbose = true, EndSize = 500, Arbitrary = [| typeof<PositiveFloat>; typeof<MyGenerator> |])>]
 let testSpreadChoiNConv
     (fa: float)
     (fb: float)
@@ -333,11 +333,13 @@ let testSpreadChoiNConv
     let t2 = DenseVector.init nf2 (fun i -> t + (float i) / 250.)
     let fw1 = DenseVector.create nf1 1. / float nf1
     let fw2 = DenseVector.create nf2 1. / float nf2
-    let m = [ 7; 3; 2 ]
+    //when 1st level is accurate enough, the rest is not so important
+    let m = [ 17; 3; 2 ]
     let m' = [ 17; 7; 5; 3 ]
     let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m
     let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m'
-    let err = (List.max [ 1.; fa; fb; abs k ]) * 0.005
+    //let err = List.max [ 1.; fa; fb; abs k ] * 0.001
+    let err = max (o * 0.001) 0.001
 
     nearstr v o err $"Choi {m} vs {m'}"
     |> Prop.collect (roundp 1 (abs (v - o) / err)) //check how many diff is less than half of tol

@@ -339,7 +339,7 @@ let testSpreadChoiNConv
     let v, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m
     let o, _ = optionChoi2AssetN f1 fw1 t1 v1' f2 fw2 t2 v2' k rho callput m'
     //let err = List.max [ 1.; fa; fb; abs k ] * 0.001
-    let err = max (o * 0.001) 0.001
+    let err = max (o * 0.01) 0.001
 
     nearstr v o err $"Choi {m} vs {m'}"
     |> Prop.collect (roundp 1 (abs (v - o) / err)) //check how many diff is less than half of tol

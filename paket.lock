@@ -1,5 +1,5 @@
 GENERATE-LOAD-SCRIPTS: ON
-RESTRICTION: == net9.0
+RESTRICTION: == net8.0
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Argu (6.2.5)

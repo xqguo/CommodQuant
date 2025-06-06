@@ -5,7 +5,14 @@ module Choi =
     open MathNet.Numerics
     open MathNet.Numerics.LinearAlgebra
 
-    ///get V with Choi's method with forward weights and cov, general case
+    /// <summary>
+    /// Calculates the V matrix using Choi's method with forward prices, weights, and a covariance matrix.
+    /// This is a general case implementation.
+    /// </summary>
+    /// <param name="f">A vector of forward prices.</param>
+    /// <param name="w">A vector of weights corresponding to the forward prices.</param>
+    /// <param name="sigma">The covariance matrix of the forward prices.</param>
+    /// <returns>The V matrix used in Choi's option pricing model.</returns>
     let getVChoi (f: Vector<float>) (w: Vector<float>) (sigma: Matrix<float>) =
         let n = f.Count
         let g' = f .* w
@@ -36,7 +43,20 @@ module Choi =
         let V = V1''.ToColumnMatrix().Append(svd.U * svd.W) //formula 25
         V
 
-    ///get V with Choi's method for 2 assets with constant correlation.
+    /// <summary>
+    /// Calculates the V matrix using Choi's method for a spread option between two assets,
+    /// assuming a constant correlation between them.
+    /// </summary>
+    /// <param name="f1">A vector of forward prices for the first asset.</param>
+    /// <param name="fw1">A vector of weights for the first asset.</param>
+    /// <param name="t1">A vector of times to maturity for the first asset.</param>
+    /// <param name="v1">A vector of volatilities for the first asset.</param>
+    /// <param name="f2">A vector of forward prices for the second asset.</param>
+    /// <param name="fw2">A vector of weights for the second asset.</param>
+    /// <param name="t2">A vector of times to maturity for the second asset.</param>
+    /// <param name="v2">A vector of volatilities for the second asset.</param>
+    /// <param name="rho">The constant correlation between the two assets.</param>
+    /// <returns>The V matrix for the combined set of forwards.</returns>
     let getVChoi2Asset
         (f1: Vector<float>)
         (fw1: Vector<float>)
@@ -76,7 +96,17 @@ module Choi =
     //    let fv' = fv / w //TODO need to handle case where w is 0??? e.g. two forward fixing opposite weight, different value?
     //    fv', w, tv, vv
 
-    //Choi's general method using cov inputs
+    /// <summary>
+    /// Prices an option using Choi's general method with a covariance matrix input.
+    /// This is a recursive function that handles the core logic.
+    /// </summary>
+    /// <param name="f">A vector of forward prices.</param>
+    /// <param name="w">A vector of weights corresponding to the forward prices.</param>
+    /// <param name="sigma">The covariance matrix of the forward prices.</param>
+    /// <param name="strike">The strike price of the option.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <param name="o">A list of integers representing the order of Gauss-Hermite quadrature points.</param>
+    /// <returns>A tuple containing the option price and an array of deltas for each forward.</returns>
     let rec optionChoiG (f: Vector<float>) (w: Vector<float>) (sigma: Matrix<float>) strike callput (o: int list) =
         //validate inputs
         if strike < 0. then
@@ -139,7 +169,7 @@ module Choi =
             //     |> Vector.sum //payoff derivative
 
             let difffn z1 z = //dfn'/dz1
-                fn' z1 z 
+                fn' z1 z
                 |> Vector.mapi (fun k x -> x * V.[k, 0])
                 |> Vector.sum //payoff derivative
 
@@ -213,12 +243,33 @@ module Choi =
 
             max 0. (opt - adj), deltas //return deltas in input vector
 
-    //Choi model with 4 dim and descretize 17/2
-    //This is generally accurate within 0.1c err
+    /// <summary>
+    /// Prices an option using Choi's method with a predefined Gauss-Hermite quadrature order.
+    /// This is a simplified version of `optionChoiG`.
+    /// It typically uses a 3-point Gauss-Hermite quadrature ([7; 3; 2]), which is generally accurate within 0.1c error.
+    /// </summary>
+    /// <param name="f">A vector of forward prices.</param>
+    /// <param name="w">A vector of weights corresponding to the forward prices.</param>
+    /// <param name="sigma">The covariance matrix of the forward prices.</param>
+    /// <param name="strike">The strike price of the option.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <returns>A tuple containing the option price and an array of deltas for each forward.</returns>
     let optionChoi (f: Vector<float>) (w: Vector<float>) (sigma: Matrix<float>) strike callput =
         optionChoiG f w sigma strike callput [ 7; 3; 2 ]
 
-    ///using cov inputs
+    /// <summary>
+    /// Prices a spread option between two assets using Choi's method with a covariance matrix input.
+    /// Handles high correlation cases by adjusting the covariance matrix.
+    /// </summary>
+    /// <param name="f1">A vector of forward prices for the first asset.</param>
+    /// <param name="fw1">A vector of weights for the first asset.</param>
+    /// <param name="f2">A vector of forward prices for the second asset.</param>
+    /// <param name="fw2">A vector of weights for the second asset.</param>
+    /// <param name="k">The strike price of the spread option.</param>
+    /// <param name="sigma">The covariance matrix for the combined set of forwards.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <param name="o">A list of integers representing the order of Gauss-Hermite quadrature points.</param>
+    /// <returns>A tuple containing the option price and a 2-element array of deltas (one for each asset).</returns>
     let optionChoi2AssetCov
         (f1: Vector<float>)
         (fw1: Vector<float>)
@@ -236,7 +287,7 @@ module Choi =
         //call general case
         let f = appendVector f1 f2
         let w = appendVector fw1 (fw2 * -1.)
-        
+
         // Print f, w, and sigma to stdout
         //printfn "f: %A" f
         //printfn "w: %A" w
@@ -289,7 +340,23 @@ module Choi =
         let delta = [| delta1sum; delta2sum |]
         opt, delta //return deltas in long/short 2 elem array
 
-    //spread option using Choi, without change of numeraire
+    /// <summary>
+    /// Prices a spread option between two assets using Choi's method.
+    /// This version constructs the covariance matrix from individual asset volatilities and correlation.
+    /// It does not use a change of numeraire. It calls `optionChoi` internally.
+    /// </summary>
+    /// <param name="f1">A vector of forward prices for the first asset.</param>
+    /// <param name="fw1">A vector of weights for the first asset.</param>
+    /// <param name="t1">A vector of times to maturity for the first asset.</param>
+    /// <param name="v1">A vector of volatilities for the first asset.</param>
+    /// <param name="f2">A vector of forward prices for the second asset.</param>
+    /// <param name="fw2">A vector of weights for the second asset.</param>
+    /// <param name="t2">A vector of times to maturity for the second asset.</param>
+    /// <param name="v2">A vector of volatilities for the second asset.</param>
+    /// <param name="k">The strike price of the spread option.</param>
+    /// <param name="rho">The constant correlation between the two assets.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <returns>A tuple containing the option price and a 2-element array of deltas (one for each asset).</returns>
     let optionChoi2Asset
         (f1: Vector<float>)
         (fw1: Vector<float>)
@@ -313,7 +380,24 @@ module Choi =
         let delta = [| delta1sum; delta2sum |]
         opt, delta //return deltas in long/short 2 elem array
 
-    ///assuming perferect correalation in asset
+    /// <summary>
+    /// Prices a spread option between two assets using Choi's general method (`optionChoiG`).
+    /// This version constructs the covariance matrix from individual asset volatilities and correlation.
+    /// It assumes perfect correlation within each asset's own forward curve if multiple forwards are provided for an asset.
+    /// </summary>
+    /// <param name="f1">A vector of forward prices for the first asset.</param>
+    /// <param name="fw1">A vector of weights for the first asset.</param>
+    /// <param name="t1">A vector of times to maturity for the first asset.</param>
+    /// <param name="v1">A vector of volatilities for the first asset.</param>
+    /// <param name="f2">A vector of forward prices for the second asset.</param>
+    /// <param name="fw2">A vector of weights for the second asset.</param>
+    /// <param name="t2">A vector of times to maturity for the second asset.</param>
+    /// <param name="v2">A vector of volatilities for the second asset.</param>
+    /// <param name="k">The strike price of the spread option.</param>
+    /// <param name="rho">The constant correlation between the two assets.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <param name="o">A list of integers representing the order of Gauss-Hermite quadrature points.</param>
+    /// <returns>A tuple containing the option price and a 2-element array of deltas (one for each asset).</returns>
     let optionChoi2AssetG
         (f1: Vector<float>)
         (fw1: Vector<float>)
@@ -338,8 +422,26 @@ module Choi =
         let delta = [| delta1sum; delta2sum |]
         opt, delta //return deltas in long/short 2 elem array
 
-    ///assuming perferect correalation in asset
-    ///change of Numeraire to work with high correlation > 0.75 precision issue
+    /// <summary>
+    /// Prices a spread option between two assets using Choi's method with a change of numeraire.
+    /// This version is specifically designed to handle high correlation cases (e.g., > 0.75)
+    /// more accurately by using the `optionChoi2AssetCov` logic which adjusts for high correlation.
+    /// It assumes perfect correlation within each asset's own forward curve if multiple forwards are provided.
+    /// Input vectors for time to maturity (t1, t2) and volatilities (v1, v2) must contain positive values.
+    /// </summary>
+    /// <param name="f1">A vector of forward prices for the first asset.</param>
+    /// <param name="fw1">A vector of weights for the first asset.</param>
+    /// <param name="t1">A vector of times to maturity for the first asset (must be positive).</param>
+    /// <param name="v1">A vector of volatilities for the first asset (must be positive).</param>
+    /// <param name="f2">A vector of forward prices for the second asset.</param>
+    /// <param name="fw2">A vector of weights for the second asset.</param>
+    /// <param name="t2">A vector of times to maturity for the second asset (must be positive).</param>
+    /// <param name="v2">A vector of volatilities for the second asset (must be positive).</param>
+    /// <param name="k">The strike price of the spread option.</param>
+    /// <param name="rho">The constant correlation between the two assets.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <param name="o">A list of integers representing the order of Gauss-Hermite quadrature points.</param>
+    /// <returns>A tuple containing the option price and a 2-element array of deltas (one for each asset).</returns>
     let optionChoi2AssetN
         (f1: Vector<float>)
         (fw1: Vector<float>)
@@ -370,7 +472,17 @@ module Choi =
         let sigma = getCov t1 v1 t2 v2 rho
         optionChoi2AssetCov f1 fw1 f2 fw2 k sigma callput o
 
-    //asian Choi method
+    /// <summary>
+    /// Prices an Asian option using Choi's method.
+    /// This function wraps `optionChoi` and sums the deltas of the individual forwards
+    /// to provide a single delta for the Asian option.
+    /// </summary>
+    /// <param name="f">A vector of forward prices for the underlying asset over the averaging period.</param>
+    /// <param name="w">A vector of weights for each forward price (typically uniform for a standard Asian option).</param>
+    /// <param name="k">The strike price of the Asian option.</param>
+    /// <param name="sigma">The covariance matrix of the forward prices.</param>
+    /// <param name="callput">Specifies whether the option is a Call or Put. See <see cref="CallPut"/>.</param>
+    /// <returns>A tuple containing the Asian option price and its total delta.</returns>
     let asianoptionChoi (f: Vector<float>) (w: Vector<float>) k (sigma: Matrix<float>) callput =
         let (opt, deltas) = optionChoi f w sigma k callput
         let delta = Array.sum deltas

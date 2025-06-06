@@ -7,7 +7,11 @@ module Gabillon =
     open MathNet.Numerics.LinearAlgebra
     open MathNet.Numerics.Optimization
 
-    //check for eigenvalue and fix the cov matrix to be posive definite
+    /// <summary>
+    /// Checks for eigenvalues and fixes the covariance matrix to be positive definite.
+    /// </summary>
+    /// <param name="cov">The covariance matrix.</param>
+    /// <returns>The positive definite covariance matrix.</returns>
     let fixCov (cov: Matrix<float>) =
         try
             let _ = cov.Cholesky()
@@ -20,7 +24,11 @@ module Gabillon =
             // o * (DenseMatrix.ofDiag l') * (o.Inverse())
             o * (DenseMatrix.ofDiag l') * (o.Transpose())
 
-    //fix corr matrix
+    /// <summary>
+    /// Fixes the correlation matrix to be positive definite.
+    /// </summary>
+    /// <param name="corr">The correlation matrix.</param>
+    /// <returns>The positive definite correlation matrix.</returns>
     let fixCorr (corr: Matrix<float>) =
         let cov = fixCov corr
         let vol = cov.Diagonal().PointwiseAbs().PointwiseSqrt()
@@ -28,8 +36,18 @@ module Gabillon =
         cov ./ (vol.OuterProduct vol)
         |> Matrix.mapi (fun i j v -> if i = j then 1.0 else v)
 
-    //compute forward variance between tm to tn for a future with maturity Ti
-    //using constant Gabillon model inputs for this interval
+    /// <summary>
+    /// Computes the forward variance between tm and tn for a future with maturity Ti,
+    /// using constant Gabillon model inputs for this interval.
+    /// </summary>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the future.</param>
+    /// <param name="sigmas">Short-term volatility.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The forward variance.</returns>
     let fwdVariance tm tn Ti sigmas sigmal k rho =
         let Tn = Ti - tn
         let Tm = Ti - tm
@@ -49,9 +67,20 @@ module Gabillon =
     //(fwdVariance 0.0 1.0 1.0 0.551 0.2 1.0 0.5 )/1.0|> sqrt
     //(fwdVariance 0.0 0.9 1.0 0.551 0.2 1.0 0.5 )/0.9|> sqrt
 
-    //compute forward covariance between tm to tn for a future with maturity Ti Tj
-    //using constant Gabillon model inputs for this interval
-    //allowing different sigmas i vs j.
+    /// <summary>
+    /// Computes the forward covariance between tm and tn for futures with maturity Ti and Tj,
+    /// using constant Gabillon model inputs for this interval and allowing different sigmas for i and j.
+    /// </summary>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the first future.</param>
+    /// <param name="Tj">Maturity of the second future.</param>
+    /// <param name="sigmasi">Short-term volatility of the first future.</param>
+    /// <param name="sigmasj">Short-term volatility of the second future.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The forward covariance.</returns>
     let fwdCovariance tm tn Ti Tj sigmasi sigmasj sigmal k rho =
         let Tin = Ti - tn
         let Tim = Ti - tm
@@ -76,9 +105,25 @@ module Gabillon =
         let p4 = rho * sigmasj * sigmal * (1.0 / k * ejnm - e2nm / (2.0 * k))
         p1 + p2 + p3 + p4
 
-    //compute forward covariance between tm to tn for two futures 1 2 with maturity Ti Tj
-    //using constant Gabillon model inputs for this interval
-    //allowing different sigmas i vs j.
+    /// <summary>
+    /// Computes the forward cross-covariance between tm and tn for two futures (1 and 2) with maturities Ti and Tj,
+    /// using constant Gabillon model inputs for this interval and allowing different sigmas for i and j.
+    /// </summary>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the first future.</param>
+    /// <param name="Tj">Maturity of the second future.</param>
+    /// <param name="sigmas1">Short-term volatility of the first future.</param>
+    /// <param name="sigmas2">Short-term volatility of the second future.</param>
+    /// <param name="sigmal1">Long-term volatility of the first future.</param>
+    /// <param name="sigmal2">Long-term volatility of the second future.</param>
+    /// <param name="k1">Mean reversion speed of the first future.</param>
+    /// <param name="k2">Mean reversion speed of the second future.</param>
+    /// <param name="rho11">Correlation between short-term factors of the two futures.</param>
+    /// <param name="rho12">Correlation between short-term factor of future 1 and long-term factor of future 2.</param>
+    /// <param name="rho21">Correlation between long-term factor of future 1 and short-term factor of future 2.</param>
+    /// <param name="rho22">Correlation between long-term factors of the two futures.</param>
+    /// <returns>The forward cross-covariance.</returns>
     let fwdXCovariance (tm: float) tn Ti Tj sigmas1 sigmas2 sigmal1 sigmal2 k1 k2 rho11 rho12 rho21 rho22 =
         let k12 = k1 + k2
         let Tin = Ti - tn
@@ -104,17 +149,51 @@ module Gabillon =
         let p4 = ls * (ejnmk - e2nmk)
         p1 + p2 + p3 + p4
 
+    /// <summary>
+    /// Computes the forward correlation between tm and tn for futures with maturity Ti and Tj.
+    /// </summary>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the first future.</param>
+    /// <param name="Tj">Maturity of the second future.</param>
+    /// <param name="sigmasi">Short-term volatility of the first future.</param>
+    /// <param name="sigmasj">Short-term volatility of the second future.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The forward correlation.</returns>
     let fwdCorr tm tn Ti Tj sigmasi sigmasj sigmal k rho =
         let Vi = fwdVariance tm tn Ti sigmasi sigmal k rho
         let Vj = fwdVariance tm tn Tj sigmasj sigmal k rho
         let cov = fwdCovariance tm tn Ti Tj sigmasi sigmasj sigmal k rho
         cov / sqrt (Vi * Vj)
 
+    /// <summary>
+    /// Computes the forward volatility between tm and tn for a future with maturity Ti.
+    /// </summary>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the future.</param>
+    /// <param name="sigmas">Short-term volatility.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The forward volatility.</returns>
     let fwdVol tm tn Ti sigmas sigmal k rho =
         let vvt = fwdVariance tm tn Ti sigmas sigmal k rho
         sqrt (vvt / (tn - tm))
 
-    // derivative of forward variance against sigmas
+    /// <summary>
+    /// Computes the derivative of forward variance with respect to sigmas.
+    /// </summary>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the future.</param>
+    /// <param name="sigmas">Short-term volatility.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The derivative of forward variance with respect to sigmas.</returns>
     let dfwdVarianceds tm tn Ti sigmas sigmal k rho =
         let Tn = Ti - tn
         let Tm = Ti - tm
@@ -131,6 +210,18 @@ module Gabillon =
 
     //dfwdVarianceds 0.0 1.0 1.0 0.4 0.2 1.0 0.5
 
+    /// <summary>
+    /// Finds sigmaS using numerical root finding.
+    /// </summary>
+    /// <param name="vm">Volatility at time tm.</param>
+    /// <param name="vn">Volatility at time tn.</param>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the future.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The implied sigmaS.</returns>
     let findSigmaS vm vn tm tn Ti sigmal k rho =
         let vvt = vn * vn * tn - vm * vm * tm
 
@@ -143,7 +234,18 @@ module Gabillon =
 
     //findSigmaS 0.4 0.4 0.0 1.0 1.0 0.2 1.0 0.5
 
-    //can actually analytically compute sigmaS, as it is just a quadratic equation
+    /// <summary>
+    /// Analytically computes sigmaS, as it is just a quadratic equation.
+    /// </summary>
+    /// <param name="vm">Volatility at time tm.</param>
+    /// <param name="vn">Volatility at time tn.</param>
+    /// <param name="tm">Start time of the interval.</param>
+    /// <param name="tn">End time of the interval.</param>
+    /// <param name="Ti">Maturity of the future.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <returns>The implied sigmaS.</returns>
     let implySigmaS vm vn tm tn Ti sigmal k rho =
         let vvt = vn * vn * tn - vm * vm * tm
         let Tn = Ti - tn
@@ -163,9 +265,16 @@ module Gabillon =
 
     //implySigmaS 0.4 0.4 0.0 1.0 1.0 0.2 1.0 0.5
 
-    //get best fit target fun of sum squared error on vol.
-    //TODO: fix option exp, using future exp as option exp for now
-
+    /// <summary>
+    /// Computes the gradient function for optimization.
+    /// </summary>
+    /// <param name="sigmas">Short-term volatility.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <param name="ins">The instrument.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>A tuple containing the target function value and its gradient.</returns>
     let gradientfunc sigmas sigmal k rho (ins: Instrument) pd =
         let c = getCommod ins
         let vols = getVols ins
@@ -191,6 +300,12 @@ module Gabillon =
         let d' = [ r0; r1; r2; r3 ] |> List.map df |> vector
         struct (r, d')
 
+    /// <summary>
+    /// Finds the best fit parameters for the Gabillon model.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>The result of the optimization, containing the best fit parameters.</returns>
     let bestfit ins pd =
         let solver = Optimization.BfgsBMinimizer(1e-5, 1e-5, 1e-5, 1000)
         //let solver = Optimization.ConjugateGradientMinimizer(1e-5, 1000)
@@ -204,7 +319,17 @@ module Gabillon =
         solver.FindMinimum(o, l, u, ig)
     //solver.FindMinimum( o, ig)
 
-    //get covariance for a gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
+    /// <summary>
+    /// Gets the covariance matrix for a Gabillon model.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <param name="vols">The volatility curve.</param>
+    /// <param name="sl">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <param name="fixings">Array of fixing dates and contract names.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>The covariance matrix.</returns>
     let getGabillonCov ins (vols: VolCurve) (sl, k, rho) (fixings: (DateTime * string)[]) pd =
         let c = getCommod ins
         let optd = c.Contracts.Opt |> Map.map (fun _ d -> getTTM pd d)
@@ -238,7 +363,27 @@ module Gabillon =
 
         DenseMatrix.init n n (fun i j -> if i <= j then lower.[i, j] else lower.[j, i])
 
-    //get covariance for two gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
+    /// <summary>
+    /// Gets the cross-covariance matrix for two Gabillon models.
+    /// </summary>
+    /// <param name="ins">The first instrument.</param>
+    /// <param name="vols">The volatility curve for the first instrument.</param>
+    /// <param name="fixings">Array of fixing dates and contract names for the first instrument.</param>
+    /// <param name="ins'">The second instrument.</param>
+    /// <param name="vols'">The volatility curve for the second instrument.</param>
+    /// <param name="fixings'">Array of fixing dates and contract names for the second instrument.</param>
+    /// <param name="l1">Long-term volatility of the first instrument.</param>
+    /// <param name="l2">Long-term volatility of the second instrument.</param>
+    /// <param name="k1">Mean reversion speed of the first instrument.</param>
+    /// <param name="k2">Mean reversion speed of the second instrument.</param>
+    /// <param name="rho1">Correlation for the first instrument.</param>
+    /// <param name="rho2">Correlation for the second instrument.</param>
+    /// <param name="rho11">Correlation between short-term factors of the two instruments.</param>
+    /// <param name="rho12">Correlation between short-term factor of instrument 1 and long-term factor of instrument 2.</param>
+    /// <param name="rho21">Correlation between long-term factor of instrument 1 and short-term factor of instrument 2.</param>
+    /// <param name="rho22">Correlation between long-term factors of the two instruments.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>The cross-covariance matrix.</returns>
     let getXGabillonCov
         ins
         (vols: VolCurve)
@@ -292,7 +437,27 @@ module Gabillon =
             let cj = cs'.[j]
             fwdXCovariance 0.0 t futd.[ci] futd'.[cj] ss.[ci] ss'.[cj] l1 l2 k1 k2 rho11 rho12 rho21 rho22)
 
-    //get covariance for two gabillon model with vol curve and gabillon global params, and a fixing time vector with corresponding fut contract
+    /// <summary>
+    /// Gets the full cross-covariance matrix for two Gabillon models.
+    /// </summary>
+    /// <param name="ins">The first instrument.</param>
+    /// <param name="vols">The volatility curve for the first instrument.</param>
+    /// <param name="fixings">Array of fixing dates and contract names for the first instrument.</param>
+    /// <param name="ins'">The second instrument.</param>
+    /// <param name="vols'">The volatility curve for the second instrument.</param>
+    /// <param name="fixings'">Array of fixing dates and contract names for the second instrument.</param>
+    /// <param name="l1">Long-term volatility of the first instrument.</param>
+    /// <param name="l2">Long-term volatility of the second instrument.</param>
+    /// <param name="k1">Mean reversion speed of the first instrument.</param>
+    /// <param name="k2">Mean reversion speed of the second instrument.</param>
+    /// <param name="rho1">Correlation for the first instrument.</param>
+    /// <param name="rho2">Correlation for the second instrument.</param>
+    /// <param name="rho11">Correlation between short-term factors of the two instruments.</param>
+    /// <param name="rho12">Correlation between short-term factor of instrument 1 and long-term factor of instrument 2.</param>
+    /// <param name="rho21">Correlation between long-term factor of instrument 1 and short-term factor of instrument 2.</param>
+    /// <param name="rho22">Correlation between long-term factors of the two instruments.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>The full cross-covariance matrix.</returns>
     let getXGabillonCovFull
         ins
         (vols: VolCurve)
@@ -381,7 +546,12 @@ module Gabillon =
 
         fixCov cov
 
-    //hardcoded defaults, could read from files.
+    /// <summary>
+    /// Gets the default Gabillon parameters for a given instrument.
+    /// These are hardcoded defaults and could be read from files in the future.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <returns>A tuple containing (sigmal, k, rho).</returns>
     let getGabillonParam ins =
         match ins with
         | TTF
@@ -392,17 +562,45 @@ module Gabillon =
         | DBRT -> (0.12, 0.5, 0.7)
         | _ -> (0.001, 0.001, 0.0) //bs equivalent
 
+    /// <summary>
+    /// Combines Gabillon parameters for two instruments.
+    /// </summary>
+    /// <param name="l1">Long-term volatility of the first instrument.</param>
+    /// <param name="k1">Mean reversion speed of the first instrument.</param>
+    /// <param name="r1">Correlation for the first instrument.</param>
+    /// <param name="l2">Long-term volatility of the second instrument.</param>
+    /// <param name="k2">Mean reversion speed of the second instrument.</param>
+    /// <param name="r2">Correlation for the second instrument.</param>
+    /// <param name="rho">List of correlation parameters (1 or 4 elements).</param>
+    /// <returns>A tuple of combined parameters.</returns>
     let combineGabillonParam (l1, k1, r1) (l2, k2, r2) rho =
         match rho with
         | [ r ] -> (l1, l2, k1, k2, r1, r2, r, r, r, r)
         | [ r11; r12; r21; r22 ] -> (l1, l2, k1, k2, r1, r2, r11, r12, r21, r22)
         | _ -> failwith "Rho should be a list of float of either 1 or 4 elements"
 
+    /// <summary>
+    /// Gets the combined Gabillon parameters for two instruments.
+    /// </summary>
+    /// <param name="ins1">The first instrument.</param>
+    /// <param name="ins2">The second instrument.</param>
+    /// <param name="rho">List of correlation parameters (1 or 4 elements).</param>
+    /// <returns>A tuple of combined parameters.</returns>
     let getXGabillonParam ins1 ins2 rho =
         let p1 = getGabillonParam ins1
         let p2 = getGabillonParam ins2
         combineGabillonParam p1 p2 rho
 
+    /// <summary>
+    /// Gets the implied volatility curve for a Gabillon model.
+    /// </summary>
+    /// <param name="ins">The instrument.</param>
+    /// <param name="sigmas">Short-term volatility.</param>
+    /// <param name="sigmal">Long-term volatility.</param>
+    /// <param name="k">Mean reversion speed.</param>
+    /// <param name="rho">Correlation between short-term and long-term factors.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>The implied volatility curve.</returns>
     let getGabillonImpliedVol ins sigmas sigmal k rho pd =
         let c = getCommod ins
 

@@ -8,8 +8,8 @@ open FsCheck
 open FsCheckTypes
 open MathNet.Numerics.LinearAlgebra
 
-[<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
-let ``forward cross covariance equivalence to forward covariance`` tn Ti Tj sigmas1 sigmas2 sigmal k rho =
+[<Property(Arbitrary = [| typeof<PositiveFloat>; typeof<MyGenerator> |])>]
+let ``forward cross covariance equivalence to forward covariance`` tn Ti Tj sigmas1 sigmas2 sigmal k (Corr rho) =
     let tm = 0.
     let tn = [ tn; Ti; Tj ] |> List.min
 
@@ -20,8 +20,8 @@ let ``forward cross covariance equivalence to forward covariance`` tn Ti Tj sigm
     near xv v 1E-12 |> Prop.label (sprintf "variance identical") 
     |> Prop.collect( xv - v )
 
-[<Property(Arbitrary = [| typeof<PositiveFloat> |])>]
-let ``forward cross covariance equivalence to forward variance`` tn Ti sigmas1 sigmal k rho =
+[<Property(Arbitrary = [| typeof<PositiveFloat>; typedefof<MyGenerator> |])>]
+let ``forward cross covariance equivalence to forward variance`` tn Ti sigmas1 sigmal k (Corr rho) =
     let tm = 0.
     let tn = [ tn; Ti ] |> List.min
 

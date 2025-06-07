@@ -5,15 +5,41 @@ module Math =
     open MathNet.Numerics.Distributions
     open MathNet.Numerics.LinearAlgebra
 
+    /// <summary>
+    /// Computes the cumulative distribution function (CDF) of the standard normal distribution.
+    /// </summary>
+    /// <param name="x">The value at which to evaluate the CDF.</param>
+    /// <returns>The probability that a standard normal variable is less than or equal to <paramref name="x"/>.</returns>
     let normcdf = fun x -> Normal.CDF(0., 1., x)
+
+    /// <summary>
+    /// Computes the probability density function (PDF) of the standard normal distribution.
+    /// </summary>
+    /// <param name="x">The value at which to evaluate the PDF.</param>
+    /// <returns>The value of the standard normal PDF at <paramref name="x"/>.</returns>
     let normpdf = fun x -> Normal.PDF(0., 1., x)
+
+    /// <summary>
+    /// Computes the inverse cumulative distribution function (quantile function) of the standard normal distribution.
+    /// </summary>
+    /// <param name="x">The probability for which to compute the quantile (must be in (0,1)).</param>
+    /// <returns>The value <c>z</c> such that <c>P(Z &lt;= z) = x</c> for a standard normal variable <c>Z</c>.</returns>
     let norminvcdf = fun x -> Normal.InvCDF(0., 1., x)
 
-    /// append 2 vectors
+    /// <summary>
+    /// Appends two vectors into a single vector.
+    /// </summary>
+    /// <param name="v1">The first vector.</param>
+    /// <param name="v2">The second vector.</param>
+    /// <returns>A new vector containing the elements of <paramref name="v1"/> followed by those of <paramref name="v2"/>.</returns>
     let appendVector (v1: Vector<float>) (v2: Vector<float>) =
         v1.ToColumnMatrix().Stack(v2.ToColumnMatrix()).Column(0)
 
-    ///householder reflection matrix
+    /// <summary>
+    /// Computes the Householder reflection matrix for a given vector.
+    /// </summary>
+    /// <param name="q">The input vector.</param>
+    /// <returns>The Householder reflection matrix that reflects <paramref name="q"/> onto the first basis vector.</returns>
     let householderR (q: Vector<float>) =
         let n = q.Count
         let e = DenseVector.init n (fun n -> if n = 0 then 1.0 else 0.0)
@@ -44,6 +70,9 @@ module Math =
     //recursive version with dim input
     //https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature
     // 1 <= dim
+    /// <summary>look up Gauss-Hermite nodes for a given dim</summary>
+    /// <param name="o">the dim specification in a list of int, e.g. 7 3 2</param>
+    /// <returns></returns>
     let rec ghzn (o: int list) =
         let s2 = sqrt 2.0
 
@@ -137,6 +166,9 @@ module Math =
                    yield [| x |] |]
         | h :: t -> permutate (z h) (ghzn t) //previous layer)
 
+    /// <summary>return the Gauss-Hermite weights for a given dimension.</summary>
+    /// <param name="o">the dim specification in a list of int, e.g. 7 3 2</param>
+    /// <returns></returns>
     let rec ghwn (o: int list) =
         let cons = sqrt (System.Math.PI)
 
@@ -228,10 +260,39 @@ module Math =
         | [ h ] -> w h
         | h :: t -> permprod (w h) (ghwn t)
 
+    /// <summary>
+    /// Returns the Gauss-Hermite nodes for a given dimension, using order 5 for each dimension.
+    /// </summary>
+    /// <param name="d">The number of dimensions.</param>
+    /// <returns>An array of node arrays for the specified dimension.</returns>
     let ghz5 d = ghzn (List.replicate d 5)
+
+    /// <summary>
+    /// Returns the Gauss-Hermite weights for a given dimension, using order 5 for each dimension.
+    /// </summary>
+    /// <param name="d">The number of dimensions.</param>
+    /// <returns>An array of weights for the specified dimension.</returns>
     let ghw5 d = ghwn (List.replicate d 5)
+
+    /// <summary>
+    /// Returns the Gauss-Hermite nodes for a given dimension, using order 3 for each dimension.
+    /// </summary>
+    /// <param name="d">The number of dimensions.</param>
+    /// <returns>An array of node arrays for the specified dimension.</returns>
     let ghz3 d = ghzn (List.replicate d 3)
+
+    /// <summary>
+    /// Returns the Gauss-Hermite weights for a given dimension, using order 3 for each dimension.
+    /// </summary>
+    /// <param name="d">The number of dimensions.</param>
+    /// <returns>An array of weights for the specified dimension.</returns>
     let ghw3 d = ghwn (List.replicate d 3)
+
+    /// <summary>
+    /// Returns the Gauss-Hermite nodes and weights for the specified orders.
+    /// </summary>
+    /// <param name="o">A list of orders for each dimension.</param>
+    /// <returns>A tuple containing the nodes array and weights array.</returns>
     let gh o = ghzn o, ghwn o
 
     // o is a list of order of Ghass Hermite for each dim of integration

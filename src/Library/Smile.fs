@@ -13,6 +13,15 @@ module Smile =
         round (f * x) / f
 
     //### Fit extreme delta using SVI
+    /// <summary>
+    /// Represents the parameters for the SVI (Stochastic Volatility Inspired) model.
+    /// </summary>
+    /// <param name="a">The level of variance.</param>
+    /// <param name="b">The gradient of the smile.</param>
+    /// <param name="s">The smoothness of the smile.</param>
+    /// <param name="rho">The correlation between the underlying asset and its volatility.</param>
+    /// <param name="m">The ATM (at-the-money) point of the smile.</param>
+    /// <param name="t">The time to expiration.</param>
     type SVIPara =
         { a: float
           b: float
@@ -21,6 +30,15 @@ module Smile =
           m: float
           t: float }
 
+    /// <summary>
+    /// Represents the parameters for the SVI-JW (Stochastic Volatility Inspired - Jump Wings) model.
+    /// </summary>
+    /// <param name="vt">The variance at time t.</param>
+    /// <param name="psit">The skewness parameter.</param>
+    /// <param name="pt">The put curvature parameter.</param>
+    /// <param name="ct">The call curvature parameter.</param>
+    /// <param name="varmint">The minimum variance.</param>
+    /// <param name="t">The time to expiration.</param>
     type SVIJwPara =
         { vt: float
           psit: float
@@ -29,14 +47,33 @@ module Smile =
           varmint: float
           t: float }
 
+    /// <summary>
+    /// Calculates the SVI (Stochastic Volatility Inspired) variance for a given log-moneyness k.
+    /// </summary>
+    /// <param name="psvi">The SVI parameters.</param>
+    /// <param name="k">The log-moneyness.</param>
+    /// <returns>The SVI variance.</returns>
     let svi (psvi: SVIPara) k =
         psvi.a
         + psvi.b
           * (psvi.rho * (k - psvi.m) + sqrt ((k - psvi.m) * (k - psvi.m) + pown psvi.s 2))
 
+    /// <summary>
+    /// Calculates the SVI (Stochastic Volatility Inspired) volatility for a given log-moneyness k.
+    /// </summary>
+    /// <param name="psvi">The SVI parameters.</param>
+    /// <param name="k">The log-moneyness.</param>
+    /// <returns>The SVI volatility.</returns>
     let svivol (psvi: SVIPara) k =
         sqrt (max 0. (svi psvi (log k)) / psvi.t)
 
+    /// <summary>
+    /// Finds the best SVI parameters to fit a given set of log-moneyness and volatilities.
+    /// </summary>
+    /// <param name="logk">An array of log-moneyness values.</param>
+    /// <param name="vols">An array of volatilities corresponding to the log-moneyness values.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <returns>The result of the optimization, containing the best SVI parameters.</returns>
     let bestfitsvilogk logk vols t =
         let gradientfunc a b s rho m k' v' =
             let targetfunc a b s rho m =
@@ -77,6 +114,11 @@ module Smile =
 
         solver.FindMinimum(o, l, u, ig)
 
+    /// <summary>
+    /// Converts SVI (Stochastic Volatility Inspired) parameters to SVI-JW (Jump Wings) parameters.
+    /// </summary>
+    /// <param name="psvi">The SVI parameters.</param>
+    /// <returns>The SVI-JW parameters.</returns>
     let sviToJw (psvi: SVIPara) =
         let a = psvi.a
         let b = psvi.b
@@ -98,10 +140,22 @@ module Smile =
           varmint = (sqrt varmint)
           t = t }
 
+    /// <summary>
+    /// Finds the best SVI parameters to fit a given set of deltas and volatilities.
+    /// </summary>
+    /// <param name="deltas">An array of delta values.</param>
+    /// <param name="vols">An array of volatilities corresponding to the delta values.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <returns>The result of the optimization, containing the best SVI parameters.</returns>
     let bestfitsvi deltas vols t =
         let strikes = (deltas, vols) ||> Array.map2 (fun d v -> bsstrike 1.0 v t d |> log)
         bestfitsvilogk strikes vols t
 
+    /// <summary>
+    /// Converts SVI-JW (Jump Wings) parameters to SVI (Stochastic Volatility Inspired) parameters.
+    /// </summary>
+    /// <param name="pjw">The SVI-JW parameters.</param>
+    /// <returns>The SVI parameters.</returns>
     let jwToSvi (pjw: SVIJwPara) =
         let vt = pown pjw.vt 2
         let pt = pjw.pt
@@ -133,6 +187,15 @@ module Smile =
           m = m
           t = texp }
 
+    /// <summary>
+    /// Calculates the Black-Scholes implied volatility.
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="o">The option payoff type (Call or Put).</param>
+    /// <param name="p">The option price.</param>
+    /// <returns>The implied volatility.</returns>
     let bsvol f k t (o: Payoff) p =
         RootFinding.Brent.FindRoot(
             (fun v ->
@@ -142,6 +205,12 @@ module Smile =
             5.0
         )
 
+    /// <summary>
+    /// Interpolates SVI volatility from a given delta.
+    /// </summary>
+    /// <param name="psvi">The SVI parameters.</param>
+    /// <param name="d">The delta value.</param>
+    /// <returns>The interpolated SVI volatility.</returns>
     let interpolateSVIVolfromDelta (psvi: SVIPara) d =
         let t = psvi.t
 
@@ -157,6 +226,14 @@ module Smile =
 
         svivol psvi k'
 
+    /// <summary>
+    /// Interpolates volatility from a delta smile using cubic spline on log-moneyness vs variance.
+    /// </summary>
+    /// <param name="k">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="deltas">An array of delta values.</param>
+    /// <param name="vols">An array of volatilities corresponding to the delta values.</param>
+    /// <returns>The interpolated volatility.</returns>
     let interpolateVolCSlogkfromDeltaSmile k t (deltas: double[]) (vols: double[]) =
         let logk, v2 =
             (deltas, vols)
@@ -170,17 +247,29 @@ module Smile =
         // let cs = CubicSpline.InterpolateAkimaSorted (logk, v2)
         cs.Interpolate(log k) |> sqrt
 
-    //interpolate vol from delta smile using delta
-    //deltas should be in range (0, 1)
-    //vols are abs values, e.g 0.2 for 20% vol.
+    /// <summary>
+    /// Interpolates volatility from a delta smile using delta.
+    /// Deltas should be in range (0, 1). Vols are absolute values (e.g., 0.2 for 20% vol).
+    /// </summary>
+    /// <param name="delta">The delta value.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>The interpolated volatility.</returns>
     let interpolateVolfromDeltaSmile delta (deltas: double[]) (vols: double[]) =
         let cs = CubicSpline.InterpolatePchip(deltas, vols)
         let d = if delta < 0.0 then 1.0 + delta else delta //call delta
         cs.Interpolate(d)
 
-    ///interpolate vol from delta smile using delta
-    ///cubic spline using logk vs variance
-    ///extrapolate using cs on delta, as logk can lead to infinity and target delta maynot be feasible
+    /// <summary>
+    /// Interpolates volatility from a delta smile using delta.
+    /// Cubic spline uses log-moneyness vs variance.
+    /// Extrapolates using cubic spline on delta, as log-moneyness can lead to infinity and target delta may not be feasible.
+    /// </summary>
+    /// <param name="d">The delta value.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>The interpolated volatility.</returns>
     let interpolateVolbyDeltaCSlogk d t (deltas: double[]) (vols: double[]) =
         let getv k =
             interpolateVolCSlogkfromDeltaSmile k t deltas vols
@@ -217,7 +306,12 @@ module Smile =
 
             getv k
 
-
+    /// <summary>
+    /// Gets a volatility curve from a delta smile for a given delta.
+    /// </summary>
+    /// <param name="d">The delta value.</param>
+    /// <param name="smile">The VolDeltaSmile object.</param>
+    /// <returns>A VolCurve object representing the volatility curve.</returns>
     let getVolCurveFromSmile d (smile: VolDeltaSmile) =
         let p = smile.Pillars
         let deltas = smile.Deltas
@@ -232,18 +326,32 @@ module Smile =
 
         Array.zip p vs |> Map.ofArray |> VolCurve
 
-    //interpolate vol from delta smile using delta
-    //deltas should be in range (0, 1)
-    //vols are abs values, e.g 0.2 for 20% vol.
+    /// <summary>
+    /// Interpolates volatility and strike from a delta smile using delta.
+    /// Deltas should be in range (0, 1). Vols are absolute values (e.g., 0.2 for 20% vol).
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="delta">The delta value.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>An array containing the interpolated volatility and strike price [volatility, strike].</returns>
     let getVolStrikefromDeltaSmile f t delta (deltas: double[]) (vols: double[]) =
         let d = if delta < 0.0 then 1.0 + delta else delta //call delta
         let v = interpolateVolfromDeltaSmile d deltas vols
         let k = bsstrike f v t d
         [| v; k |]
 
-    //compute delta for strike from delta smile of
-    //deltas should be in range (0, 1)
-    //vols are abs values, e.g 0.2 for 20% vol.
+    /// <summary>
+    /// Computes the delta for a given strike from a delta smile.
+    /// Deltas should be in range (0, 1). Vols are absolute values (e.g., 0.2 for 20% vol).
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>The computed delta.</returns>
     let getDeltafromDeltaSmile f k t (deltas: double[]) (vols: double[]) =
         let g d =
             interpolateVolfromDeltaSmile d deltas vols
@@ -257,17 +365,35 @@ module Smile =
             1.0
         )
 
-    //interpolate vol from delta smile
-    //deltas should be in range (0, 1)
-    //vols are abs values, e.g 0.2 for 20% vol.
+    /// <summary>
+    /// Interpolates volatility from a delta smile for a given strike.
+    /// Deltas should be in range (0, 1). Vols are absolute values (e.g., 0.2 for 20% vol).
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>The interpolated volatility.</returns>
     let getVolfromDeltaSmile f k t (deltas: double[]) (vols: double[]) =
         let d = getDeltafromDeltaSmile f k t deltas vols
         interpolateVolfromDeltaSmile d deltas vols
 
-    //compute delta for strike from delta smile of
-    //deltas should be in range (0, 1)
-    //vols are abs values, e.g 0.2 for 20% vol.
-    //using Gabillon model: option exp/fut exp/long vol/ k / correlation
+    /// <summary>
+    /// Computes delta for a strike from a delta smile using the Gabillon model.
+    /// Deltas should be in range (0, 1). Vols are absolute values (e.g., 0.2 for 20% vol).
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="x">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <param name="optT">Option expiration time for Gabillon model.</param>
+    /// <param name="futT">Futures expiration time for Gabillon model.</param>
+    /// <param name="sl">Long-term volatility for Gabillon model.</param>
+    /// <param name="k">Mean reversion speed for Gabillon model.</param>
+    /// <param name="rho">Correlation for Gabillon model.</param>
+    /// <returns>The computed delta.</returns>
     let getDeltafromDeltaSmileGabillon f x t (deltas: double[]) (vols: double[]) (optT, futT, sl, k, rho) =
         let g d =
             interpolateVolfromDeltaSmile d deltas vols
@@ -284,15 +410,44 @@ module Smile =
             1.00
         )
 
+    /// <summary>
+    /// Calculates the Black-Scholes price from a delta smile.
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="o">The option payoff type (Call or Put).</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>The Black-Scholes price.</returns>
     let bsDeltaSmile f k t o (deltas: double[]) (vols: double[]) =
         let v = getVolfromDeltaSmile f k t deltas vols
         bs f k v t o
 
+    /// <summary>
+    /// Calculates the Black-Scholes price, volatility, and strike from a delta smile for a given delta.
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="d">The delta value.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>A tuple containing the Black-Scholes price, volatility, and strike (price, volatility, strike).</returns>
     let bsDeltaSmileWithDelta f d t (deltas: double[]) (vols: double[]) =
         let r = getVolStrikefromDeltaSmile f t d deltas vols
         let o = if d >= 0.0 then Call else Put
         (bs f r.[1] r.[0] t o, r.[0], r.[1]) // prem, v, strike.
 
+    /// <summary>
+    /// Calculates adapted Black-Scholes Greeks (Delta, Gamma, Vega, Theta) from a delta smile.
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="t">The time to expiration.</param>
+    /// <param name="o">The option payoff type (Call or Put).</param>
+    /// <param name="deltas">An array of delta values in the smile.</param>
+    /// <param name="vols">An array of volatilities in the smile.</param>
+    /// <returns>An array containing Delta, Gamma, Vega, and Theta [Delta, Gamma, Vega, Theta].</returns>
     let bsAdaptedGreeks f k t o (deltas: double[]) (vols: double[]) =
         let h = NumericalDerivative()
         let d = [| f; 0.0; t |]
@@ -307,7 +462,16 @@ module Smile =
            h.EvaluatePartialDerivative(g, d, 1, 1) //vega
            - h.EvaluatePartialDerivative(g, d, 2, 1) / 365. |] //1d theta
 
-    ///use reference ETO's delta to get VolCurve from smile, flat vol
+    /// <summary>
+    /// Gets a volatility curve from a smile using a reference ETO's delta (flat volatility).
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="expDate">The expiration date.</param>
+    /// <param name="refMonth">The reference month for the ETO.</param>
+    /// <param name="smile">The VolDeltaSmile object.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>A VolCurve object representing the volatility curve.</returns>
     let getRefDelta f k expDate refMonth (smile: VolDeltaSmile) pd =
         let t = getTTM pd expDate
         let deltas = smile.Deltas
@@ -317,7 +481,21 @@ module Smile =
         let d' = bsdelta f k v' t Call
         getVolCurveFromSmile d' smile
 
-    ///use reference ETO's delta to get VolCurve from smile using Gabilion model
+    /// <summary>
+    /// Gets a volatility curve from a smile using a reference ETO's delta and the Gabillon model.
+    /// </summary>
+    /// <param name="f">The forward price.</param>
+    /// <param name="k">The strike price.</param>
+    /// <param name="expDate">The expiration date.</param>
+    /// <param name="refMonth">The reference month for the ETO.</param>
+    /// <param name="smile">The VolDeltaSmile object.</param>
+    /// <param name="ot">Option expiration time for Gabillon model.</param>
+    /// <param name="ft">Futures expiration time for Gabillon model.</param>
+    /// <param name="lv">Long-term volatility for Gabillon model.</param>
+    /// <param name="b">Mean reversion speed for Gabillon model.</param>
+    /// <param name="r">Correlation for Gabillon model.</param>
+    /// <param name="pd">The pricing date.</param>
+    /// <returns>A VolCurve object representing the volatility curve.</returns>
     let getRefDeltaGabillon f k expDate refMonth (smile: VolDeltaSmile) ot ft (lv, b, r) pd =
         let t = getTTM pd expDate
         let eo = getTTM pd ot

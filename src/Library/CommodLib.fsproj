@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <PackageId>CommodLib</PackageId>
-    <Version>1.0.8</Version>
+    <Version>1.0.9</Version>
     <PackageReleaseNotes>use net9.0</PackageReleaseNotes>
     <Authors>Xiaoqiang Guo</Authors>
     <RepositoryUrl>https://github.com/xqguo/CommodQuant</RepositoryUrl>
